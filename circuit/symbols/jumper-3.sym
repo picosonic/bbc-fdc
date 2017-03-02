@@ -1,0 +1,50 @@
+v 20050820 1
+P 500 0 500 200 1 0 0
+{
+T 550 50 5 8 1 1 0 0 1
+pinnumber=2
+T 1150 -50 5 8 0 0 180 0 1
+pinseq=2
+T 500 -500 5 10 0 0 0 0 1
+pintype=pas
+T 500 -300 5 10 0 0 0 0 1
+pinlabel=2
+}
+P 100 0 100 200 1 0 0
+{
+T 150 50 5 8 1 1 0 0 1
+pinnumber=1
+T -250 -250 5 8 0 0 0 0 1
+pinseq=1
+T -300 -400 5 10 0 0 0 0 1
+pintype=pas
+T -400 -100 5 10 0 0 0 0 1
+pinlabel=1
+}
+V 500 300 50 3 0 0 0 -1 -1 0 -1 -1 -1 -1 -1
+V 100 300 50 3 0 0 0 -1 -1 0 -1 -1 -1 -1 -1
+B 0 200 1000 200 3 0 0 0 -1 -1 0 -1 -1 -1 -1 -1
+T 400 500 5 8 0 0 0 0 1
+device=JUMPER-3
+T 100 500 8 10 1 1 0 0 1
+refdes=J?
+V 900 300 50 3 0 0 0 -1 -1 0 -1 -1 -1 -1 -1
+P 900 0 900 200 1 0 0
+{
+T 950 50 5 8 1 1 0 0 1
+pinnumber=3
+T 1750 -250 5 8 0 0 0 0 1
+pinseq=3
+T 1600 -400 5 10 0 0 0 0 1
+pintype=pas
+T 1500 -100 5 10 0 0 0 0 1
+pinlabel=3
+}
+T 3600 0 8 10 0 0 0 0 1
+author=Alexey Lukomskiy lucomskyATmail.ru
+T 0 0 8 10 0 0 0 0 1
+dist-license=GPL
+T 1600 0 8 10 0 0 0 0 1
+use-license=unlimited
+T 0 200 8 10 0 0 0 0 1
+comment=Suggested library: connector

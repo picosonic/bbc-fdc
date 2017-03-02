@@ -1,0 +1,464 @@
+v 20130925 2
+P 0 2800 300 2800 1 0 0
+{
+T 205 2845 5 8 1 1 0 6 1
+pinnumber=25
+T 200 2850 5 8 0 1 180 2 1
+pinseq=13
+T 355 2795 9 8 1 1 0 0 1
+pinlabel=GND
+T 350 2800 5 8 0 1 180 8 1
+pintype=io
+}
+P 0 2500 300 2500 1 0 0
+{
+T 205 2545 5 8 1 1 0 6 1
+pinnumber=27
+T 200 2550 5 8 0 1 180 2 1
+pinseq=14
+T 355 2495 9 8 1 1 0 0 1
+pinlabel=ID_SD (I²C ID EEPROM)
+T 350 2500 5 8 0 1 180 8 1
+pintype=pwr
+}
+P 0 2200 300 2200 1 0 0
+{
+T 205 2245 5 8 1 1 0 6 1
+pinnumber=29
+T 200 2250 5 8 0 1 180 2 1
+pinseq=15
+T 355 2195 9 8 1 1 0 0 1
+pinlabel=GPIO05
+T 350 2200 5 8 0 1 180 8 1
+pintype=io
+}
+P 0 1900 300 1900 1 0 0
+{
+T 205 1945 5 8 1 1 0 6 1
+pinnumber=31
+T 200 1950 5 8 0 1 180 2 1
+pinseq=16
+T 355 1895 9 8 1 1 0 0 1
+pinlabel=GPIO06
+T 350 1900 5 8 0 1 180 8 1
+pintype=io
+}
+P 0 1600 300 1600 1 0 0
+{
+T 205 1645 5 8 1 1 0 6 1
+pinnumber=33
+T 200 1650 5 8 0 1 180 2 1
+pinseq=17
+T 355 1595 9 8 1 1 0 0 1
+pinlabel=GPIO13
+T 350 1600 5 8 0 1 180 8 1
+pintype=pwr
+}
+P 0 1300 300 1300 1 0 0
+{
+T 205 1345 5 8 1 1 0 6 1
+pinnumber=35
+T 200 1350 5 8 0 1 180 2 1
+pinseq=18
+T 355 1295 9 8 1 1 0 0 1
+pinlabel=GPIO19
+T 350 1300 5 8 0 1 180 8 1
+pintype=io
+}
+P 0 1000 300 1000 1 0 0
+{
+T 205 1045 5 8 1 1 0 6 1
+pinnumber=37
+T 200 1050 5 8 0 1 180 2 1
+pinseq=19
+T 355 995 9 8 1 1 0 0 1
+pinlabel=GPIO26
+T 350 1000 5 8 0 1 180 8 1
+pintype=io
+}
+P 0 6400 300 6400 1 0 0
+{
+T 200 6450 5 8 1 1 0 6 1
+pinnumber=1
+T 200 6350 5 8 0 1 0 8 1
+pinseq=1
+T 350 6400 9 8 1 1 0 0 1
+pinlabel=3.3 V
+T 350 6400 5 8 0 1 0 2 1
+pintype=pwr
+}
+P 0 5500 300 5500 1 0 0
+{
+T 200 5550 5 8 1 1 0 6 1
+pinnumber=7
+T 200 5450 5 8 0 1 0 8 1
+pinseq=4
+T 350 5500 9 8 1 1 0 0 1
+pinlabel=GPIO04 (GPIO_GCLK)
+T 350 5500 5 8 0 1 0 2 1
+pintype=pwr
+}
+P 0 5200 300 5200 1 0 0
+{
+T 200 5250 5 8 1 1 0 6 1
+pinnumber=9
+T 200 5150 5 8 0 1 0 8 1
+pinseq=5
+T 350 5200 9 8 1 1 0 0 1
+pinlabel=GND
+T 350 5200 5 8 0 1 0 2 1
+pintype=io
+}
+P 0 6100 300 6100 1 0 0
+{
+T 200 6150 5 8 1 1 0 6 1
+pinnumber=3
+T 200 6050 5 8 0 1 0 8 1
+pinseq=2
+T 350 6100 9 8 1 1 0 0 1
+pinlabel=GPIO02 (SDA1, I²C)
+T 350 6100 5 8 0 1 0 2 1
+pintype=pwr
+}
+P 0 5800 300 5800 1 0 0
+{
+T 200 5850 5 8 1 1 0 6 1
+pinnumber=5
+T 200 5750 5 8 0 1 0 8 1
+pinseq=3
+T 350 5800 9 8 1 1 0 0 1
+pinlabel=GPIO03 (SCL1, I²C)
+T 350 5800 5 8 0 1 0 2 1
+pintype=io
+}
+P 0 4900 300 4900 1 0 0
+{
+T 200 4950 5 8 1 1 0 6 1
+pinnumber=11
+T 200 4850 5 8 0 1 0 8 1
+pinseq=6
+T 350 4900 9 8 1 1 0 0 1
+pinlabel=GPIO17 (GPIO_GEN0)
+T 350 4900 5 8 0 1 0 2 1
+pintype=pwr
+}
+P 0 4600 300 4600 1 0 0
+{
+T 200 4650 5 8 1 1 0 6 1
+pinnumber=13
+T 200 4550 5 8 0 1 0 8 1
+pinseq=7
+T 350 4600 9 8 1 1 0 0 1
+pinlabel=GPIO27 (GPIO_GEN2)
+T 350 4600 5 8 0 1 0 2 1
+pintype=io
+}
+P 0 4300 300 4300 1 0 0
+{
+T 200 4350 5 8 1 1 0 6 1
+pinnumber=15
+T 200 4250 5 8 0 1 0 8 1
+pinseq=8
+T 350 4300 9 8 1 1 0 0 1
+pinlabel=GPIO22 (GPIO_GEN3)
+T 350 4300 5 8 0 1 0 2 1
+pintype=io
+}
+P 0 4000 300 4000 1 0 0
+{
+T 200 4050 5 8 1 1 0 6 1
+pinnumber=17
+T 200 3950 5 8 0 1 0 8 1
+pinseq=9
+T 350 4000 9 8 1 1 0 0 1
+pinlabel=3.3 V
+T 350 4000 5 8 0 1 0 2 1
+pintype=pwr
+}
+B 300 500 3500 6200 3 0 0 0 -1 -1 0 -1 -1 -1 -1 -1
+T 3600 6800 8 10 1 1 0 6 1
+refdes=U?
+T 400 6800 9 10 1 0 0 0 1
+Raspberry Pi 2 Model B v1.1
+T 300 4200 5 10 0 0 0 0 1
+device=RaspberryPi2
+T 300 4400 5 10 0 0 0 0 1
+author=José Roberto Colombo Junior
+T 300 4600 5 10 0 0 0 0 1
+documentation=http://www.element14.com/community/docs/DOC-73950/l/raspberry-pi-2-model-b-gpio-40-pin-block-pinout
+T 300 4800 5 10 0 0 0 0 1
+description=Raspberry Pi 2 Model B v1.1
+T 300 5000 5 10 0 0 0 0 1
+dist-license=GPL
+T 300 5200 5 10 0 0 0 0 1
+use-license=unlimited
+P 0 3100 300 3100 1 0 0
+{
+T 205 3145 5 8 1 1 0 6 1
+pinnumber=23
+T 200 3150 5 8 0 1 180 2 1
+pinseq=12
+T 355 3095 9 8 1 1 0 0 1
+pinlabel=GPIO11 (SPI_CLK)
+T 350 3100 5 8 0 1 180 8 1
+pintype=io
+}
+P 0 3400 300 3400 1 0 0
+{
+T 205 3445 5 8 1 1 0 6 1
+pinnumber=21
+T 200 3450 5 8 0 1 180 2 1
+pinseq=11
+T 355 3395 9 8 1 1 0 0 1
+pinlabel=GPIO09 (SPI_MISO)
+T 350 3400 5 8 0 1 180 8 1
+pintype=io
+}
+P 0 3700 300 3700 1 0 0
+{
+T 200 3750 5 8 1 1 0 6 1
+pinnumber=19
+T 200 3650 5 8 0 1 0 8 1
+pinseq=10
+T 350 3700 9 8 1 1 0 0 1
+pinlabel=GPIO10 (SPI_MOSI)
+T 350 3700 5 8 0 1 0 2 1
+pintype=io
+}
+P 0 700 300 700 1 0 0
+{
+T 205 745 5 8 1 1 0 6 1
+pinnumber=39
+T 200 750 5 8 0 1 180 2 1
+pinseq=20
+T 355 695 9 8 1 1 0 0 1
+pinlabel=GND
+T 350 700 5 8 0 1 180 8 1
+pintype=pwr
+}
+P 4100 4300 3800 4300 1 0 0
+{
+T 3900 4250 5 8 0 1 0 2 1
+pinseq=33
+T 3750 4300 5 8 0 1 0 8 1
+pintype=io
+T 3895 4345 5 8 1 1 0 0 1
+pinnumber=16
+T 3745 4295 9 8 1 1 0 6 1
+pinlabel=(GPIO_GEN4) GPIO23
+}
+P 4100 4600 3800 4600 1 0 0
+{
+T 3900 4550 5 8 0 1 0 2 1
+pinseq=34
+T 3750 4600 5 8 0 1 0 8 1
+pintype=pwr
+T 3895 4645 5 8 1 1 0 0 1
+pinnumber=14
+T 3745 4595 9 8 1 1 0 6 1
+pinlabel=GND
+}
+P 4100 4900 3800 4900 1 0 0
+{
+T 3900 4850 5 8 0 1 0 2 1
+pinseq=35
+T 3750 4900 5 8 0 1 0 8 1
+pintype=io
+T 3895 4945 5 8 1 1 0 0 1
+pinnumber=12
+T 3745 4895 9 8 1 1 0 6 1
+pinlabel=(GPIO_GEN1) GPIO18
+}
+P 4100 5200 3800 5200 1 0 0
+{
+T 3900 5150 5 8 0 1 0 2 1
+pinseq=36
+T 3750 5200 5 8 0 1 0 8 1
+pintype=io
+T 3895 5245 5 8 1 1 0 0 1
+pinnumber=10
+T 3745 5195 9 8 1 1 0 6 1
+pinlabel=(RXD0) GPIO15
+}
+P 4100 5500 3800 5500 1 0 0
+{
+T 3900 5450 5 8 0 1 0 2 1
+pinseq=37
+T 3750 5500 5 8 0 1 0 8 1
+pintype=io
+T 3895 5545 5 8 1 1 0 0 1
+pinnumber=8
+T 3745 5495 9 8 1 1 0 6 1
+pinlabel=(TXD0) GPIO14
+}
+P 4100 5800 3800 5800 1 0 0
+{
+T 3900 5750 5 8 0 1 0 2 1
+pinseq=38
+T 3750 5800 5 8 0 1 0 8 1
+pintype=io
+T 3895 5845 5 8 1 1 0 0 1
+pinnumber=6
+T 3745 5795 9 8 1 1 0 6 1
+pinlabel=GND
+}
+P 4100 6100 3800 6100 1 0 0
+{
+T 3900 6050 5 8 0 1 0 2 1
+pinseq=39
+T 3750 6100 5 8 0 1 0 8 1
+pintype=pwr
+T 3895 6145 5 8 1 1 0 0 1
+pinnumber=4
+T 3745 6095 9 8 1 1 0 6 1
+pinlabel=5 V
+}
+P 4100 700 3800 700 1 0 0
+{
+T 3900 750 5 8 0 1 180 8 1
+pinseq=21
+T 3750 700 5 8 0 1 180 2 1
+pintype=io
+T 3895 745 5 8 1 1 0 0 1
+pinnumber=40
+T 3745 695 9 8 1 1 0 6 1
+pinlabel=GPIO21
+}
+P 4100 1600 3800 1600 1 0 0
+{
+T 3900 1650 5 8 0 1 180 8 1
+pinseq=24
+T 3750 1600 5 8 0 1 180 2 1
+pintype=io
+T 3895 1645 5 8 1 1 0 0 1
+pinnumber=34
+T 3745 1595 9 8 1 1 0 6 1
+pinlabel=GND
+}
+P 4100 1900 3800 1900 1 0 0
+{
+T 3900 1950 5 8 0 1 180 8 1
+pinseq=25
+T 3750 1900 5 8 0 1 180 2 1
+pintype=pwr
+T 3895 1945 5 8 1 1 0 0 1
+pinnumber=32
+T 3745 1895 9 8 1 1 0 6 1
+pinlabel=GPIO12
+}
+P 4100 1000 3800 1000 1 0 0
+{
+T 3900 1050 5 8 0 1 180 8 1
+pinseq=22
+T 3750 1000 5 8 0 1 180 2 1
+pintype=io
+T 3895 1045 5 8 1 1 0 0 1
+pinnumber=38
+T 3745 995 9 8 1 1 0 6 1
+pinlabel=GPIO20
+}
+P 4100 1300 3800 1300 1 0 0
+{
+T 3900 1350 5 8 0 1 180 8 1
+pinseq=23
+T 3750 1300 5 8 0 1 180 2 1
+pintype=io
+T 3895 1345 5 8 1 1 0 0 1
+pinnumber=36
+T 3745 1295 9 8 1 1 0 6 1
+pinlabel=GPIO16
+}
+P 4100 2200 3800 2200 1 0 0
+{
+T 3900 2250 5 8 0 1 180 8 1
+pinseq=26
+T 3750 2200 5 8 0 1 180 2 1
+pintype=io
+T 3895 2245 5 8 1 1 0 0 1
+pinnumber=30
+T 3745 2195 9 8 1 1 0 6 1
+pinlabel=GND
+}
+P 4100 2500 3800 2500 1 0 0
+{
+T 3900 2550 5 8 0 1 180 8 1
+pinseq=27
+T 3750 2500 5 8 0 1 180 2 1
+pintype=io
+T 3895 2545 5 8 1 1 0 0 1
+pinnumber=28
+T 3745 2495 9 8 1 1 0 6 1
+pinlabel=(I²C ID EEPROM) ID_SC
+}
+P 4100 2800 3800 2800 1 0 0
+{
+T 3900 2850 5 8 0 1 180 8 1
+pinseq=28
+T 3750 2800 5 8 0 1 180 2 1
+pintype=io
+T 3895 2845 5 8 1 1 0 0 1
+pinnumber=26
+T 3745 2795 9 8 1 1 0 6 1
+pinlabel=(SPI_CE1_N) GPIO07
+}
+P 4100 3100 3800 3100 1 0 0
+{
+T 3900 3150 5 8 0 1 180 8 1
+pinseq=29
+T 3750 3100 5 8 0 1 180 2 1
+pintype=io
+T 3895 3145 5 8 1 1 0 0 1
+pinnumber=24
+T 3745 3095 9 8 1 1 0 6 1
+pinlabel=(SPI_CE0_N) GPIO08
+}
+P 4100 4000 3800 4000 1 0 0
+{
+T 3900 3950 5 8 0 1 0 2 1
+pinseq=32
+T 3750 4000 5 8 0 1 0 8 1
+pintype=io
+T 3895 4045 5 8 1 1 0 0 1
+pinnumber=18
+T 3745 3995 9 8 1 1 0 6 1
+pinlabel=(GPIO_GEN5) GPIO24
+}
+P 4100 3700 3800 3700 1 0 0
+{
+T 3900 3650 5 8 0 1 0 2 1
+pinseq=31
+T 3750 3700 5 8 0 1 0 8 1
+pintype=io
+T 3895 3745 5 8 1 1 0 0 1
+pinnumber=20
+T 3745 3695 9 8 1 1 0 6 1
+pinlabel=GND
+}
+P 4100 3400 3800 3400 1 0 0
+{
+T 3900 3450 5 8 0 1 180 8 1
+pinseq=30
+T 3750 3400 5 8 0 1 180 2 1
+pintype=pwr
+T 3895 3445 5 8 1 1 0 0 1
+pinnumber=22
+T 3745 3395 9 8 1 1 0 6 1
+pinlabel=(GPIO_GEN6) GPIO25
+}
+P 4100 6400 3800 6400 1 0 0
+{
+T 3900 6350 5 8 0 1 0 2 1
+pinseq=40
+T 3750 6400 5 8 0 1 0 8 1
+pintype=io
+T 3895 6445 5 8 1 1 0 0 1
+pinnumber=2
+T 3745 6395 9 8 1 1 0 6 1
+pinlabel=5 V
+}
+T -5 500 8 10 0 1 0 0 1
+author=Pedro Augusto Queiroz de Assis
+T -5 500 8 10 0 1 0 0 1
+footprint=HEADER40_2
+T -5 500 8 10 0 1 0 0 1
+author=Franz Eichhorn

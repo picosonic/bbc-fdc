@@ -1,0 +1,28 @@
+v 20140308 2
+P 200 0 200 300 1 0 0
+{
+T 250 -150 5 10 0 0 0 2 1
+pintype=pas
+T 255 250 5 10 0 1 0 2 1
+pinlabel=1
+T 155 250 5 10 0 1 0 8 1
+pinnumber=1
+T 250 50 5 10 0 0 0 2 1
+pinseq=1
+}
+V 200 350 50 3 10 0 0 -1 -1 0 -1 -1 -1 -1 -1
+T 200 450 8 10 1 1 0 3 1
+refdes=TP?
+T 200 1250 8 10 0 0 0 3 1
+use-license=Unlimited
+T 200 1450 8 10 0 0 0 3 1
+dist-license=GPL
+T 200 1650 8 10 0 0 0 3 1
+copyright=(C) 2014 Edward Hennessy
+T 200 1850 8 10 0 0 0 3 1
+author=Edward Hennessy
+T 200 950 8 10 0 0 0 3 1
+device=TESTPOINT
+T 200 750 8 10 0 0 0 3 1
+footprint=$(Footprint)
+
