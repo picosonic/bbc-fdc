@@ -1,0 +1,17 @@
+G04 start of page 8 for group 6 idx 6 *
+G04 Title: (unknown), outline *
+G04 Creator: pcb 20110918 *
+G04 CreationDate: Wed 07 Dec 2016 14:25:13 GMT UTC *
+G04 For: jasper *
+G04 Format: Gerber/RS-274X *
+G04 PCB-Dimensions: 393701 196850 *
+G04 PCB-Coordinate-Origin: lower left *
+%MOIN*%
+%FSLAX25Y25*%
+%LNOUTLINE*%
+%ADD75C,0.0100*%
+G54D75*X0Y196850D02*X393701D01*
+X0Y0D02*Y196850D01*
+X393701D02*Y0D01*
+X0D01*
+M02*
