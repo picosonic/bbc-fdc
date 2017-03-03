@@ -1,0 +1,20 @@
+#ifndef _DEFUSE_H_
+#define _DEFUSE_H_
+
+// Acorn DFS geometry and layout
+#define SECTORSIZE 256
+#define SECTORSPERTRACK 10
+#define TRACKSIZE (SECTORSIZE*SECTORSPERTRACK)
+#define MAXTRACKS 80
+#define MAXFILES 31
+
+// Whole disk image
+#define WHOLEDISKSIZE (SECTORSIZE*SECTORSPERTRACK*MAXTRACKS)
+#define SECTORSTATUSSIZE (SECTORSPERTRACK*MAXTRACKS)
+
+// For sector status
+#define NODATA 0
+#define BADDATA 1
+#define GOODDATA 2
+
+#endif
