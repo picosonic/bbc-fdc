@@ -11,4 +11,4 @@ I've read both 40 and 80 track 5.25 inch disks, both using the 40/80 track selec
 
 Single and double sided disks can be read by switching between heads during the capture process.
 
-The BBC Micro DFS format used 40 or 80 tracks, 10 sectors per track (numbered 0 to 9), 256 bytes per sector, with FM encoding (single density). This gives a maximum data capactiy for a double sided 80 track DFS disk of 409,600 bytes.
+The BBC Micro DFS format used 40 or 80 tracks, 10 sectors per track (numbered 0 to 9), 256 bytes per sector, with FM encoding (single density). This gives a maximum data capacity for a double sided 80 track DFS disk of 409,600 bytes.
