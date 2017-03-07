@@ -34,13 +34,16 @@ size_t disksize=0;
 unsigned char wholedisk[WHOLEDISKSIZE];
 unsigned char sectorstatus[SECTORSTATUSSIZE];
 
+// Read a sector from disk buffer to the whole disk image
 int readsector(const int sector)
 {
   int track;
 
+  // Make sure sector is within the bounds of the disk image
   if ((sector<0) || (sector>=((MAXTRACKS-1)*SECTORSPERTRACK)))
     return 0;
 
+  // Determine which track this sector belongs to
   track=sector/SECTORSPERTRACK;
 
   // Check if we need to read the sector from disk
@@ -53,11 +56,13 @@ int readsector(const int sector)
   return SECTORSIZE;
 }
 
+// Make sure the first two sectors (containing the catalogue) are loaded
 int readcatalogue()
 {
   return (readsector(0)+readsector(1));
 }
 
+// Invalidate the status of each sector to force a read
 void clearcache()
 {
   int i;
@@ -69,7 +74,7 @@ void clearcache()
 // Read nth DFS filename from catalogue
 //   but don't add "$."
 //   return the "Locked" state of the file
-int getfilename(int entry, char *filename)
+int getfilename(const int entry, char *filename)
 {
   int i;
   int len;
@@ -101,6 +106,7 @@ int getfilename(int entry, char *filename)
   return locked;
 }
 
+// Search catalogue for an entry by name
 int findentry(const char *path)
 {
   int numfiles;
@@ -120,19 +126,29 @@ int findentry(const char *path)
 }
 
 // Return file length for nth entry in DFS catalogue
-unsigned long getfilelength(int entry)
+unsigned long getfilelength(const int entry)
 {
-  return ((((wholedisk[(1*SECTORSIZE)+8+((entry-1)*8)+6]&0x30)>>4)<<16) |
-          ((wholedisk[(1*SECTORSIZE)+8+((entry-1)*8)+5])<<8) |
-          ((wholedisk[(1*SECTORSIZE)+8+((entry-1)*8)+4])));
+  unsigned long offset;
+
+  offset=(1*SECTORSIZE)+8+((entry-1)*8);
+
+  return ((((wholedisk[offset+6]&0x30)>>4)<<16) |
+          ((wholedisk[offset+5])<<8) |
+          ((wholedisk[offset+4])));
 }
 
-unsigned long getstartsector(int entry)
+// Return start sector for nth entry in DFS catalogue
+unsigned long getstartsector(const int entry)
 {
-  return (((wholedisk[(1*SECTORSIZE)+8+((entry-1)*8)+6]&0x03)<<8) |
-          ((wholedisk[(1*SECTORSIZE)+8+((entry-1)*8)+7])));
+  unsigned long offset;
+
+  offset=(1*SECTORSIZE)+8+((entry-1)*8);
+
+  return (((wholedisk[offset+6]&0x03)<<8) |
+          ((wholedisk[offset+7])));
 }
 
+// Get file attributes (only length is useful) for named file
 static int dfs_getattr(const char *path, struct stat *stbuf)
 {
   int res = 0;
@@ -142,8 +158,10 @@ static int dfs_getattr(const char *path, struct stat *stbuf)
   // Make sure we have the catalogue loaded
   readcatalogue();
 
+  // Clear the return values
   memset(stbuf, 0, sizeof(struct stat));
 
+  // Check if the root folder is being enumerated
   if (strcmp(path, "/") == 0)
   {
     stbuf->st_mode = S_IFDIR | 0555; // r-xr-xr-x
@@ -169,6 +187,7 @@ static int dfs_getattr(const char *path, struct stat *stbuf)
   return res;
 }
 
+// Return filenames for all entries in the catalogue
 static int dfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
        off_t offset, struct fuse_file_info *fi)
 {
@@ -198,6 +217,7 @@ static int dfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   return 0;
 }
 
+// "open()" request handler
 static int dfs_open(const char *path, struct fuse_file_info *fi)
 {
   // Make sure we have the catalogue loaded
@@ -212,6 +232,7 @@ static int dfs_open(const char *path, struct fuse_file_info *fi)
   return 0;
 }
 
+// "read()" request handler
 static int dfs_read(const char *path, char *buf, size_t size, off_t offset,
           struct fuse_file_info *fi)
 {
@@ -225,19 +246,23 @@ static int dfs_read(const char *path, char *buf, size_t size, off_t offset,
   // Make sure we have the catalogue loaded
   readcatalogue();
 
+  // Find the named filename
   entry=findentry(path);
 
   if (entry<1)
     return -ENOENT;
 
+  // Determine file length and number of sectors used
   len = getfilelength(entry);
   startsector = getstartsector(entry);
   numsectors = (len/SECTORSIZE);
   if ((numsectors*SECTORSIZE)!=len)
     numsectors++;
 
+  // Check read() offset falls within file boundary
   if (offset < len)
   {
+    // If read() length is more than file length, then truncate to file length
     if (offset + size > len)
       size = len - offset;
 
@@ -245,6 +270,7 @@ static int dfs_read(const char *path, char *buf, size_t size, off_t offset,
     for (i=startsector; i<=((startsector+numsectors)-1); i++)
       readsector(i);
 
+    // Copy file data
     memcpy(buf, &wholedisk[(startsector*SECTORSIZE)+offset], size);
   }
   else
@@ -253,6 +279,7 @@ static int dfs_read(const char *path, char *buf, size_t size, off_t offset,
   return size;
 }
 
+// "statfs()" request handler
 static int dfs_statfs(const char *path, struct statvfs *stbuf)
 {
   (void) path;
@@ -263,10 +290,13 @@ static int dfs_statfs(const char *path, struct statvfs *stbuf)
   // Make sure we have the catalogue loaded
   readcatalogue();
 
+  // Clear the return variables
   memset(stbuf, 0, sizeof(struct statvfs));
 
+  // Determine number of files in the catalogue
   numfiles=wholedisk[(1*SECTORSIZE)+5]/8;
 
+  // Iterate through each file in catalogue to determine sector usage
   for (i=1; ((i<=numfiles) && (i<MAXFILES)); i++)
   {
     sectorusage+=(getfilelength(i)/SECTORSIZE);
@@ -286,6 +316,7 @@ static int dfs_statfs(const char *path, struct statvfs *stbuf)
   return 0;
 }
 
+// Report write-protected to truncate operations
 static int dfs_truncate(const char *path, off_t size)
 {
   (void) path;
@@ -294,6 +325,7 @@ static int dfs_truncate(const char *path, off_t size)
   return -EACCES;
 }
 
+// Report write-protected to write operations
 static int dfs_write(const char *path, const char *buf, size_t size,
           off_t offset, struct fuse_file_info *fi)
 {
@@ -306,6 +338,7 @@ static int dfs_write(const char *path, const char *buf, size_t size,
   return -EACCES;
 }
 
+// Report write-protected to "mknod"
 static int dfs_mknod(const char *path, mode_t mode, dev_t rdev)
 {
   (void) path;
@@ -315,6 +348,7 @@ static int dfs_mknod(const char *path, mode_t mode, dev_t rdev)
   return -EACCES;
 }
 
+// Report write-protected to "unlink" ("rm")
 static int dfs_unlink(const char *path)
 {
   (void) path;
@@ -322,6 +356,7 @@ static int dfs_unlink(const char *path)
   return -EACCES;
 }
 
+// Report write-protected to "mkdir"
 static int dfs_mkdir(const char *path, mode_t mode)
 {
   (void) path;
@@ -330,6 +365,7 @@ static int dfs_mkdir(const char *path, mode_t mode)
   return -EACCES;
 }
 
+// FUSE operations, function table
 static struct fuse_operations dfs_oper =
 {
   .getattr  = dfs_getattr,
@@ -345,6 +381,7 @@ static struct fuse_operations dfs_oper =
   .mkdir    = dfs_mkdir,
 };
 
+// Program entry point
 int main(int argc, char **argv)
 {
   struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
@@ -353,8 +390,10 @@ int main(int argc, char **argv)
   // Start with a blank SSD filename
   options.ssd_filename = strdup("");
 
+  // Set the file mode creation mask
   umask(0);
 
+  // Mark each sector as initially unread
   clearcache();
 
   // Parse command line options
@@ -364,9 +403,11 @@ int main(int argc, char **argv)
   // Check for a SSD filename on command line
   if (strlen(options.ssd_filename)!=0)
   {
+    // Check file is readable
     fp=fopen(options.ssd_filename, "r");
     if (fp!=NULL)
     {
+      // Attempt to read the whole disk from the file
       disksize=fread(diskbuff, 1, sizeof(diskbuff), fp);
 
       fclose(fp);
