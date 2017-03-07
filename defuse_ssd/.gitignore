@@ -1,0 +1,8 @@
+# Executables
+
+defuse_ssd
+*.o
+
+# Disk images
+*.ssd
+*.dsd
