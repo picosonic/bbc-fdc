@@ -1,0 +1,20 @@
+Bill of materials
+-----------------
+
+R1 to R5 are 150R pull-ups to 5v (as per Beeb circuit diagram).
+
+R6 (2k2), R7 (10k), R9 (330R), R10 (10k) and R11 (2k2) are pull-ups to 3.3v.
+
+R8, R12 and R13 are all 2k2 pull-downs to ground.
+
+J1 is a 34 pin header it should be attached with the notch facing away from the rest of the board.
+
+J2 to J4 are for jumpers to select between 5" and 8" drives and between drive select 0 and 1. But you could hard wire them if you prefer.
+
+J5 is a 40 pin Raspberry Pi header extender.
+
+C1 and C2 are 100nF electrolytic capacitors for decoupling.
+
+I found I didn't need C3 which was to be a radial capacitor for smoothing power.
+
+The chips are DM7406N open collector inverters. I used chip holders but you don't need to.
