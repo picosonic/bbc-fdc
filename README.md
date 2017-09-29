@@ -5,7 +5,7 @@ This project is to allow the direct connection of floppy disk drives with 34 pin
 
 It controls the drive using GPIO and samples the read data pin using SPI to obtain a forensic level capture of the raw magnetic flux transitions on the floppy disk.
 
-Initially this was to read my BBC Micro 5.25 inch disks formatted in Acorn DFS, but I've also been able to read and extract data from ADFS and DOS 5.25 inch disks.
+Initially this was to read my BBC Micro 5.25 inch disks formatted in Acorn DFS, but I've also been able to read and extract data from ADFS, DOS and Commodore 64 5.25 inch disks.
 
 The Cumana dual 5.25 inch disk drive (built November 1985) I'm using is capable of reading multiple different formats.
 
