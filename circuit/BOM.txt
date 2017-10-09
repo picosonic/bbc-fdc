@@ -13,7 +13,7 @@ J2 to J4 are for jumpers to select between 5" and 8" drives and between drive se
 
 J5 is a 40 pin Raspberry Pi header extender.
 
-C1 and C2 are 100nF electrolytic capacitors for decoupling.
+C1 and C2 are 100nF ceramic disc capacitors for decoupling.
 
 I found I didn't need C3 which was to be a radial capacitor for smoothing power.
 
