@@ -1,1 +1,10 @@
+# Executables
 
+*.o
+
+# Disk images
+*.raw
+*.ssd
+*.dsd
+*.adf
+*.d64
