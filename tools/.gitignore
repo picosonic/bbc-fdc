@@ -1,6 +1,6 @@
 # Executables
-
 *.o
+drivetest
 
 # Disk images
 *.raw
@@ -8,3 +8,4 @@
 *.dsd
 *.adf
 *.d64
+*.img
