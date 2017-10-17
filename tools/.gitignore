@@ -1,6 +1,7 @@
 # Executables
 *.o
 drivetest
+bbcfdc
 
 # Disk images
 *.raw
