@@ -453,6 +453,7 @@ void addbit(unsigned char bit)
               case 0x02:
               case 0x03:
                 datasize=(128<<bitstream[4])+3;
+                break;
 
               default:
                 if (debug)
