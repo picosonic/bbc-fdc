@@ -10,14 +10,14 @@
 
 #include "pins.h"
 
-// Sample buffer
-#define SAMPLEBUFFSIZE (1024*1024*10)
-unsigned char samplebuffer[SAMPLEBUFFSIZE];
-
 // For disk/drive status
 #define NODRIVE 0
 #define NODISK 1
 #define HAVEDISK 2
+
+// For RPM calculation
+#define SECONDSINMINUTE 60
+#define MICROSECONDSINSECOND 1000000
 
 int current_track = 0;
 int current_head = 0;
@@ -200,12 +200,8 @@ unsigned char detect_disk()
 // Program enty pont
 int main(int argc,char **argv)
 {
-  unsigned long i, count;
-  unsigned char last;
-  struct timeval timestart, timeend;
-  unsigned long samples[2];
-  double samplesperms;
-  double sampleperiod;
+  struct timeval tv;
+  unsigned long long starttime, endtime;
   unsigned char drivestatus;
 
   // Check user permissions
@@ -267,57 +263,26 @@ int main(int argc,char **argv)
 
   printf("Sampling index pin ... \n");
 
-  // Sample the index pulses
-  gettimeofday(&timestart, NULL);
-  for (i=0; i<SAMPLEBUFFSIZE; i++)
-  {
-    samplebuffer[i]=bcm2835_gpio_lev(INDEX_PULSE);
-  }
-  gettimeofday(&timeend, NULL);
+  // Wait for first index falling edge
+  while (bcm2835_gpio_lev(INDEX_PULSE)!=LOW) { }
+  while (bcm2835_gpio_lev(INDEX_PULSE)==LOW) { }
 
-  printf("Finished\n");
+  // Get time
+  gettimeofday(&tv, NULL);
+  starttime=(((unsigned long long)tv.tv_sec)*MICROSECONDSINSECOND)+tv.tv_usec;
+
+  // Wait for next index falling edge
+  while (bcm2835_gpio_lev(INDEX_PULSE)!=LOW) { }
+  while (bcm2835_gpio_lev(INDEX_PULSE)==LOW) { }
+
+  gettimeofday(&tv, NULL);
+  endtime=(((unsigned long long)tv.tv_sec)*MICROSECONDSINSECOND)+tv.tv_usec;
 
   sleep(1);
 
   stopMotor();
 
-  // Convert from 2 lots of seconds/microseconds to a millisecond delta
-  timestart.tv_usec /= 1000;
-  timeend.tv_usec /= 1000;
-  timeend.tv_sec -= timestart.tv_sec;
-  timeend.tv_usec += 1000 * timeend.tv_sec;
-  timeend.tv_usec -= timestart.tv_usec;
-
-  // Calculate samples per millisecond
-  samplesperms=SAMPLEBUFFSIZE/timeend.tv_usec;
-
-  printf("%ld samples took %ld milliseconds\n", SAMPLEBUFFSIZE, timeend.tv_usec);
-
-  printf("\n");
-
-  // Initialise counters
-  last=samplebuffer[0]; count=0;
-  samples[0]=0; samples[1]=0;
-
-  // Process samples to find longest "1" and longest "0"
-  for (i=0; i<SAMPLEBUFFSIZE; i++)
-  {
-    if (last!=samplebuffer[i])
-    {
-      if (count>samples[last & 0x01])
-        samples[last & 0x01]=count;
-
-      last=samplebuffer[i];
-      count=0;
-    }
-    else
-      count++;
-  }
-
-  // Calculate a single period - length of a "0" + length of a "1" in milliseconds
-  sampleperiod=(samples[0]+samples[1])/samplesperms;
-
-  printf("Approximate RPM %f\n", (1000/sampleperiod)*60);
+  printf("Approximate RPM %f\n", ((MICROSECONDSINSECOND/(float)(endtime-starttime))*SECONDSINMINUTE));
 
   return 0;
 }
