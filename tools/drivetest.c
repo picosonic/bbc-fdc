@@ -13,9 +13,6 @@
 #define SECONDSINMINUTE 60
 #define MICROSECONDSINSECOND 1000000
 
-int current_track = 0;
-int current_head = 0;
-
 // Stop the motor and tidy up upon exit
 void exitFunction()
 {

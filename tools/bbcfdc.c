@@ -28,20 +28,12 @@
 #define BADDATA 1
 #define GOODDATA 2
 
-// For disk/drive status
-#define NODRIVE 0
-#define NODISK 1
-#define HAVEDISK 2
-
 // For type of capture
 #define DISKCAT 0
 #define DISKIMG 1
 #define DISKRAW 2
 
 #define RETRIES 10
-
-int current_track = 0;
-int current_head = 0;
 
 int debug=0;
 int singlesided=1;
@@ -373,21 +365,21 @@ void addbit(unsigned char bit)
             unsigned int tracksize=(sectorsize*10);
 
             // Check the track number matches
-            if (track!=current_track)
+            if (track!=hw_currenttrack)
             {
               if (debug)
-                printf("*** Track ID mismatch %d != %d ***\n", track, current_track);
+                printf("*** Track ID mismatch %d != %d ***\n", track, hw_currenttrack);
  
               // Override the read track number with the track we should be on
-              track=current_track;
+              track=hw_currenttrack;
             }
 
             // See if we need this sector, store it if current status is either EMPTY or BAD
-            if (sectorstatus[current_head][(SECTORSPERTRACK*track)+sector]!=GOODDATA)
+            if (sectorstatus[hw_currenthead][(SECTORSPERTRACK*track)+sector]!=GOODDATA)
             {
-              memcpy(&wholedisk[current_head][(track*tracksize)+(sector*sectorsize)], &bitstream[1], sectorsize);
+              memcpy(&wholedisk[hw_currenthead][(track*tracksize)+(sector*sectorsize)], &bitstream[1], sectorsize);
 
-              sectorstatus[current_head][(SECTORSPERTRACK*track)+sector]=dataCRC;
+              sectorstatus[hw_currenthead][(SECTORSPERTRACK*track)+sector]=dataCRC;
             }
           }
           else
@@ -397,9 +389,9 @@ void addbit(unsigned char bit)
           }
 
           // Do a catalogue if we haven't already and sector 00 and 01 have been read correctly for this side
-          if ((info==0) && (sectorstatus[current_head][0]==GOODDATA) && (sectorstatus[current_head][1]==GOODDATA))
+          if ((info==0) && (sectorstatus[hw_currenthead][0]==GOODDATA) && (sectorstatus[hw_currenthead][1]==GOODDATA))
           {
-            showinfo(current_head);
+            showinfo(hw_currenthead);
             info++;
           }
 
@@ -814,7 +806,7 @@ int main(int argc,char **argv)
         }
 
         if (retry>=RETRIES)
-          printf("I/O error reading head %d track %d\n", current_head, i);
+          printf("I/O error reading head %d track %d\n", hw_currenthead, i);
       }
       else
       {

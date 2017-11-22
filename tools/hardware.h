@@ -12,6 +12,9 @@
 #define MAXHEADS 2
 #define MAXTRACKS 80
 
+extern int hw_currenttrack;
+extern int hw_currenthead;
+
 // Initialisation
 extern int hw_init();
 
