@@ -9,7 +9,8 @@
 // GPIO and P1 numbers are for Raspberry Pi 2/3 with 40 pin header
 // All used inputs and outputs of 34 pin connector go through 74LS06
 
-#ifdef RPI1
+/* RPi 2 has ARM v7, older RPis are ARM v6, so use that as simple detection */
+#if __ARM_ARCH < 7
   // Output pins to 34pin cable
   #define MOTOR_ON     RPI_GPIO_P1_12  // GPIO 18 P1_12 to cable 16
   #define DS0_OUT      RPI_GPIO_P1_16  // GPIO 23 P1_16 to cable 10 or cable 12 via jumper J3
