@@ -3,18 +3,15 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>
-#include <bcm2835.h>
 #include <string.h>
 
-#include "pins.h"
+#include "hardware.h"
 
 // Acorn DFS geometry and layout
 #define SECTORSIZE 256
 #define SECTORSPERTRACK 10
 #define TRACKSIZE (SECTORSIZE*SECTORSPERTRACK)
-#define MAXTRACKS 80
 #define MAXFILES 31
-#define MAXHEADS 2
 
 // SPI read buffer size
 #define SPIBUFFSIZE (1024*1024)
@@ -625,239 +622,22 @@ void process(int attempt)
   }
 }
 
-int init()
-{
-  int i;
-
-  if (!bcm2835_init()) return 0;
-
-  bcm2835_gpio_fsel(DS0_OUT, GPIO_OUT);
-  bcm2835_gpio_clr(DS0_OUT);
-
-  bcm2835_gpio_fsel(MOTOR_ON, GPIO_OUT);
-  bcm2835_gpio_clr(MOTOR_ON);
-
-  bcm2835_gpio_fsel(DIR_SEL, GPIO_OUT);
-  bcm2835_gpio_clr(DIR_SEL);
-
-  bcm2835_gpio_fsel(DIR_STEP, GPIO_OUT);
-  bcm2835_gpio_clr(DIR_STEP);
-
-  bcm2835_gpio_fsel(WRITE_GATE, GPIO_OUT);
-  bcm2835_gpio_clr(WRITE_GATE);
-
-  bcm2835_gpio_fsel(SIDE_SELECT, GPIO_OUT);
-  bcm2835_gpio_clr(SIDE_SELECT);
-
-  bcm2835_gpio_fsel(WRITE_PROTECT, GPIO_IN);
-  bcm2835_gpio_set_pud(WRITE_PROTECT, PULL_UP);
-
-  bcm2835_gpio_fsel(TRACK_0, GPIO_IN);
-  bcm2835_gpio_set_pud(TRACK_0, PULL_UP);
-
-  bcm2835_gpio_fsel(INDEX_PULSE, GPIO_IN);
-  bcm2835_gpio_set_pud(INDEX_PULSE, PULL_UP);
-
-  //bcm2835_gpio_fsel(READ_DATA, GPIO_IN);
-  //bcm2835_gpio_set_pud(READ_DATA, PULL_UP);
-
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_1024); // 390.625kHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_512); // 781.25kHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256); // 1.562MHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128); // 3.125MHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_64); // 6.250MHz on RPI3
-  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_32); // 12.5MHz on RPI3 ***** WORKS
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_16); // 25MHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_8); // 50MHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_4); // 100MHz on RPI3 - UNRELIABLE
-
-  bcm2835_spi_setDataMode(BCM2835_SPI_MODE2); // CPOL = 1, CPHA = 0 
-
-  bcm2835_spi_begin(); // sets all correct pin modes
-
-  return 1;
-}
-
-// stop motor and release drive
-void stopMotor()
-{
-  bcm2835_gpio_clr(MOTOR_ON);
-  bcm2835_gpio_clr(DS0_OUT);
-  bcm2835_gpio_clr(DIR_SEL);
-  bcm2835_gpio_clr(DIR_STEP);
-  bcm2835_gpio_clr(SIDE_SELECT);
-  printf("Stopped motor\n");
-}
-
+// Stop the motor and tidy up upon exit
 void exitFunction()
 {
   printf("Exit function\n");
-  stopMotor();
-  bcm2835_spi_end();
-  bcm2835_close();
+  hw_done();
 }
 
+// Handle signals by stopping motor and tidying up
 void sig_handler(const int sig)
 {
   if (sig==SIGSEGV)
     printf("SEG FAULT\n");
 
-  stopMotor();
-  bcm2835_spi_end();
+  hw_done();
   exit(0);
 }
-
-void seekToTrackZero(int newDrive)
-{
-  if (newDrive) // wait for a few milliseconds for track_zero to be set/reset
-    delay(10);
-
-  int track0 = bcm2835_gpio_lev(TRACK_0);
-
-  if (track0 == LOW)
-    printf("Seeking to track zero\r\n");
-
-  while (track0 == LOW)
-  {
-    bcm2835_gpio_clr(DIR_SEL);
-    bcm2835_gpio_set(DIR_STEP);
-    delayMicroseconds(8);
-    bcm2835_gpio_clr(DIR_STEP);
-    delay(40); // wait maximum time for step
-    track0 = bcm2835_gpio_lev(TRACK_0);
-  }
-
-  printf("At track zero\n");
-  current_track = 0;
-}
-
-void seekToTrack(int track)
-{
-  // Sanity check the requested track is within range
-  if ((track<0) || (track>=MAXTRACKS))
-    exitFunction();
-
-  // Sanity check our "current" track is within range
-  if ((current_track<0) || (current_track>=MAXTRACKS))
-    exitFunction();
-
-  // Do nothing if we're already at the requested track
-  if (track == current_track)
-    return;
-
-  // For seek to track 00, seek until TRACK00 signal
-  if (track == 0)
-  {
-    seekToTrackZero(0);
-    return;
-  }
-
-  printf("Seeking from track %d to track %d\n", current_track, track);
-
-  // Seek towards inside of disk
-  while (current_track < track)
-  {
-    bcm2835_gpio_set(DIR_SEL);
-    bcm2835_gpio_set(DIR_STEP);
-    delayMicroseconds(8);
-    bcm2835_gpio_clr(DIR_STEP);
-    delay(40); // wait maximum time for step
-    current_track++;
-  }
-
-  // Seek towards outside of disk
-  while (current_track > track)
-  {
-    // Prevent stepping past track 00
-    if (bcm2835_gpio_lev(TRACK_0)==LOW)
-      break;
-
-    bcm2835_gpio_clr(DIR_SEL);
-    bcm2835_gpio_set(DIR_STEP);
-    delayMicroseconds(8);
-    bcm2835_gpio_clr(DIR_STEP);
-    delay(40); // wait maximum time for step
-    current_track--;
-  }
-}
-
-// Request data from side 0 = upper (label), or side 1 = lower side of disk
-void sideSelect(int side)
-{
-  // First check the requested side is within range
-  if ((side==0) || (side==(MAXHEADS-1)))
-  {
-    if (side==0)
-      bcm2835_gpio_clr(SIDE_SELECT);
-    else
-      bcm2835_gpio_set(SIDE_SELECT);
-
-    current_head=side;
-    printf("Accessing side %d\n", current_head);
-  }
-}
-
-int detect_disk()
-{
-  int retval=NODISK;
-  unsigned long i;
-
-  // Select drive
-  bcm2835_gpio_set(DS0_OUT);
-
-  // Start MOTOR
-  bcm2835_gpio_set(MOTOR_ON);
-
-  delay(500);
-
-  // We need to see the index pulse go high to prove there is a drive with a disk in it
-  for (i=0; i<200; i++)
-  {
-    // A drive with no disk will have an index pulse "stuck" low, so make sure it goes high within timeout
-    if (bcm2835_gpio_lev(INDEX_PULSE)!=LOW)
-      break;
-
-    delay(2);
-  }
-
-  if (i<200)
-  {
-    for (i=0; i<200; i++)
-    {
-      // Make sure index pulse goes low again, i.e. it's pulsing (disk going round)
-      if (bcm2835_gpio_lev(INDEX_PULSE)==LOW)
-        break;
-
-      delay(2);
-    }
-
-    if (i<200) retval=HAVEDISK;
-  }
-
-  // Test to see if there is no drive
-  if ((retval!=HAVEDISK) && (bcm2835_gpio_lev(TRACK_0)==LOW) && (bcm2835_gpio_lev(WRITE_PROTECT)==LOW) && (bcm2835_gpio_lev(INDEX_PULSE)==LOW))
-  {
-    // Likely no drive
-    retval=NODRIVE;
-  }
-
-  // If we have a disk and drive, then seek to track 00
-  if (retval==HAVEDISK)
-  {
-    seekToTrackZero(1);
-  }
-
-  delay(1000);
-
-  // Stop MOTOR
-  bcm2835_gpio_clr(MOTOR_ON);
-
-  // De-select drive
-  bcm2835_gpio_clr(DS0_OUT);
-
-  return retval;
-}
-
 
 int main(int argc,char **argv)
 {
@@ -872,7 +652,7 @@ int main(int argc,char **argv)
 
   printf("Start\n");
 
-  if (!init())
+  if (!hw_init())
   {
     printf("Failed init\n");
     return 1;
@@ -884,7 +664,7 @@ int main(int argc,char **argv)
   signal(SIGSEGV, sig_handler); // Seg fault
   signal(SIGTERM, sig_handler); // Termination request
 
-  drivestatus=detect_disk();
+  drivestatus=hw_detectdisk();
 
   if (drivestatus==NODRIVE)
   {
@@ -898,25 +678,26 @@ int main(int argc,char **argv)
     return 3;
   }
 
-  // Select drive
-  bcm2835_gpio_set(DS0_OUT);
+  // Select drive, depending on jumper
+  hw_driveselect();
 
   // Start MOTOR
-  bcm2835_gpio_set(MOTOR_ON);
+  hw_startmotor();
 
+  // Wait for motor to get up to speed
   sleep(1);
 
   // Determine if head is at track 00
-  if (bcm2835_gpio_lev(TRACK_0)==LOW)
-    printf("Starting not at track zero\n");
-  else
+  if (hw_attrackzero())
     printf("Starting at track zero\n");
+  else
+    printf("Starting not at track zero\n");
 
   // Determine if disk in drive is write protected
-  if (bcm2835_gpio_lev(WRITE_PROTECT)==LOW)
-    printf("Disk is writeable\n");
-  else
+  if (hw_writeprotected())
     printf("Disk is write-protected\n");
+  else
+    printf("Disk is writeable\n");
 
   // Work out what type of capture we are doing
   if (argc==2)
@@ -963,16 +744,16 @@ int main(int argc,char **argv)
   for (side=0; side<MAXHEADS; side++)
   {
     info=0; // Request a directory listing for this side of the disk
-    sideSelect(side);
+    hw_sideselect(side);
 
-    seekToTrackZero(1);
+    hw_seektotrackzero();
 
     for (i=0; i<maxtracks; i++)
     {
 
       for (retry=0; retry<RETRIES; retry++)
       {
-        seekToTrack(i);
+        hw_seektotrack(i);
 
         // Wait for a bit after seek to allow drive speed to settle
         sleep(1);
@@ -984,16 +765,10 @@ int main(int argc,char **argv)
 
         // Wait for transition from LOW to HIGH prior to sampling to align as much as possible with index
         // Ratio seems to be about 45.6 LOW to 1 HIGH
-        while (bcm2835_gpio_lev(INDEX_PULSE)!=LOW)
-        {
-        }
-
-        while (bcm2835_gpio_lev(INDEX_PULSE)==LOW)
-        {
-        }
+        hw_waitforindex();
 
         // Sampling data
-        bcm2835_spi_transfern((char *)spibuffer, sizeof(spibuffer));
+        hw_samplerawtrackdata((char *)spibuffer, sizeof(spibuffer));
 
         // Process the raw sample data to extract FM encoded data
         if (capturetype!=DISKRAW)
@@ -1061,7 +836,7 @@ int main(int argc,char **argv)
   } // side loop
 
   // Return the disk head to track 0 following disk imaging
-  seekToTrackZero(0);
+  hw_seektotrackzero();
 
   printf("Finished\n");
 
@@ -1146,7 +921,7 @@ int main(int argc,char **argv)
   if (diskimage!=NULL) fclose(diskimage);
   if (rawdata!=NULL) fclose(rawdata);
 
-  stopMotor();
+  hw_stopmotor();
 
   return 0;
 }
