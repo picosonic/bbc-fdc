@@ -15,4 +15,8 @@ Single and double sided disks can be read by switching between heads during the 
 
 The BBC Micro Acorn DFS format used 40 or 80 tracks, 10 sectors per track (numbered 0 to 9), 256 bytes per sector, with FM encoding (single density). This gives a maximum data capacity for a double sided 80 track DFS disk of 409,600 bytes. However 2 sectors on each side of the disk are reserved for the catalogue.
 
+More recently I've also been able to read 3.5 inch disks using a TEAC FD-235HG PC drive. Oddly I was only able to get it to work by connecting it to the 34 pin ribbon cable prior to the swap and by moving the drive select jumper on my board to DS1.
+
+I've so far been able to read and extract data from Archimedes ADFS D/E and DOS 3.5 inch disks.
+
 ![Top of board](/circuit/top.jpg?raw=true "Top of board")
