@@ -39,7 +39,7 @@ int debug=0;
 int singlesided=1;
 int capturetype=DISKCAT;
 
-unsigned char spibuffer[SPIBUFFSIZE];
+unsigned char *spibuffer;
 unsigned char *ibuffer;
 unsigned int datacells;
 int bits=0;
@@ -619,6 +619,12 @@ void exitFunction()
 {
   printf("Exit function\n");
   hw_done();
+
+  if (spibuffer!=NULL)
+  {
+    free(spibuffer);
+    spibuffer=NULL;
+  }
 }
 
 // Handle signals by stopping motor and tidying up
@@ -639,15 +645,23 @@ int main(int argc,char **argv)
   if (geteuid() != 0)
   {
     fprintf(stderr,"Must be run as root\n");
-    exit(1);
+    return 1;
+  }
+
+  // Allocate memory for SPI buffer
+  spibuffer=malloc(SPIBUFFSIZE);
+  if (spibuffer==NULL)
+  {
+    fprintf(stderr, "\n");
+    return 2;
   }
 
   printf("Start\n");
 
   if (!hw_init())
   {
-    printf("Failed init\n");
-    return 1;
+    fprintf(stderr, "Failed hardware init\n");
+    return 3;
   }
 
   // Install signal handlers to make sure motor is stopped
@@ -661,13 +675,13 @@ int main(int argc,char **argv)
   if (drivestatus==NODRIVE)
   {
     fprintf(stderr, "Failed to detect drive\n");
-    return 2;
+    return 4;
   }
 
   if (drivestatus==NODISK)
   {
     fprintf(stderr, "Failed to detect disk in drive\n");
-    return 3;
+    return 5;
   }
 
   // Select drive, depending on jumper
@@ -914,6 +928,12 @@ int main(int argc,char **argv)
   if (rawdata!=NULL) fclose(rawdata);
 
   hw_stopmotor();
+
+  if (spibuffer!=NULL)
+  {
+    free(spibuffer);
+    spibuffer=NULL;
+  }
 
   return 0;
 }
