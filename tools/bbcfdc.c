@@ -774,7 +774,7 @@ int main(int argc,char **argv)
         hw_waitforindex();
 
         // Sampling data
-        hw_samplerawtrackdata((char *)spibuffer, sizeof(spibuffer));
+        hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
 
         // Process the raw sample data to extract FM encoded data
         if (capturetype!=DISKRAW)
@@ -826,7 +826,7 @@ int main(int argc,char **argv)
       {
         // Write the raw sample data if required
         if (rawdata!=NULL)
-          fwrite(spibuffer, 1, sizeof(spibuffer), rawdata);
+          fwrite(spibuffer, 1, SPIBUFFSIZE, rawdata);
       }
 
       // If we're only doing a catalogue, then don't read any more tracks from this side
