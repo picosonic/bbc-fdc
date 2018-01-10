@@ -18,3 +18,4 @@ C1 and C2 are 100nF ceramic disc capacitors for decoupling.
 I found I didn't need C3 which was to be a radial capacitor for smoothing power.
 
 The chips are DM7406N open collector inverters. I used chip holders but you don't need to.
+An alterative chip if you can't find the DM7406N is the TI SN7406N.
