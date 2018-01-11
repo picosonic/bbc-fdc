@@ -591,18 +591,6 @@ void process(int attempt)
             addbit(1);
           }
 
-/*
-          if ((count>=(bitwidth*4)) && (count<=(bitwidth*5)))
-          {
-            addbit(1);
-          }
-
-          if ((count>=(bitwidth*8)) && (count<=(bitwidth*10)))
-          {
-            addbit(0);
-            addbit(1);
-          }
-*/
           edges=0;
           count=0;
         }
