@@ -103,7 +103,7 @@ int main(int argc,char **argv)
   gettimeofday(&tv, NULL);
   starttime=(((unsigned long long)tv.tv_sec)*MICROSECONDSINSECOND)+tv.tv_usec;
 
-  // Wait for next index falling edge
+  // Wait for next index rising edge
   hw_waitforindex();
 
   gettimeofday(&tv, NULL);

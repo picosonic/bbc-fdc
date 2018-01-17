@@ -235,10 +235,13 @@ int hw_writeprotected()
   return (bcm2835_gpio_lev(WRITE_PROTECT)==HIGH);
 }
 
-// Wait for next rising or falling edge on index pin
+// Wait for next rising edge on index pin
 void hw_waitforindex()
 {
+  // If index is already high, wait for it to go low
   while (bcm2835_gpio_lev(INDEX_PULSE)!=LOW) { }
+
+  // Wait for next rising edge
   while (bcm2835_gpio_lev(INDEX_PULSE)==LOW) { }
 }
 

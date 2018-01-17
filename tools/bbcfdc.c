@@ -757,8 +757,8 @@ int main(int argc,char **argv)
           printf("Sampling data\n");
         }
 
-        // Wait for transition from LOW to HIGH prior to sampling to align as much as possible with index
-        // Ratio seems to be about 45.6 LOW to 1 HIGH
+        // Wait for index rising edge prior to sampling to align as much as possible with index
+        // Values seen on a scope are 200ms between pulses of 4.28ms width
         hw_waitforindex();
 
         // Sampling data
