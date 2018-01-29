@@ -54,6 +54,7 @@ int blocksize=0;
 unsigned long idpos;
 unsigned char track, head, sector;
 unsigned int datasize;
+unsigned char idamtrack, idamhead, idamsector, idamlength;
 
 int maxtracks=MAXTRACKS;
 
@@ -435,6 +436,12 @@ void addbit(unsigned char bit)
             head=bitstream[2];
             sector=bitstream[3];
 
+            // Record IDAM values
+            idamtrack=track;
+            idamhead=head;
+            idamsector=sector;
+            idamlength=bitstream[4];
+
             switch(bitstream[4])
             {
               case 0x00:
@@ -501,49 +508,61 @@ void process(int attempt)
   count=0;
   datacells=0; edges=0;
 
-  // Initialise table
-  for (j=0; j<50; j++) avg[j]=0;
-
-  // Try to clock the most common width of a "1"
-  for (datapos=0;datapos<SPIBUFFSIZE; datapos++)
+  // Check for processing in disk detection mode
+  if (attempt==99)
   {
-    c=spibuffer[datapos];
-
-    for (j=0; j<8; j++)
-    {
-      bi=((c&0x80)>>7);
-      if (bi!=state)
-      {
-        state=1-state;
-
-        edges++;
-
-        if (edges==1)
-        {
-          if (state==0)
-          {
-            if ((count>=0) && (count<=50))
-              avg[count]++;
-          }
-
-          edges=0;
-          count=0;
-        }
-      }
-      count++;
-
-      c=c<<1;
-    }
+    idamtrack=0xff;
+    idamhead=0xff;
+    idamsector=0xff;
+    idamlength=0xff;
   }
 
-  // Find most common width for a bit
-  for (j=0; j<50; j++)
-  {
-    if (avg[j]>avg[bitwidth]) bitwidth=j;
-  }
-
+  // On first attempt determine width of a pulse in samples
   if (attempt==0)
+  {
+    // Initialise table
+    for (j=0; j<50; j++) avg[j]=0;
+
+    // Try to clock the most common width of a "1"
+    for (datapos=0;datapos<SPIBUFFSIZE; datapos++)
+    {
+      c=spibuffer[datapos];
+
+      for (j=0; j<8; j++)
+      {
+        bi=((c&0x80)>>7);
+        if (bi!=state)
+        {
+          state=1-state;
+
+          edges++;
+
+          if (edges==1)
+          {
+            if (state==0)
+            {
+              if ((count>=0) && (count<=50))
+                avg[count]++;
+            }
+
+            edges=0;
+            count=0;
+          }
+        }
+        count++;
+
+        c=c<<1;
+      }
+    }
+
+    // Find most common width for a bit
+    for (j=0; j<50; j++)
+    {
+      if (avg[j]>avg[bitwidth]) bitwidth=j;
+    }
+
     printf("Bit-width for a '1' in samples : %d\n", bitwidth);
+  }
 
   // Second pass to extract the data
   state=(spibuffer[0]&0x80)>>7;
@@ -723,6 +742,78 @@ int main(int argc,char **argv)
         printf("Unable to save rawdata\n");
       else
         capturetype=DISKRAW;
+    }
+  }
+
+  // In catalogue mode, try to determine what type of disk is in what type of drive
+  if (capturetype==DISKCAT)
+  {
+    // Seek to track 2
+    hw_seektotrack(2);
+    // Select upper side
+    hw_sideselect(0);
+
+    // Wait for a bit after seek to allow drive speed to settle
+    sleep(1);
+
+    // Sample track
+    hw_waitforindex();
+    hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
+    process(99);
+    // Check readability
+    if ((idamtrack==0xff) || (idamhead==0xff) || (idamsector==0xff) || (idamlength==0xff))
+    {
+      printf("No valid sector IDs found\n");
+    }
+    else
+    {
+      unsigned char othertrack=idamtrack;
+      unsigned char otherhead=idamhead;
+      unsigned char othersector=idamsector;
+      unsigned char otherlength=idamlength;
+
+      // Select lower side
+      hw_sideselect(1);
+
+      // Wait for a bit after head switch to allow drive to settle
+      sleep(1);
+
+      // Sample track
+      hw_waitforindex();
+      hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
+      process(99);
+      // Check readability
+      if ((idamtrack==0xff) || (idamhead==0xff) || (idamsector==0xff) || (idamlength==0xff))
+      {
+        // Only upper side was readable
+        printf("Single-sided disk detected\n");
+      }
+      else
+      {
+        // Both sides readable
+
+        // If IDAM shows same head, then double-sided separate
+        if (idamhead==otherhead)
+          printf("Double-sided with separate sides disk detected\n");
+        else
+          printf("Double-sided disk detected\n");
+      }
+
+      // If IDAM cylinder shows 2 then correct stepping
+      if (othertrack==2)
+      {
+        printf("Correct drive stepping for this disk\n");
+      }
+      else
+      {
+        // If IDAM cylinder shows 1 then 40 track in 80 track drive
+        if (othertrack==1)
+          printf("40 track disk detected in 80 track drive\n");
+
+        // If IDAM cylinder shows 4 then 80 track in 40 track drive
+        if (othertrack==4)
+          printf("80 track disk detected in 40 track drive\n");
+      }
     }
   }
 
