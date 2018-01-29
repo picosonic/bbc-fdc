@@ -744,7 +744,6 @@ int main(int argc,char **argv)
 
     for (i=0; i<maxtracks; i++)
     {
-
       for (retry=0; retry<RETRIES; retry++)
       {
         hw_seektotrack(i);
@@ -754,7 +753,7 @@ int main(int argc,char **argv)
 
         if ((retry==0) && (debug))
         {
-          printf("Sampling data\n");
+          printf("Sampling data for track %.2X head %.2x\n", i, side);
         }
 
         // Wait for index rising edge prior to sampling to align as much as possible with index

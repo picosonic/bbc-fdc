@@ -53,7 +53,7 @@ int hw_init()
 //  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_8); // 50MHz on RPI3
 //  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_4); // 100MHz on RPI3 - UNRELIABLE
 
-  bcm2835_spi_setDataMode(BCM2835_SPI_MODE2); // CPOL = 1, CPHA = 0 
+  bcm2835_spi_setDataMode(BCM2835_SPI_MODE2); // CPOL (Clock Polarity) = 1, CPHA (Clock Phase) = 0 
 
   bcm2835_spi_begin(); // sets all correct pin modes
 
