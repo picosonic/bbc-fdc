@@ -791,6 +791,7 @@ int main(int argc,char **argv)
       else
       {
         // Both sides readable
+        singlesided=0;
 
         // If IDAM shows same head, then double-sided separate
         if (idamhead==otherhead)
