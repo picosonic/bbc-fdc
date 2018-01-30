@@ -16,6 +16,15 @@
 // SPI read buffer size
 #define SPIBUFFSIZE (1024*1024)
 
+// Microseconds in a bitcell window for single-density FM
+#define BITCELL 4
+
+// Sample rate in Hz
+#define SAMPLERATE 12500000
+
+// Microseconds in a second
+#define USINSECOND 1000000
+
 // Disk bitstream block size
 #define BLOCKSIZE 2048
 
@@ -499,14 +508,20 @@ void process(int attempt)
   int j,k, pos;
   char state,bi=0;
   unsigned char c, clock, data;
-  int count, edges;
+  int count;
   unsigned long avg[50];
   int bitwidth=0;
+  float defaultwindow;
+  int bucket1, bucket01;
+
+  defaultwindow=((float)BITCELL/((float)1/((float)SAMPLERATE/(float)USINSECOND)));
+  bucket1=defaultwindow+(defaultwindow/2);
+  bucket01=(defaultwindow*2)+(defaultwindow/2);
 
   state=(spibuffer[0]&0x80)>>7;
   bi=state;
   count=0;
-  datacells=0; edges=0;
+  datacells=0;
 
   // Check for processing in disk detection mode
   if (attempt==99)
@@ -516,59 +531,6 @@ void process(int attempt)
     idamsector=0xff;
     idamlength=0xff;
   }
-
-  // On first attempt determine width of a pulse in samples
-  if (attempt==0)
-  {
-    // Initialise table
-    for (j=0; j<50; j++) avg[j]=0;
-
-    // Try to clock the most common width of a "1"
-    for (datapos=0;datapos<SPIBUFFSIZE; datapos++)
-    {
-      c=spibuffer[datapos];
-
-      for (j=0; j<8; j++)
-      {
-        bi=((c&0x80)>>7);
-        if (bi!=state)
-        {
-          state=1-state;
-
-          edges++;
-
-          if (edges==1)
-          {
-            if (state==0)
-            {
-              if ((count>=0) && (count<=50))
-                avg[count]++;
-            }
-
-            edges=0;
-            count=0;
-          }
-        }
-        count++;
-
-        c=c<<1;
-      }
-    }
-
-    // Find most common width for a bit
-    for (j=0; j<50; j++)
-    {
-      if (avg[j]>avg[bitwidth]) bitwidth=j;
-    }
-
-    printf("Bit-width for a '1' in samples : %d\n", bitwidth);
-  }
-
-  // Second pass to extract the data
-  state=(spibuffer[0]&0x80)>>7;
-  bi=state;
-  count=0;
-  datacells=0; edges=0;
 
   // Initialise last sector ID mark to blank
   track=0xff;
@@ -582,39 +544,44 @@ void process(int attempt)
   {
     c=spibuffer[datapos];
 
+    // Fill in missing sample between SPI bytes
+    count++;
+
     for (j=0; j<8; j++)
     {
       bi=((c&0x80)>>7);
+
+      count++;
+
       if (bi!=state)
       {
         state=1-state;
 
-        edges++;
-
-        if ((state==0) && (edges>=2))
+        // Look for rising edge
+        if (state==1)
         {
-          if (count<67)
+          if (count<bucket1)
           {
             addbit(1);
           }
           else
-          if (count<112)
+          if (count<bucket01)
           {
             addbit(0);
             addbit(1);
           }
           else
           {
+            // This shouldn't happen in single-density FM encoding
             addbit(0);
             addbit(0);
             addbit(1);
           }
 
-          edges=0;
+          // Reset sample counter
           count=0;
         }
       }
-      count++;
 
       c=c<<1;
     }
