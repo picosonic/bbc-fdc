@@ -680,7 +680,7 @@ int main(int argc,char **argv)
         // Wait for a bit after seek/head select to allow drive speed to settle
         sleep(1);
 
-        if ((retry==0) && (debug))
+        if (retry==0)
           printf("Sampling data for track %.2X head %.2x\n", i, side);
 
         // Wait for index rising edge prior to sampling to align as much as possible with index hole
