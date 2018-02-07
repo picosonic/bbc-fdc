@@ -189,7 +189,7 @@ void diskstore_dumpsectorlist(const int maxtracks)
       if (curr!=NULL)
       {
         totalsectors++;
-        fprintf(stderr, "%d ", curr->logical_sector);
+        fprintf(stderr, "%d[%d] ", curr->logical_sector, curr->physical_head);
       }
     } while (curr!=NULL);
     fprintf(stderr, "\n");
