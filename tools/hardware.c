@@ -6,6 +6,8 @@
 int hw_currenttrack = 0;
 int hw_currenthead = 0;
 
+int hw_stepping = HW_NORMALSTEPPING;
+
 // Initialise GPIO and SPI
 int hw_init()
 {
@@ -111,12 +113,15 @@ void hw_seektotrackzero()
 // Seek head to given track
 void hw_seektotrack(int track)
 {
+  int steps;
+  int i;
+
   // Sanity check the requested track is within range
-  if ((track<0) || (track>=MAXTRACKS))
+  if ((track<0) || (track>=HW_MAXTRACKS))
     return;
 
   // Sanity check our "current" track is within range
-  if ((hw_currenttrack<0) || (hw_currenttrack>=MAXTRACKS))
+  if ((hw_currenttrack<0) || (hw_currenttrack>=HW_MAXTRACKS))
     return;
 
   // For seek to track 00, seek until TRACK00 signal
@@ -126,29 +131,41 @@ void hw_seektotrack(int track)
     return;
   }
 
+  // Check for double stepping for 40 track disk in 80 track drive
+  if (hw_stepping==HW_DOUBLESTEPPING)
+    steps=2;
+  else
+    steps=1;
+
   // Seek towards inside of disk
   while (hw_currenttrack < track)
   {
-    bcm2835_gpio_set(DIR_SEL);
-    bcm2835_gpio_set(DIR_STEP);
-    delayMicroseconds(8);
-    bcm2835_gpio_clr(DIR_STEP);
-    delay(40); // wait maximum time for step
+    for (i=0; i<steps; i++)
+    {
+      bcm2835_gpio_set(DIR_SEL);
+      bcm2835_gpio_set(DIR_STEP);
+      delayMicroseconds(8);
+      bcm2835_gpio_clr(DIR_STEP);
+      delay(40); // wait maximum time for step
+    }
     hw_currenttrack++;
   }
 
   // Seek towards outside of disk
   while (hw_currenttrack > track)
   {
-    // Prevent stepping past track 00
-    if (bcm2835_gpio_lev(TRACK_0)==LOW)
-      break;
+    for (i=0; i<steps; i++)
+    {
+      // Prevent stepping past track 00
+      if (bcm2835_gpio_lev(TRACK_0)==LOW)
+        break;
 
-    bcm2835_gpio_clr(DIR_SEL);
-    bcm2835_gpio_set(DIR_STEP);
-    delayMicroseconds(8);
-    bcm2835_gpio_clr(DIR_STEP);
-    delay(40); // wait maximum time for step
+      bcm2835_gpio_clr(DIR_SEL);
+      bcm2835_gpio_set(DIR_STEP);
+      delayMicroseconds(8);
+      bcm2835_gpio_clr(DIR_STEP);
+      delay(40); // wait maximum time for step
+    }
     hw_currenttrack--;
   }
 }
@@ -156,7 +173,7 @@ void hw_seektotrack(int track)
 // Try to see if both a disk and drive are detectable
 unsigned char hw_detectdisk()
 {
-  int retval=NODISK;
+  int retval=HW_NODISK;
   unsigned long i;
 
   // Select drive
@@ -189,18 +206,18 @@ unsigned char hw_detectdisk()
       delay(2);
     }
 
-    if (i<200) retval=HAVEDISK;
+    if (i<200) retval=HW_HAVEDISK;
   }
 
   // Test to see if there is no drive
-  if ((retval!=HAVEDISK) && (bcm2835_gpio_lev(TRACK_0)==LOW) && (bcm2835_gpio_lev(WRITE_PROTECT)==LOW) && (bcm2835_gpio_lev(INDEX_PULSE)==LOW))
+  if ((retval!=HW_HAVEDISK) && (bcm2835_gpio_lev(TRACK_0)==LOW) && (bcm2835_gpio_lev(WRITE_PROTECT)==LOW) && (bcm2835_gpio_lev(INDEX_PULSE)==LOW))
   {
     // Likely no drive
-    retval=NODRIVE;
+    retval=HW_NODRIVE;
   }
 
   // If we have a disk and drive, then seek to track 00
-  if (retval==HAVEDISK)
+  if (retval==HW_HAVEDISK)
   {
     if (!hw_attrackzero())
       hw_seektotrackzero();
@@ -249,7 +266,7 @@ void hw_waitforindex()
 void hw_sideselect(const int side)
 {
   // Check the requested side is within range
-  if ((side==0) || (side==(MAXHEADS-1)))
+  if ((side==0) || (side==(HW_MAXHEADS-1)))
   {
     if (side==0)
       bcm2835_gpio_clr(SIDE_SELECT);

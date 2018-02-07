@@ -6,12 +6,8 @@
 #include <string.h>
 
 #include "hardware.h"
-
-// Acorn DFS geometry and layout
-#define SECTORSIZE 256
-#define SECTORSPERTRACK 10
-#define TRACKSIZE (SECTORSIZE*SECTORSPERTRACK)
-#define MAXFILES 31
+#include "diskstore.h"
+#include "dfs.h"
 
 // SPI read buffer size
 #define SPIBUFFSIZE (1024*1024)
@@ -19,7 +15,7 @@
 // Microseconds in a bitcell window for single-density FM
 #define BITCELL 4
 
-// Sample rate in Hz
+// SPI sample rate in Hz
 #define SAMPLERATE 12500000
 
 // Microseconds in a second
@@ -27,10 +23,6 @@
 
 // Disk bitstream block size
 #define BLOCKSIZE 2048
-
-// Whole disk image
-#define SECTORSPERSIDE (SECTORSPERTRACK*MAXTRACKS)
-#define WHOLEDISKSIZE (SECTORSPERSIDE*SECTORSIZE)
 
 // For sector status
 #define NODATA 0
@@ -42,40 +34,49 @@
 #define DISKIMG 1
 #define DISKRAW 2
 
-#define RETRIES 10
+#define RETRIES 5
+
+// State machine
+#define SYNC 1
+#define ADDR 2
+#define DATA 3
+
+// FM Block types
+#define BLOCKNULL 0x00
+#define BLOCKINDEX 0xfc
+#define BLOCKADDR 0xfe
+#define BLOCKDATA 0xfb
+#define BLOCKDELDATA 0xf8
 
 int debug=0;
-int singlesided=1;
-int capturetype=DISKCAT;
+int sides=1; // Default to single sided
+int disktracks;
+int drivetracks;
+int capturetype=DISKCAT; // Default to *CAT type output
+
+int state=SYNC;
 
 unsigned char *spibuffer;
-unsigned char *ibuffer;
 unsigned int datacells;
 int bits=0;
-int hadAM=0;
 int info=0;
 
 // Most recent address mark
-int blocktype=0;
-int blocksize=0;
+unsigned long idpos, blockpos;
+int idamtrack, idamhead, idamsector, idamlength;
+int lasttrack, lasthead, lastsector, lastlength;
+unsigned char blocktype;
+unsigned int blocksize;
+unsigned int idblockcrc, datablockcrc;
 
-// Most recent address mark
-unsigned long idpos;
-unsigned char track, head, sector;
-unsigned int datasize;
-unsigned char idamtrack, idamhead, idamsector, idamlength;
-
-int maxtracks=MAXTRACKS;
-
+// Block data buffer
 unsigned char bitstream[BLOCKSIZE];
 unsigned int bitlen=0;
 
-// Store the whole disk image in RAM
-unsigned char wholedisk[MAXHEADS][WHOLEDISKSIZE];
-unsigned char sectorstatus[MAXHEADS][SECTORSPERSIDE];
-
+// Processing position within the SPI buffer
 unsigned long datapos=0;
 
+// File handles
 FILE *diskimage=NULL;
 FILE *rawdata=NULL;
 
@@ -95,168 +96,6 @@ unsigned int calc_crc(unsigned char *data, int datalen)
   return (crc & 0xffff);
 }
 
-// Read nth DFS filename from catalogue
-//   but don't add "$."
-//   return the "Locked" state of the file
-int getfilename(int entry, char *filename)
-{
-  int i;
-  int len;
-  unsigned char fchar;
-  int locked;
-
-  len=0;
-
-  locked=(ibuffer[(entry*8)+7] & 0x80)?1:0;
-
-  fchar=ibuffer[(entry*8)+7] & 0x7f;
-
-  if (fchar!='$')
-  {
-    filename[len++]=fchar;
-    filename[len++]='.';
-  }
-
-  for (i=0; i<7; i++)
-  {
-    fchar=ibuffer[(entry*8)+i] & 0x7f;
-
-    if (fchar==' ') break;
-    filename[len++]=fchar;
-  }
-
-  filename[len++]=0;
-
-  return locked;
-}
-
-// Return load address for nth entry in DFS catalogue
-unsigned long getloadaddress(int entry)
-{
-  unsigned long loadaddress;
-
-  loadaddress=((((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+6]&0x0c)>>2)<<16) |
-               ((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+1])<<8) |
-               ((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)])));
-
-  if (loadaddress & 0x30000) loadaddress |= 0xFF0000;
-
-  return loadaddress;
-}
-
-// Return execute address for nth entry in DFS catalogue
-unsigned long getexecaddress(int entry)
-{
-  unsigned long execaddress;
-
-  execaddress=((((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+6]&0xc0)>>6)<<16) |
-               ((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+3])<<8) |
-               ((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+2])));
-
-  if (execaddress & 0x30000) execaddress |= 0xFF0000;
-
-  return execaddress;
-}
-
-// Return file length for nth entry in DFS catalogue
-unsigned long getfilelength(int entry)
-{
-  return ((((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+6]&0x30)>>4)<<16) |
-          ((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+5])<<8) |
-          ((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+4])));
-}
-
-// Return file starting sector for nth entry in DFS catalogue
-unsigned long getstartsector(int entry)
-{
-  return (((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+6]&0x03)<<8) |
-          ((ibuffer[(1*SECTORSIZE)+8+((entry-1)*8)+7])));
-}
-
-// Display info read from the disk catalogue from sectors 00 and 01
-void showinfo(int infohead)
-{
-  int i, j;
-  int numfiles;
-  int locked;
-  unsigned char bootoption;
-  size_t tracks, totalusage, totalsectors, totalsize, sectorusage;
-  char filename[10];
-
-  ibuffer=&wholedisk[infohead][0];
-
-  printf("Head: %d\n", infohead);
-  printf("Disk title : \"");
-  for (i=0; i<8; i++)
-  {
-    if (ibuffer[i]==0) break;
-    printf("%c", ibuffer[i]);
-  }
-  for (i=0; i<4; i++)
-  {
-    if (ibuffer[(1*SECTORSIZE)+i]==0) break;
-    printf("%c", ibuffer[(1*SECTORSIZE)+i]);
-  }
-  printf("\"\n");
-
-  totalsectors=(((ibuffer[(1*SECTORSIZE)+6]&0x03)<<8) | (ibuffer[(1*SECTORSIZE)+7]));
-  tracks=totalsectors/SECTORSPERTRACK;
-  //maxtracks=tracks;
-  totalsize=totalsectors*SECTORSIZE;
-  printf("Disk size : %d tracks (%d sectors, %d bytes)\n", tracks, totalsectors, totalsize);
-
-  bootoption=(ibuffer[(1*SECTORSIZE)+6]&0x30)>>4;
-  printf("Boot option: %d ", bootoption);
-  switch (bootoption)
-  {
-    case 0:
-      printf("Nothing");
-      break;
-
-    case 1:
-      printf("*LOAD !BOOT");
-      break;
-
-    case 2:
-      printf("*RUN !BOOT");
-      break;
-
-    case 3:
-      printf("*EXEC !BOOT");
-      break;
-
-    default:
-      printf("Unknown");
-      break;
-  }
-  printf("\n");
-
-  totalusage=0; sectorusage=2;
-  printf("Write operations made to disk : %.2x\n", ibuffer[(1*SECTORSIZE)+4]); // Stored in BCD
-
-  numfiles=ibuffer[(1*SECTORSIZE)+5]/8;
-  printf("Catalogue entries : %d\n", numfiles);
-
-  for (i=1; ((i<=numfiles) && (i<MAXFILES)); i++)
-  {
-    locked=getfilename(i, filename);
-
-    printf("%-9s", filename);
-
-    printf(" %.6lx %.6lx %.6lx %.3lx", getloadaddress(i), getexecaddress(i), getfilelength(i), getstartsector(i));
-    totalusage+=getfilelength(i);
-    sectorusage+=(getfilelength(i)/SECTORSIZE);
-    if (((getfilelength(i)/SECTORSIZE)*SECTORSIZE)!=getfilelength(i))
-      sectorusage++;
-
-    if (locked) printf(" L");
-    printf("\n");
-  }
-
-  printf("Total disk usage : %d bytes (%d%% of disk)\n", totalusage, (totalusage*100)/(totalsize-(2*SECTORSIZE)));
-  printf("Remaining catalogue space : %d files, %d unused disk sectors\n", MAXFILES-numfiles, (((ibuffer[(1*SECTORSIZE)+6]&0x03)<<8) | (ibuffer[(1*SECTORSIZE)+7])) - sectorusage);
-}
-
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
 void addbit(unsigned char bit)
 {
@@ -267,6 +106,7 @@ void addbit(unsigned char bit)
   datacells|=bit;
   bits++;
 
+  // Keep processing until we have 8 clock bits + 8 data bits
   if (bits>=16)
   {
     // Extract clock byte
@@ -289,146 +129,104 @@ void addbit(unsigned char bit)
     data|=((datacells&0x0004)>>1);
     data|=((datacells&0x0001)>>0);
 
-    // Detect standard address marks
-    switch (datacells)
+    switch (state)
     {
-      case 0xf77a: // d7 fc
-        if (debug)
-          printf("\n[%x] Index Address Mark\n", datapos);
-        blocktype=data;
-        bitlen=0;
-        hadAM=1;
-        break;
-
-      case 0xf57e: // c7 fe
-        if (debug)
-          printf("\n[%x] ID Address Mark\n", datapos);
-        blocktype=data;
-        blocksize=7;
-        bitlen=0;
-        hadAM=1;
-        idpos=datapos;
-        break;
-
-      case 0xf56f: // c7 fb
-        if (debug)
-          printf("\n[%x] Data Address Mark, distance from ID %x\n", datapos, datapos-idpos);
-        blocktype=data;
-        bitlen=0;
-        hadAM=1;
-        break;
-
-      case 0xf56a: // c7 f8
-        if (debug)
-          printf("\n[%x] Deleted Data Address Mark\n", datapos);
-        blocktype=data;
-        bitlen=0;
-        hadAM=1;
-        break;
-
-      default:
-        break;
-    }
-
-    // Process block data depending on type
-    switch (blocktype)
-    {
-      case 0xf8: // Deleted data block
-      case 0xfb: // Data block
-        // force it to be standard DFS 256 bytes/sector (+blocktype+CRC)
-        blocksize=SECTORSIZE+3;
-
-        // Keep reading until we have the whole block in bitsteam[]
-        if (bitlen<blocksize)
+      case SYNC:
+        // Detect standard FM address marks
+        switch (datacells)
         {
-          //printf(" %.4x %.2x %c %.2x %c\n", datacells, clock, ((clock>=' ')&&(clock<='~'))?clock:'.', data, ((data>=' ')&&(data<='~'))?data:'.');
-
-          if (debug)
-          {
-            if ((clock!=0xff) && (bitlen>0))
-              printf("Invalid CLOCK %.4x %.2x %c %.2x %c\n", datacells, clock, ((clock>=' ')&&(clock<='~'))?clock:'.', data, ((data>=' ')&&(data<='~'))?data:'.');
-          }
-
-          bitstream[bitlen++]=data;
-        }
-        else
-        {
-          // All the bytes for this "data" block have been read, so process them
-          if (debug)
-            printf("  %.2x CRC %.2x%.2x", blocktype, bitstream[bitlen-2], bitstream[bitlen-1]);
-
-          dataCRC=(calc_crc(&bitstream[0], bitlen-2)==((bitstream[bitlen-2]<<8)|bitstream[bitlen-1]))?GOODDATA:BADDATA;
-
-          // Report if the CRC matches
-          if (debug)
-          {
-            if (dataCRC==GOODDATA)
-              printf(" OK\n");
-            else
-              printf(" BAD\n");
-          }
-
-          // Sanitise the data from the most recent unused address mark
-          if ((track<MAXTRACKS) && (track<maxtracks) && (sector<SECTORSPERTRACK))
-          {
-            unsigned int sectorsize=(blocksize-3);
-            unsigned int tracksize=(sectorsize*10);
-
-            // Check the track number matches
-            if (track!=hw_currenttrack)
-            {
-              if (debug)
-                printf("*** Track ID mismatch %d != %d ***\n", track, hw_currenttrack);
- 
-              // Override the read track number with the track we should be on
-              track=hw_currenttrack;
-            }
-
-            // See if we need this sector, store it if current status is either EMPTY or BAD
-            if (sectorstatus[hw_currenthead][(SECTORSPERTRACK*track)+sector]!=GOODDATA)
-            {
-              memcpy(&wholedisk[hw_currenthead][(track*tracksize)+(sector*sectorsize)], &bitstream[1], sectorsize);
-
-              sectorstatus[hw_currenthead][(SECTORSPERTRACK*track)+sector]=dataCRC;
-            }
-          }
-          else
-          {
+          case 0xf77a: // d7 fc
             if (debug)
-              printf("  Invalid ID Track %d Sector %d\n", track, sector);
-          }
+              printf("\n[%x] Index Address Mark\n", datapos);
+            blocktype=data;
+            bitlen=0;
+            state=SYNC;
 
-          // Do a catalogue if we haven't already and sector 00 and 01 have been read correctly for this side
-          if ((info==0) && (sectorstatus[hw_currenthead][0]==GOODDATA) && (sectorstatus[hw_currenthead][1]==GOODDATA))
-          {
-            showinfo(hw_currenthead);
-            info++;
-          }
+            // Clear IDAM cache, although I've not seen IAM on Acorn DFS
+            idamtrack=-1;
+            idamhead=-1;
+            idamsector=-1;
+            idamlength=-1;
+            break;
 
-          // Require subsequent data blocks to have a valid ID block
-          track=0xff;
-          head=0xff;
-          sector=0xff;
-          datasize=0;
-          idpos=0;
+          case 0xf57e: // c7 fe
+            if (debug)
+              printf("\n[%x] ID Address Mark\n", datapos);
+            blocktype=data;
+            blocksize=6+1;
+            bitlen=0;
+            bitstream[bitlen++]=data;
+            idpos=datapos;
+            state=ADDR;
 
-          blocktype=0;
+            // Clear IDAM cache incase previous was good and this one is bad
+            idamtrack=-1;
+            idamhead=-1;
+            idamsector=-1;
+            idamlength=-1;
+            break;
+
+          case 0xf56f: // c7 fb
+            if (debug)
+              printf("\n[%x] Data Address Mark, distance from ID %x\n", datapos, datapos-idpos);
+
+            // Don't process if don't have a valid preceding IDAM
+            if ((idamtrack!=-1) && (idamhead!=-1) && (idamsector!=-1) && (idamlength!=-1))
+            {
+              blocktype=data;
+              bitlen=0;
+              bitstream[bitlen++]=data;
+              blockpos=datapos;
+              state=DATA;
+            }
+            else
+            {
+              blocktype=BLOCKNULL;
+              bitlen=0;
+              state=SYNC;
+            }
+            break;
+
+          case 0xf56a: // c7 f8
+            if (debug)
+              printf("\n[%x] Deleted Data Address Mark, distance from ID %x\n", datapos, datapos-idpos);
+
+            // Don't process if don't have a valid preceding IDAM
+            if ((idamtrack!=-1) && (idamhead!=-1) && (idamsector!=-1) && (idamlength!=-1))
+            {
+              blocktype=data;
+              bitlen=0;
+              bitstream[bitlen++]=data;
+              blockpos=datapos;
+              state=DATA;
+            }
+            else
+            {
+              blocktype=BLOCKNULL;
+              bitlen=0;
+              state=SYNC;
+            }
+            break;
+
+          default:
+            // No matching address marks
+            break;
         }
         break;
 
-      case 0xfe: // ID block
-        if (bitlen<blocksize)
+      case ADDR:
+        // Keep reading until we have the whole block in bitsteam[]
+        bitstream[bitlen++]=data;
+
+        if (bitlen==blocksize)
         {
-          bitstream[bitlen++]=data;
-        }
-        else
-        {
-          dataCRC=(calc_crc(&bitstream[0], bitlen-2)==((bitstream[5]<<8)|bitstream[6]))?GOODDATA:BADDATA;
+          idblockcrc=calc_crc(&bitstream[0], bitlen-2);
+          dataCRC=(idblockcrc==(unsigned int)((bitstream[bitlen-2]<<8)|bitstream[bitlen-1]))?GOODDATA:BADDATA;
 
           if (debug)
           {
-            printf("Track %d ", bitstream[1]);
-            printf("Head %d ", bitstream[2]);
+            printf("Track %d (%d) ", bitstream[1], hw_currenttrack);
+            printf("Head %d (%d) ", bitstream[2], hw_currenthead);
             printf("Sector %d ", bitstream[3]);
             printf("Data size %d ", bitstream[4]);
             printf("CRC %.2x%.2x", bitstream[5], bitstream[6]);
@@ -441,62 +239,117 @@ void addbit(unsigned char bit)
 
           if (dataCRC==GOODDATA)
           {
-            track=bitstream[1];
-            head=bitstream[2];
-            sector=bitstream[3];
-
             // Record IDAM values
-            idamtrack=track;
-            idamhead=head;
-            idamsector=sector;
+            idamtrack=bitstream[1];
+            idamhead=bitstream[2];
+            idamsector=bitstream[3];
             idamlength=bitstream[4];
 
-            switch(bitstream[4])
+            // Record last known good IDAM values for this track
+            lasttrack=idamtrack;
+            lasthead=idamhead;
+            lastsector=idamsector;
+            lastlength=idamlength;
+
+            // Sanitise data block length
+            switch(idamlength)
             {
-              case 0x00:
-              case 0x01:
-              case 0x02:
-              case 0x03:
-                datasize=(128<<bitstream[4])+3;
+              case 0x00: // 128
+              case 0x01: // 256
+              case 0x02: // 512
+              case 0x03: // 1024
+                blocksize=(128<<idamlength)+3;
                 break;
 
               default:
                 if (debug)
-                printf("Invalid record length %.2x\n", bitstream[4]);
+                  printf("Invalid record length %.2x\n", idamlength);
 
-                datasize=256+3;
+                // Default to DFS standard sector size + (blocktype + (2 x crc))
+                blocksize=DFS_SECTORSIZE+3;
                 break;
             }
           }
+          else
+          {
+            // IDAM failed CRC, ignore following data block (for now)
+            blocksize=0;
 
-          blocktype=0;
+            // Clear IDAM cache
+            idamtrack=-1;
+            idamhead=-1;
+            idamsector=-1;
+            idamlength=-1;
+          }
+
+          state=SYNC;
+          blocktype=BLOCKNULL;
         }
         break;
 
-      case 0xfc: // Index block
-        if (debug)
-          printf("Index address mark\n");
-        blocktype=0;
+      case DATA:
+        // Keep reading until we have the whole block in bitsteam[]
+        bitstream[bitlen++]=data;
+
+        if (bitlen==blocksize)
+        {
+          // All the bytes for this "data" block have been read, so process them
+
+          // Calculate CRC
+          datablockcrc=calc_crc(&bitstream[0], bitlen-2);
+
+          if (debug)
+            printf("  %.2x CRC %.2x%.2x", blocktype, bitstream[bitlen-2], bitstream[bitlen-1]);
+
+          dataCRC=(datablockcrc==((bitstream[bitlen-2]<<8)|bitstream[bitlen-1]))?GOODDATA:BADDATA;
+
+          // Report and save if the CRC matches
+          if (dataCRC==GOODDATA)
+          {
+            if (debug)
+              printf(" OK [%x]\n", datapos);
+
+            diskstore_addsector(hw_currenttrack, hw_currenthead, idamtrack, idamhead, idamsector, idblockcrc, blocktype, blocksize-3, &bitstream[1], datablockcrc);
+          }
+          else
+          {
+            if (debug)
+              printf(" BAD\n");
+          }
+
+          // Do a catalogue if we haven't already and sector 00 and 01 have been read correctly for this side
+          if ((info==0) && (diskstore_findhybridsector(0, hw_currenthead, 0)!=NULL) && (diskstore_findhybridsector(0, hw_currenthead, 1)!=NULL))
+          {
+            printf("\nSide : %d\n", hw_currenthead);
+            dfs_showinfo(diskstore_findhybridsector(0, hw_currenthead, 0), diskstore_findhybridsector(0, hw_currenthead, 1));
+            info++;
+            printf("\n");
+          }
+
+          // Require subsequent data blocks to have a valid ID block first
+          idamtrack=-1;
+          idamhead=-1;
+          idamsector=-1;
+          idamlength=-1;
+
+          idpos=0;
+
+          blocktype=BLOCKNULL;
+          blocksize=0;
+          state=SYNC;
+        }
         break;
 
       default:
-        if (blocktype!=0)
-        {
-          if (debug)
-            printf("** Unknown block address mark %.2x **\n", blocktype);
-          blocktype=0;
-        }
+        // Unknown state, should never happen
+        blocktype=BLOCKNULL;
+        blocksize=0;
+        state=SYNC;
         break;
     }
 
-    // Look for any GAP (outside of the data block/deleted data block) to resync bitstream
-    if ((clock==0xff) && (data==0xff))
-    {
-        if (bitlen>=blocksize)
-          hadAM=0;
-    }
-
-    if (hadAM==0)
+    // If waiting for sync, then keep width at 16 bits and continue shifting/adding new bits
+    if (state==SYNC)
       bits=16;
     else
       bits=0;
@@ -506,7 +359,7 @@ void addbit(unsigned char bit)
 void process(int attempt)
 {
   int j,k, pos;
-  char state,bi=0;
+  char level,bi=0;
   unsigned char c, clock, data;
   int count;
   unsigned long avg[50];
@@ -514,30 +367,31 @@ void process(int attempt)
   float defaultwindow;
   int bucket1, bucket01;
 
+  state=SYNC;
+
   defaultwindow=((float)BITCELL/((float)1/((float)SAMPLERATE/(float)USINSECOND)));
   bucket1=defaultwindow+(defaultwindow/2);
   bucket01=(defaultwindow*2)+(defaultwindow/2);
 
-  state=(spibuffer[0]&0x80)>>7;
-  bi=state;
+  level=(spibuffer[0]&0x80)>>7;
+  bi=level;
   count=0;
   datacells=0;
 
-  // Check for processing in disk detection mode
-  if (attempt==99)
-  {
-    idamtrack=0xff;
-    idamhead=0xff;
-    idamsector=0xff;
-    idamlength=0xff;
-  }
+  // Initialise last sector IDAM to invalid
+  idamtrack=-1;
+  idamhead=-1;
+  idamsector=-1;
+  idamlength=-1;
 
-  // Initialise last sector ID mark to blank
-  track=0xff;
-  head=0xff;
-  sector=0xff;
-  datasize=0;
-  blocktype=0;
+  // Initialise last known good IDAM to invalid
+  lasttrack=-1;
+  lasthead=-1;
+  lastsector=-1;
+  lastlength=-1;
+
+  blocksize=0;
+  blocktype=BLOCKNULL;
   idpos=0;
 
   for (datapos=0;datapos<SPIBUFFSIZE; datapos++)
@@ -553,12 +407,12 @@ void process(int attempt)
 
       count++;
 
-      if (bi!=state)
+      if (bi!=level)
       {
-        state=1-state;
+        level=1-level;
 
         // Look for rising edge
-        if (state==1)
+        if (level==1)
         {
           if (count<bucket1)
           {
@@ -613,8 +467,10 @@ void sig_handler(const int sig)
 
 int main(int argc,char **argv)
 {
-  unsigned int i, j, trackpos;
+  unsigned int i, j;
   unsigned char retry, side, drivestatus;
+
+  diskstore_init();
 
   if (geteuid() != 0)
   {
@@ -646,13 +502,13 @@ int main(int argc,char **argv)
 
   drivestatus=hw_detectdisk();
 
-  if (drivestatus==NODRIVE)
+  if (drivestatus==HW_NODRIVE)
   {
     fprintf(stderr, "Failed to detect drive\n");
     return 4;
   }
 
-  if (drivestatus==NODISK)
+  if (drivestatus==HW_NODISK)
   {
     fprintf(stderr, "Failed to detect disk in drive\n");
     return 5;
@@ -684,7 +540,7 @@ int main(int argc,char **argv)
   {
     if (strstr(argv[1], ".ssd")!=NULL)
     {
-      singlesided=1;
+      sides=1;
 
       diskimage=fopen(argv[1], "w+");
       if (diskimage==NULL)
@@ -712,15 +568,41 @@ int main(int argc,char **argv)
     }
   }
 
-  // In catalogue mode, try to determine what type of disk is in what type of drive
-  if (capturetype==DISKCAT)
-  {
-    // Seek to track 2
-    hw_seektotrack(2);
-    // Select upper side
-    hw_sideselect(0);
+  // Start off assuming an 80 track disk in 80 track drive
+  disktracks=HW_MAXTRACKS;
+  drivetracks=HW_MAXTRACKS;
 
-    // Wait for a bit after seek to allow drive speed to settle
+  // Try to determine what type of disk is in what type of drive
+
+  // Seek to track 2
+  hw_seektotrack(2);
+
+  // Select upper side
+  hw_sideselect(0);
+
+  // Wait for a bit after seek to allow drive speed to settle
+  sleep(1);
+
+  // Sample track
+  hw_waitforindex();
+  hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
+  process(99);
+  // Check readability
+  if ((lasttrack==-1) || (lasthead==-1) || (lastsector==-1) || (lastlength==-1))
+  {
+    printf("No valid FM sector IDs found\n");
+  }
+  else
+  {
+    unsigned char othertrack=lasttrack;
+    unsigned char otherhead=lasthead;
+    unsigned char othersector=lastsector;
+    unsigned char otherlength=lastlength;
+
+    // Select lower side
+    hw_sideselect(1);
+
+    // Wait for a bit after head switch to allow drive to settle
     sleep(1);
 
     // Sample track
@@ -728,94 +610,80 @@ int main(int argc,char **argv)
     hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
     process(99);
     // Check readability
-    if ((idamtrack==0xff) || (idamhead==0xff) || (idamsector==0xff) || (idamlength==0xff))
+    if ((lasttrack==-1) || (lasthead==-1) || (lastsector==-1) || (lastlength==-1))
     {
-      printf("No valid sector IDs found\n");
+      // Only upper side was readable
+        printf("Single-sided disk detected\n");
     }
     else
     {
-      unsigned char othertrack=idamtrack;
-      unsigned char otherhead=idamhead;
-      unsigned char othersector=idamsector;
-      unsigned char otherlength=idamlength;
+      // Both sides readable
+      sides=2;
 
-      // Select lower side
-      hw_sideselect(1);
-
-      // Wait for a bit after head switch to allow drive to settle
-      sleep(1);
-
-      // Sample track
-      hw_waitforindex();
-      hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
-      process(99);
-      // Check readability
-      if ((idamtrack==0xff) || (idamhead==0xff) || (idamsector==0xff) || (idamlength==0xff))
-      {
-        // Only upper side was readable
-        printf("Single-sided disk detected\n");
-      }
+      // If IDAM shows same head, then double-sided separate
+      if (lasthead==otherhead)
+        printf("Double-sided with separate sides disk detected\n");
       else
-      {
-        // Both sides readable
-        singlesided=0;
+        printf("Double-sided disk detected\n");
+    }
 
-        // If IDAM shows same head, then double-sided separate
-        if (idamhead==otherhead)
-          printf("Double-sided with separate sides disk detected\n");
-        else
-          printf("Double-sided disk detected\n");
+    // If IDAM cylinder shows 2 then correct stepping
+    if (othertrack==2)
+    {
+      printf("Correct drive stepping for this disk\n");
+    }
+    else
+    {
+      // If IDAM cylinder shows 1 then 40 track in 80 track drive
+      if (othertrack==1)
+      {
+        printf("40 track disk detected in 80 track drive\n");
+
+        // Enable double stepping
+        hw_stepping=HW_DOUBLESTEPPING;
+
+        disktracks=40;
+        drivetracks=80;
       }
 
-      // If IDAM cylinder shows 2 then correct stepping
-      if (othertrack==2)
+      // If IDAM cylinder shows 4 then 80 track in 40 track drive
+      if (othertrack==4)
       {
-        printf("Correct drive stepping for this disk\n");
-      }
-      else
-      {
-        // If IDAM cylinder shows 1 then 40 track in 80 track drive
-        if (othertrack==1)
-          printf("40 track disk detected in 80 track drive\n");
+        printf("80 track disk detected in 40 track drive\n*** Unable to image this disk in this drive ***\n");
 
-        // If IDAM cylinder shows 4 then 80 track in 40 track drive
-        if (othertrack==4)
-          printf("80 track disk detected in 40 track drive\n");
+        disktracks=80;
+        drivetracks=40;
       }
     }
   }
 
-  // Mark each sector as being unread
-  for (i=0; i<SECTORSPERSIDE; i++)
+  // Start at track 0
+  hw_seektotrackzero();
+
+  // Loop through the tracks
+  for (i=0; i<drivetracks; i++)
   {
-    for (j=0; j<MAXHEADS; j++)
-      sectorstatus[j][i]=NODATA;
-  }
+    hw_seektotrack(i);
 
-  maxtracks=80; // TODO
-
-  for (side=0; side<MAXHEADS; side++)
-  {
-    info=0; // Request a directory listing for this side of the disk
-    hw_sideselect(side);
-
-    hw_seektotrackzero();
-
-    for (i=0; i<maxtracks; i++)
+    // Process all available disk sides (heads)
+    for (side=0; side<sides; side++)
     {
+      // Request a directory listing for this side of the disk
+      if (i==0) info=0;
+
+      // Select the correct side
+      hw_sideselect(side);
+
+      // Retry the capture if any sectors are missing
       for (retry=0; retry<RETRIES; retry++)
       {
-        hw_seektotrack(i);
-
-        // Wait for a bit after seek to allow drive speed to settle
+        // Wait for a bit after seek/head select to allow drive speed to settle
         sleep(1);
 
         if ((retry==0) && (debug))
-        {
           printf("Sampling data for track %.2X head %.2x\n", i, side);
-        }
 
-        // Wait for index rising edge prior to sampling to align as much as possible with index
+        // Wait for index rising edge prior to sampling to align as much as possible with index hole
         // Values seen on a scope are 200ms between pulses of 4.28ms width
         hw_waitforindex();
 
@@ -828,27 +696,26 @@ int main(int argc,char **argv)
           process(retry);
 
           // Determine if we have successfully read the whole track
-          trackpos=(SECTORSPERTRACK*i);
-          if ((sectorstatus[side][trackpos+0]==GOODDATA) &&
-              (sectorstatus[side][trackpos+1]==GOODDATA) &&
-              (sectorstatus[side][trackpos+2]==GOODDATA) &&
-              (sectorstatus[side][trackpos+3]==GOODDATA) &&
-              (sectorstatus[side][trackpos+4]==GOODDATA) &&
-              (sectorstatus[side][trackpos+5]==GOODDATA) &&
-              (sectorstatus[side][trackpos+6]==GOODDATA) &&
-              (sectorstatus[side][trackpos+7]==GOODDATA) &&
-              (sectorstatus[side][trackpos+8]==GOODDATA) &&
-              (sectorstatus[side][trackpos+9]==GOODDATA))
+          if ((diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 0)!=NULL) &&
+              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 1)!=NULL) &&
+              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 2)!=NULL) &&
+              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 3)!=NULL) &&
+              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 4)!=NULL) &&
+              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 5)!=NULL) &&
+              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 6)!=NULL) &&
+              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 7)!=NULL) &&
+              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 8)!=NULL) &&
+              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 9)!=NULL))
             break;
 
           printf("Retry attempt %d, sectors ", retry+1);
-          for (j=0; j<SECTORSPERTRACK; j++)
-            if (sectorstatus[side][trackpos+j]!=GOODDATA) printf("%.2d ", j);
+          for (j=0; j<DFS_SECTORSPERTRACK; j++)
+            if (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, j)==NULL) printf("%.2d ", j);
           printf("\n");
         }
         else
           break; // No retries in RAW mode
-      }
+      } // retry loop
 
       if (capturetype!=DISKRAW)
       {
@@ -857,7 +724,7 @@ int main(int argc,char **argv)
         {
           if (info==0)
           {
-            singlesided=1;
+            sides=1;
 
             printf("Single sided disk\n");
           }
@@ -874,97 +741,59 @@ int main(int argc,char **argv)
         if (rawdata!=NULL)
           fwrite(spibuffer, 1, SPIBUFFSIZE, rawdata);
       }
+    } // side loop
 
-      // If we're only doing a catalogue, then don't read any more tracks from this side
-      if (capturetype==DISKCAT)
-        break;
-    } // track loop
-
-    // If disk image is being written but we only have a single sided disk, then stop here
-    if (singlesided)
+    // If we're only doing a catalogue, then don't read any more tracks
+    if (capturetype==DISKCAT)
       break;
 
-    printf("\n");
-  } // side loop
+    // If this is an 80 track disk in a 40 track drive, then don't go any further
+    if ((drivetracks==40) && (disktracks==80))
+      break;
+  } // track loop
 
   // Return the disk head to track 0 following disk imaging
   hw_seektotrackzero();
 
   printf("Finished\n");
 
-  // Output list of good/bad tracks, but only if we're doing a whole disk image
-  if (diskimage!=NULL)
-  {
-    for (i=0; i<SECTORSPERSIDE; i++)
-    {
-      if ((i%10)==0) printf("%d:%.2d ", 0, i/SECTORSPERTRACK);
-
-      switch (sectorstatus[0][i])
-      {
-        case NODATA:
-          printf("_");
-          break;
-
-        case BADDATA:
-          printf("/");
-          break;
-
-        case GOODDATA:
-          printf("*");
-          break;
-
-        default:
-          break;
-      }
-      if ((i%10)==9) printf("\n");
-    }
-    printf("\n");
-
-    if (!singlesided)
-    {
-      for (i=0; i<SECTORSPERSIDE; i++)
-      {
-        if ((i%10)==0) printf("%d:%.2d ", 1, i/SECTORSPERTRACK);
-
-        switch (sectorstatus[1][i])
-        {
-          case NODATA:
-            printf("_");
-            break;
-
-          case BADDATA:
-            printf("/");
-            break;
-
-          case GOODDATA:
-            printf("*");
-            break;
-
-          default:
-            break;
-        }
-        if ((i%10)==9) printf("\n");
-      }
-      printf("\n");
-    }
-  }
+  // Stop the drive motor
+  hw_stopmotor();
 
   // Write the data to disk image file (if required)
   if (diskimage!=NULL)
   {
-    for (i=0; ((i<MAXTRACKS) && (i<maxtracks)); i++)
+    Disk_Sector *sec;
+    unsigned char blanksector[DFS_SECTORSIZE];
+
+    // Prepare a blank sector when no sector is found in store
+    bzero(blanksector, sizeof(blanksector));
+
+    for (i=0; ((i<HW_MAXTRACKS) && (i<disktracks)); i++)
     {
-      for (j=0; j<SECTORSPERTRACK; j++)
+      for (j=0; j<DFS_SECTORSPERTRACK; j++)
       {
         // Write
-        fwrite(&wholedisk[0][(i*TRACKSIZE)+(j*SECTORSIZE)], 1, SECTORSIZE, diskimage);
+        sec=diskstore_findhybridsector(i, 0, j);
+
+        if ((sec!=NULL) && (sec->data!=NULL))
+          fwrite(sec->data, 1, DFS_SECTORSIZE, diskimage);
+        else
+          fwrite(blanksector, 1, DFS_SECTORSIZE, diskimage);
       }
 
       // Write DSD interlaced as per BeebEm
-      if (!singlesided)
+      if (sides==2)
       {
-        for (j=0; j<SECTORSPERTRACK; j++)
-          fwrite(&wholedisk[1][(i*TRACKSIZE)+(j*SECTORSIZE)], 1, SECTORSIZE, diskimage);
+        for (j=0; j<DFS_SECTORSPERTRACK; j++)
+        {
+          sec=diskstore_findhybridsector(i, 1, j);
+
+          if ((sec!=NULL) && (sec->data!=NULL))
+            fwrite(sec->data, 1, DFS_SECTORSIZE, diskimage);
+          else
+            fwrite(blanksector, 1, DFS_SECTORSIZE, diskimage);
+        }
       }
     }
   }
@@ -973,13 +802,16 @@ int main(int argc,char **argv)
   if (diskimage!=NULL) fclose(diskimage);
   if (rawdata!=NULL) fclose(rawdata);
 
-  hw_stopmotor();
-
+  // Free memory allocated to SPI buffer
   if (spibuffer!=NULL)
   {
     free(spibuffer);
     spibuffer=NULL;
   }
+
+  // Dump a list of valid sectors
+  if (debug)
+    diskstore_dumpsectorlist(DFS_MAXTRACKS);
 
   return 0;
 }

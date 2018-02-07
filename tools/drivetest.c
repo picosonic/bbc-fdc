@@ -61,13 +61,13 @@ int main(int argc,char **argv)
 
   drivestatus=hw_detectdisk();
 
-  if (drivestatus==NODRIVE)
+  if (drivestatus==HW_NODRIVE)
   {
     fprintf(stderr, "Failed to detect drive\n");
     return 2;
   }
 
-  if (drivestatus==NODISK)
+  if (drivestatus==HW_NODISK)
   {
     fprintf(stderr, "Failed to detect disk in drive\n");
     return 3;

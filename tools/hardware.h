@@ -4,16 +4,21 @@
 #include <stdint.h>
 
 // For disk/drive status
-#define NODRIVE 0
-#define NODISK 1
-#define HAVEDISK 2
+#define HW_NODRIVE 0
+#define HW_NODISK 1
+#define HW_HAVEDISK 2
 
 // Drive geometry
-#define MAXHEADS 2
-#define MAXTRACKS 80
+#define HW_MAXHEADS 2
+#define HW_MAXTRACKS 80
+
+#define HW_NORMALSTEPPING 1
+#define HW_DOUBLESTEPPING 2
 
 extern int hw_currenttrack;
 extern int hw_currenthead;
+
+extern int hw_stepping;
 
 // Initialisation
 extern int hw_init();
