@@ -7,7 +7,7 @@
 Disk_Sector *Disk_SectorsRoot;
 
 // Find sector in store to make sure there is no exact match when adding
-Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_size, const unsigned char logical_sector, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
+Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
 {
   Disk_Sector *curr;
 
@@ -127,7 +127,7 @@ void diskstore_addsector(const unsigned char physical_track, const unsigned char
   if (diskstore_findexactsector(physical_track, physical_head, logical_track, logical_head, logical_sector, logical_size, idcrc, datatype, datasize, datacrc)!=NULL)
     return;
 
-  //printf("Adding physical T:%d H:%d  |  logical T:%d H:%d S:%d (%.4x) [%.2x] %d data bytes (%.4x)\n", physical_track, physical_head, logical_track, logical_head, logical_sector, idcrc, datatype, datasize, datacrc);
+//  printf("Adding physical T:%d H:%d  |  logical C:%d H:%d R:%d N:%d (%.4x) [%.2x] %d data bytes (%.4x)\n", physical_track, physical_head, logical_track, logical_head, logical_sector, logical_size, idcrc, datatype, datasize, datacrc);
 
   newitem=malloc(sizeof(Disk_Sector));
   if (newitem==NULL) return;
