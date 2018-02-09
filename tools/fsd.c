@@ -116,6 +116,10 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks)
             case 256: buffer[4]=1; break;
             case 512: buffer[4]=2; break;
             case 1024: buffer[4]=3; break;
+            case 2048: buffer[4]=4; break;
+            case 4096: buffer[4]=5; break;
+            case 8192: buffer[4]=6; break;
+            case 16384: buffer[4]=7; break;
             default: buffer[4]=sec->logical_size; break;
           }
 

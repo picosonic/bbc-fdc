@@ -22,7 +22,7 @@
 #define USINSECOND 1000000
 
 // Disk bitstream block size
-#define BLOCKSIZE 2048
+#define BLOCKSIZE (16384+5)
 
 // For sector status
 #define NODATA 0
@@ -266,6 +266,10 @@ void addbit(unsigned char bit)
               case 0x01: // 256
               case 0x02: // 512
               case 0x03: // 1024
+              case 0x04: // 2048
+              case 0x05: // 4096
+              case 0x06: // 8192
+              case 0x07: // 16384
                 blocksize=(128<<idamlength)+3;
                 break;
 
