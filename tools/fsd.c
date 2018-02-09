@@ -119,10 +119,11 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks)
             default: buffer[4]=sec->logical_size; break;
           }
 
+          buffer[5]=FSD_ERR_NONE;
+
+          // Flag if sector marked deleted
           if (sec->datatype==0xf8)
-            buffer[5]=FSD_ERR_DELETED;
-          else
-            buffer[5]=FSD_ERR_NONE;
+            buffer[5]|=FSD_ERR_DELETED;
 
           fwrite(buffer, 1, 6, fsdfile);
 

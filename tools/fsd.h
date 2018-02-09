@@ -8,7 +8,8 @@
 // OSWORD &7F result byte
 #define FSD_ERR_NONE 0x00
 #define FSD_ERR_DELETED 0x20
-#define FSD_ERR_BADCRC 0x0e
+#define FSD_ERR_BADIDCRC 0x0c
+#define FSD_ERR_BADDATACRC 0x0e
 
 #define FSD_CREATORID 0x0a
 
