@@ -10,6 +10,8 @@
 #define FSD_ERR_DELETED 0x20
 #define FSD_ERR_BADCRC 0x0e
 
+#define FSD_CREATORID 0x0a
+
 extern void fsd_write(FILE *fsdfile, const unsigned char tracks);
 
 #endif

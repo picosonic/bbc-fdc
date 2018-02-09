@@ -1,8 +1,55 @@
 #include <stdio.h>
 #include <strings.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "fsd.h"
 #include "diskstore.h"
+
+/*
+Header:
+=======
+Identifier: "FSD"  string literal 3 bytes
+   Creator:        5 bytes; date of creation/author
+     Title:        Character string (unlimited length; may contain any but null)
+ Title_End: 0x00   byte literal 1 byte
+    Num_Tr: xx     1 byte, number of tracks
+
+For each track
+==============
+   track_num: 1 byte
+     num_sec: 1 byte (00 == unformated)
+
+    readable: 1 byte (00 == unreadable, ff ==readable) **ONLY IF FORMATTED**
+
+   If readable:
+     For each sector
+     ===============
+           Track_ID: 1 byte
+        Head_number: 1 byte
+          Sector_ID: 1 byte
+      reported_size: 1 byte (2^{7+x}; 0 ==>128, 1 ==> 256, 2==>512, 3==>1024 etc)
+          real_size: 1 byte (2^{7+x})
+         error_code: 1 byte (0==No Error, &20==Deleted Data; &0E = Data CRC Error)
+               data: <real_size> bytes
+   Note that error_code matches the OSWORD &7F result byte
+
+   If track unreadable:
+           Track_ID: 1 byte
+        Head_number: 1 byte
+          Sector_ID: 1 byte
+      reported_size: 1 byte
+
+Decoding of the "creator" 5 byte field:
+=======================================
+   (byte1 byte2 byte3 byte4 byte5)
+
+       Date_DD = (byte1 AND &F8)/8
+       Date_MM = (byte3 AND &0F)
+     Date_YYYY = (byte1 AND &07)*256+byte2
+    Creator_ID = (byte3 AND &F0)/16
+   Release_num = ((byte5 AND &C0)/64)*256 + byte4
+*/
 
 void fsd_write(FILE *fsdfile, const unsigned char tracks)
 {
@@ -11,10 +58,20 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks)
   unsigned char numsectors;
   Disk_Sector *sec;
 
+  struct tm *tim;
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+  tim=localtime(&tv.tv_sec);
+
   // Write the header
   fwrite("FSD", 1, 3, fsdfile);
 
-  bzero(buffer, 10);
+  buffer[0]=(tim->tm_mday<<3)|(((tim->tm_year+1900)&0x700)>>8);
+  buffer[1]=(tim->tm_year+1900)&0xff;
+  buffer[2]=(FSD_CREATORID<<4)|((tim->tm_mon+1)&0x0f);
+  buffer[3]=0;
+  buffer[4]=0;
   fwrite(buffer, 1, 5, fsdfile);
 
   fwrite("NO TITLE", 1, 8, fsdfile);
@@ -53,7 +110,14 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks)
           buffer[2]=sec->logical_sector;
           buffer[3]=sec->logical_size;
 
-          buffer[4]=sec->logical_size; // TODO - allow this to be different
+          switch (sec->datasize)
+          {
+            case 128: buffer[4]=0; break;
+            case 256: buffer[4]=1; break;
+            case 512: buffer[4]=2; break;
+            case 1024: buffer[4]=3; break;
+            default: buffer[4]=sec->logical_size; break;
+          }
 
           if (sec->datatype==0xf8)
             buffer[5]=FSD_ERR_DELETED;
