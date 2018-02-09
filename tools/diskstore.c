@@ -7,7 +7,7 @@
 Disk_Sector *Disk_SectorsRoot;
 
 // Find sector in store to make sure there is no exact match when adding
-Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
+Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_size, const unsigned char logical_sector, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
 {
   Disk_Sector *curr;
 
@@ -20,6 +20,7 @@ Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const
         (curr->logical_track==logical_track) &&
         (curr->logical_head==logical_head) &&
         (curr->logical_sector==logical_sector) &&
+        (curr->logical_size==logical_size) &&
         (curr->idcrc==idcrc) &&
         (curr->datatype==datatype) &&
         (curr->datasize==datasize) &&
@@ -72,8 +73,8 @@ Disk_Sector *diskstore_findhybridsector(const unsigned char physical_track, cons
   return NULL;
 }
 
-// Find nth sector for given track
-Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, const unsigned char nth_sector)
+// Find nth sector for given physical track/head
+Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char nth_sector)
 {
   Disk_Sector *curr;
   int n;
@@ -83,7 +84,7 @@ Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, const u
 
   while (curr!=NULL)
   {
-    if (curr->physical_track==physical_track)
+    if ((curr->physical_track==physical_track) && (curr->physical_head==physical_head))
     {
       if (n==nth_sector)
         return curr;
@@ -96,14 +97,34 @@ Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, const u
   return NULL;
 }
 
+// Count how many sectors we have for given physical track/head
+unsigned char diskstore_countsectors(const unsigned char physical_track, const unsigned char physical_head)
+{
+  Disk_Sector *curr;
+  int n;
+
+  curr=Disk_SectorsRoot;
+  n=0;
+
+  while (curr!=NULL)
+  {
+    if ((curr->physical_track==physical_track) && (curr->physical_head==physical_head))
+      n++;
+
+    curr=curr->next;
+  }
+
+  return n;
+}
+
 // Add a sector to linked list
-void diskstore_addsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc)
+void diskstore_addsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc)
 {
   Disk_Sector *curr;
   Disk_Sector *newitem;
 
   // First check if we already have this sector
-  if (diskstore_findexactsector(physical_track, physical_head, logical_track, logical_head, logical_sector, idcrc, datatype, datasize, datacrc)!=NULL)
+  if (diskstore_findexactsector(physical_track, physical_head, logical_track, logical_head, logical_sector, logical_size, idcrc, datatype, datasize, datacrc)!=NULL)
     return;
 
   //printf("Adding physical T:%d H:%d  |  logical T:%d H:%d S:%d (%.4x) [%.2x] %d data bytes (%.4x)\n", physical_track, physical_head, logical_track, logical_head, logical_sector, idcrc, datatype, datasize, datacrc);
@@ -117,6 +138,7 @@ void diskstore_addsector(const unsigned char physical_track, const unsigned char
   newitem->logical_track=logical_track;
   newitem->logical_head=logical_head;
   newitem->logical_sector=logical_sector;
+  newitem->logical_size=logical_size;
   newitem->idcrc=idcrc;
 
   newitem->datatype=datatype;
@@ -173,7 +195,7 @@ void diskstore_clearallsectors()
 void diskstore_dumpsectorlist(const int maxtracks)
 {
   Disk_Sector *curr;
-  int dtrack;
+  int dtrack, dhead;
   int n;
   int totalsectors=0;
 
@@ -181,18 +203,21 @@ void diskstore_dumpsectorlist(const int maxtracks)
   {
     fprintf(stderr, "TRACK %.2d: ", dtrack);
 
-    n=0;
-    do
+    for (dhead=0; dhead<2; dhead++)
     {
-      curr=diskstore_findnthsector(dtrack, n++);
-
-      if (curr!=NULL)
+      n=0;
+      do
       {
-        totalsectors++;
-        fprintf(stderr, "%d[%d] ", curr->logical_sector, curr->physical_head);
-      }
-    } while (curr!=NULL);
-    fprintf(stderr, "\n");
+        curr=diskstore_findnthsector(dtrack, dhead, n++);
+
+        if (curr!=NULL)
+        {
+          totalsectors++;
+          fprintf(stderr, "%d[%d] ", curr->logical_sector, curr->physical_head);
+        }
+      } while (curr!=NULL);
+      fprintf(stderr, "\n");
+    }
   }
 
   fprintf(stderr, "Total extracted sectors: %d\n", totalsectors);

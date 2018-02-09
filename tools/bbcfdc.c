@@ -34,6 +34,13 @@
 #define DISKIMG 1
 #define DISKRAW 2
 
+// For type of output
+#define IMAGENONE 0
+#define IMAGERAW 1
+#define IMAGESSD 2
+#define IMAGEDSD 3
+#define IMAGEFSD 4
+
 #define RETRIES 5
 
 // State machine
@@ -53,6 +60,7 @@ int sides=1; // Default to single sided
 int disktracks;
 int drivetracks;
 int capturetype=DISKCAT; // Default to *CAT type output
+int outputtype=IMAGENONE; // Default to no image
 
 int state=SYNC;
 
@@ -309,7 +317,7 @@ void addbit(unsigned char bit)
             if (debug)
               printf(" OK [%x]\n", datapos);
 
-            diskstore_addsector(hw_currenttrack, hw_currenthead, idamtrack, idamhead, idamsector, idblockcrc, blocktype, blocksize-3, &bitstream[1], datablockcrc);
+            diskstore_addsector(hw_currenttrack, hw_currenthead, idamtrack, idamhead, idamsector, idamlength, idblockcrc, blocktype, blocksize-3, &bitstream[1], datablockcrc);
           }
           else
           {
@@ -543,28 +551,49 @@ int main(int argc,char **argv)
       sides=1;
 
       diskimage=fopen(argv[1], "w+");
-      if (diskimage==NULL)
-        printf("Unable to save disk image\n");
-      else
+      if (diskimage!=NULL)
+      {
         capturetype=DISKIMG;
+        outputtype=IMAGESSD;
+      }
+      else
+        printf("Unable to save ssd image\n");
     }
     else
     if (strstr(argv[1], ".dsd")!=NULL)
     {
       diskimage=fopen(argv[1], "w+");
-      if (diskimage==NULL)
-        printf("Unable to save disk image\n");
-      else
+      if (diskimage!=NULL)
+      {
         capturetype=DISKIMG;
+        outputtype=IMAGEDSD;
+      }
+      else
+        printf("Unable to save dsd image\n");
+    }
+    else
+    if (strstr(argv[1], ".fsd")!=NULL)
+    {
+      diskimage=fopen(argv[1], "w+");
+      if (diskimage!=NULL)
+      {
+        capturetype=DISKIMG;
+        outputtype=IMAGEFSD;
+      }
+      else
+        printf("Unable to save fsd image\n");
     }
     else
     if (strstr(argv[1], ".raw")!=NULL)
     {
       rawdata=fopen(argv[1], "w+");
       if (rawdata==NULL)
-        printf("Unable to save rawdata\n");
-      else
+      {
         capturetype=DISKRAW;
+        outputtype=IMAGERAW;
+      }
+      else
+        printf("Unable to save rawdata\n");
     }
   }
 
@@ -617,8 +646,12 @@ int main(int argc,char **argv)
     }
     else
     {
-      // Both sides readable
-      sides=2;
+      // Only mark as double-sided when not using single-sided output
+      if ((outputtype!=IMAGEFSD) && (outputtype!=IMAGESSD))
+      {
+        // Both sides readable
+        sides=2;
+      }
 
       // If IDAM shows same head, then double-sided separate
       if (lasthead==otherhead)
@@ -763,36 +796,43 @@ int main(int argc,char **argv)
   // Write the data to disk image file (if required)
   if (diskimage!=NULL)
   {
-    Disk_Sector *sec;
-    unsigned char blanksector[DFS_SECTORSIZE];
-
-    // Prepare a blank sector when no sector is found in store
-    bzero(blanksector, sizeof(blanksector));
-
-    for (i=0; ((i<HW_MAXTRACKS) && (i<disktracks)); i++)
+    if (outputtype==IMAGEFSD)
     {
-      for (j=0; j<DFS_SECTORSPERTRACK; j++)
-      {
-        // Write
-        sec=diskstore_findhybridsector(i, 0, j);
+      fsd_write(diskimage, disktracks);
+    }
+    else
+    {
+      Disk_Sector *sec;
+      unsigned char blanksector[DFS_SECTORSIZE];
 
-        if ((sec!=NULL) && (sec->data!=NULL))
-          fwrite(sec->data, 1, DFS_SECTORSIZE, diskimage);
-        else
-          fwrite(blanksector, 1, DFS_SECTORSIZE, diskimage);
-      }
+      // Prepare a blank sector when no sector is found in store
+      bzero(blanksector, sizeof(blanksector));
 
-      // Write DSD interlaced as per BeebEm
-      if (sides==2)
+      for (i=0; ((i<HW_MAXTRACKS) && (i<disktracks)); i++)
       {
         for (j=0; j<DFS_SECTORSPERTRACK; j++)
         {
-          sec=diskstore_findhybridsector(i, 1, j);
+          // Write
+          sec=diskstore_findhybridsector(i, 0, j);
 
           if ((sec!=NULL) && (sec->data!=NULL))
             fwrite(sec->data, 1, DFS_SECTORSIZE, diskimage);
           else
             fwrite(blanksector, 1, DFS_SECTORSIZE, diskimage);
+        }
+
+        // Write DSD interlaced as per BeebEm
+        if (sides==2)
+        {
+          for (j=0; j<DFS_SECTORSPERTRACK; j++)
+          {
+            sec=diskstore_findhybridsector(i, 1, j);
+
+            if ((sec!=NULL) && (sec->data!=NULL))
+              fwrite(sec->data, 1, DFS_SECTORSIZE, diskimage);
+            else
+              fwrite(blanksector, 1, DFS_SECTORSIZE, diskimage);
+          }
         }
       }
     }
