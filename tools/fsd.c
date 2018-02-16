@@ -46,7 +46,7 @@ Decoding of the "creator" 5 byte field:
 
        Date_DD = (byte1 AND &F8)/8
        Date_MM = (byte3 AND &0F)
-     Date_YYYY = (byte1 AND &07)*256+byte2
+     Date_YYYY = (byte1 AND &07)*256+byte2 ** ONLY SUPPORTS YEARS UP TO 2047 **
     Creator_ID = (byte3 AND &F0)/16
    Release_num = ((byte5 AND &C0)/64)*256 + byte4
 */
