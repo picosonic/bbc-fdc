@@ -58,18 +58,18 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks)
   unsigned char numsectors;
   Disk_Sector *sec;
 
-  struct tm *tim;
+  struct tm tim;
   struct timeval tv;
 
   gettimeofday(&tv, NULL);
-  tim=localtime(&tv.tv_sec);
+  localtime_r(&tv.tv_sec, &tim);
 
   // Write the header
   fwrite("FSD", 1, 3, fsdfile);
 
-  buffer[0]=(tim->tm_mday<<3)|(((tim->tm_year+1900)&0x700)>>8);
-  buffer[1]=(tim->tm_year+1900)&0xff;
-  buffer[2]=(FSD_CREATORID<<4)|((tim->tm_mon+1)&0x0f);
+  buffer[0]=(tim.tm_mday<<3)|(((tim.tm_year+1900)&0x700)>>8);
+  buffer[1]=(tim.tm_year+1900)&0xff;
+  buffer[2]=(FSD_CREATORID<<4)|((tim.tm_mon+1)&0x0f);
   buffer[3]=0;
   buffer[4]=0;
   fwrite(buffer, 1, 5, fsdfile);
