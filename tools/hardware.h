@@ -32,9 +32,11 @@ extern void hw_stopmotor();
 // Track seeking
 extern int hw_attrackzero();
 extern void hw_seektotrackzero();
+extern void hw_seektotrack(int track);
 extern void hw_sideselect(const int side);
 
 // Signaling and data sampling
+extern void hw_waitforindex();
 extern int hw_writeprotected();
 extern void hw_samplerawtrackdata(char* buf, uint32_t len);
 
