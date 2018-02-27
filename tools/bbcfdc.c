@@ -145,7 +145,7 @@ void addbit(unsigned char bit)
         {
           case 0xf77a: // d7 fc
             if (debug)
-              printf("\n[%x] Index Address Mark\n", datapos);
+              printf("\n[%lx] Index Address Mark\n", datapos);
             blocktype=data;
             bitlen=0;
             state=SYNC;
@@ -159,7 +159,7 @@ void addbit(unsigned char bit)
 
           case 0xf57e: // c7 fe
             if (debug)
-              printf("\n[%x] ID Address Mark\n", datapos);
+              printf("\n[%lx] ID Address Mark\n", datapos);
             blocktype=data;
             blocksize=6+1;
             bitlen=0;
@@ -176,7 +176,7 @@ void addbit(unsigned char bit)
 
           case 0xf56f: // c7 fb
             if (debug)
-              printf("\n[%x] Data Address Mark, distance from ID %x\n", datapos, datapos-idpos);
+              printf("\n[%lx] Data Address Mark, distance from ID %lx\n", datapos, datapos-idpos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((idamtrack!=-1) && (idamhead!=-1) && (idamsector!=-1) && (idamlength!=-1))
@@ -197,7 +197,7 @@ void addbit(unsigned char bit)
 
           case 0xf56a: // c7 f8
             if (debug)
-              printf("\n[%x] Deleted Data Address Mark, distance from ID %x\n", datapos, datapos-idpos);
+              printf("\n[%lx] Deleted Data Address Mark, distance from ID %lx\n", datapos, datapos-idpos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((idamtrack!=-1) && (idamhead!=-1) && (idamsector!=-1) && (idamlength!=-1))
@@ -319,7 +319,7 @@ void addbit(unsigned char bit)
           if (dataCRC==GOODDATA)
           {
             if (debug)
-              printf(" OK [%x]\n", datapos);
+              printf(" OK [%lx]\n", datapos);
 
             diskstore_addsector(hw_currenttrack, hw_currenthead, idamtrack, idamhead, idamsector, idamlength, idblockcrc, blocktype, blocksize-3, &bitstream[1], datablockcrc);
           }
