@@ -2,6 +2,7 @@
 *.o
 drivetest
 bbcfdc
+bbcfdc-nopi
 checkfsd
 
 # Disk images

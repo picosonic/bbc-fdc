@@ -28,6 +28,19 @@ bbcfdc: bbcfdc.o dfs.o diskstore.o fsd.o hardware.o
 bbcfdc.o: bbcfdc.c dfs.h diskstore.h fsd.h hardware.h
 	$(CC) $(BUILDFLAGS) -c -o bbcfdc.o bbcfdc.c
 
+##########################
+
+bbcfdc-nopi: bbcfdc-nopi.o dfs.o diskstore.o fsd.o nopi.o
+	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o dfs.o diskstore.o fsd.o nopi.o -lpthread -lrt
+
+bbcfdc-nopi.o: bbcfdc.c dfs.h diskstore.h fsd.h hardware.h
+	$(CC) $(BUILDFLAGS) -DNOPI -c -o bbcfdc-nopi.o bbcfdc.c
+
+nopi.o: nopi.c hardware.h
+	$(CC) $(BUILDFLAGS) -c -o nopi.o nopi.c
+
+##########################
+
 dfs.o: dfs.c diskstore.h
 	$(CC) $(BUILDFLAGS) -c -o dfs.o dfs.c
 
@@ -45,3 +58,4 @@ clean:
 	rm -f drivetest
 	rm -f bbcfdc
 	rm -f checkfsd
+	rm -f bbcfdc-nopi

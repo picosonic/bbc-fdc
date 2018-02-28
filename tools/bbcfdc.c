@@ -31,9 +31,10 @@
 #define GOODDATA 2
 
 // For type of capture
-#define DISKCAT 0
-#define DISKIMG 1
-#define DISKRAW 2
+#define DISKNONE 0
+#define DISKCAT 1
+#define DISKIMG 2
+#define DISKRAW 3
 
 // For type of output
 #define IMAGENONE 0
@@ -60,7 +61,7 @@ int debug=0;
 int sides=1; // Default to single sided
 int disktracks;
 int drivetracks;
-int capturetype=DISKCAT; // Default to *CAT type output
+int capturetype=DISKNONE; // Default to no output
 int outputtype=IMAGENONE; // Default to no image
 
 int state=SYNC;
@@ -478,34 +479,143 @@ void sig_handler(const int sig)
   exit(0);
 }
 
+void showargs(const char *exename)
+{
+  fprintf(stderr, "%s - Floppy disk raw flux capture and processor\n\n", exename);
+  fprintf(stderr, "Syntax : [[-c] | [-o outputfile]] [-v]\n");
+}
+
 int main(int argc,char **argv)
 {
+  int argn=0;
   unsigned int i, j;
   unsigned char retry, side, drivestatus;
 
+  // Check we have some arguments
+  if (argc==1)
+  {
+    showargs(argv[0]);
+    return 1;
+  }
+
+  // Process command line arguments
+  while (argn<argc)
+  {
+    if (strcmp(argv[argn], "-v")==0)
+    {
+      debug=1;
+    }
+    else
+    if (strcmp(argv[argn], "-c")==0)
+    {
+      capturetype=DISKCAT;
+    }
+    else
+    if ((strcmp(argv[argn], "-o")==0) && ((argn+1)<argc))
+    {
+      ++argn;
+
+      if (strstr(argv[argn], ".ssd")!=NULL)
+      {
+        sides=1;
+
+        diskimage=fopen(argv[1], "w+");
+        if (diskimage!=NULL)
+        {
+          capturetype=DISKIMG;
+          outputtype=IMAGESSD;
+        }
+        else
+          printf("Unable to save ssd image\n");
+      }
+      else
+      if (strstr(argv[argn], ".dsd")!=NULL)
+      {
+        diskimage=fopen(argv[argn], "w+");
+        if (diskimage!=NULL)
+        {
+          capturetype=DISKIMG;
+          outputtype=IMAGEDSD;
+        }
+        else
+          printf("Unable to save dsd image\n");
+      }
+      else
+      if (strstr(argv[argn], ".fsd")!=NULL)
+      {
+        diskimage=fopen(argv[argn], "w+");
+        if (diskimage!=NULL)
+        {
+          capturetype=DISKIMG;
+          outputtype=IMAGEFSD;
+        }
+        else
+          printf("Unable to save fsd image\n");
+      }
+      else
+      if (strstr(argv[argn], ".raw")!=NULL)
+      {
+        rawdata=fopen(argv[argn], "w+");
+        if (rawdata==NULL)
+        {
+          capturetype=DISKRAW;
+          outputtype=IMAGERAW;
+        }
+        else
+          printf("Unable to save rawdata\n");
+      }
+    }
+#ifdef NOPI
+    else
+    if ((strcmp(argv[argn], "-i")==0) && ((argn+1)<argc))
+    {
+      ++argn;
+
+      if (!hw_init(argv[argn]))
+      {
+        fprintf(stderr, "Failed virtual hardware init\n");
+        return 4;
+      }
+    }
+#endif
+
+    ++argn;
+  }
+
+  // Make sure we have something to do
+  if (capturetype==DISKNONE)
+  {
+    showargs(argv[0]);
+    return 1;
+  }
+
   diskstore_init();
 
+#ifndef NOPI
   if (geteuid() != 0)
   {
     fprintf(stderr,"Must be run as root\n");
-    return 1;
+    return 2;
   }
+#endif
 
   // Allocate memory for SPI buffer
   spibuffer=malloc(SPIBUFFSIZE);
   if (spibuffer==NULL)
   {
     fprintf(stderr, "\n");
-    return 2;
+    return 3;
   }
 
   printf("Start\n");
 
+#ifndef NOPI
   if (!hw_init())
   {
     fprintf(stderr, "Failed hardware init\n");
-    return 3;
+    return 4;
   }
+#endif
 
   // Install signal handlers to make sure motor is stopped
   atexit(exitFunction);
@@ -518,13 +628,13 @@ int main(int argc,char **argv)
   if (drivestatus==HW_NODRIVE)
   {
     fprintf(stderr, "Failed to detect drive\n");
-    return 4;
+    return 5;
   }
 
   if (drivestatus==HW_NODISK)
   {
     fprintf(stderr, "Failed to detect disk in drive\n");
-    return 5;
+    return 6;
   }
 
   // Select drive, depending on jumper
@@ -547,60 +657,6 @@ int main(int argc,char **argv)
     printf("Disk is write-protected\n");
   else
     printf("Disk is writeable\n");
-
-  // Work out what type of capture we are doing
-  if (argc==2)
-  {
-    if (strstr(argv[1], ".ssd")!=NULL)
-    {
-      sides=1;
-
-      diskimage=fopen(argv[1], "w+");
-      if (diskimage!=NULL)
-      {
-        capturetype=DISKIMG;
-        outputtype=IMAGESSD;
-      }
-      else
-        printf("Unable to save ssd image\n");
-    }
-    else
-    if (strstr(argv[1], ".dsd")!=NULL)
-    {
-      diskimage=fopen(argv[1], "w+");
-      if (diskimage!=NULL)
-      {
-        capturetype=DISKIMG;
-        outputtype=IMAGEDSD;
-      }
-      else
-        printf("Unable to save dsd image\n");
-    }
-    else
-    if (strstr(argv[1], ".fsd")!=NULL)
-    {
-      diskimage=fopen(argv[1], "w+");
-      if (diskimage!=NULL)
-      {
-        capturetype=DISKIMG;
-        outputtype=IMAGEFSD;
-      }
-      else
-        printf("Unable to save fsd image\n");
-    }
-    else
-    if (strstr(argv[1], ".raw")!=NULL)
-    {
-      rawdata=fopen(argv[1], "w+");
-      if (rawdata==NULL)
-      {
-        capturetype=DISKRAW;
-        outputtype=IMAGERAW;
-      }
-      else
-        printf("Unable to save rawdata\n");
-    }
-  }
 
   // Start off assuming an 80 track disk in 80 track drive
   disktracks=HW_MAXTRACKS;

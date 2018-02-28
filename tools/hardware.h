@@ -21,7 +21,11 @@ extern int hw_currenthead;
 extern int hw_stepping;
 
 // Initialisation
+#ifdef NOPI
+extern int hw_init(const char *rawfile);
+#else
 extern int hw_init();
+#endif
 
 // Drive control
 extern unsigned char hw_detectdisk();
