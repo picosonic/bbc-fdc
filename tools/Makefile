@@ -2,8 +2,11 @@
 
 CC = gcc
 
+HARDWARE = $(shell bash ./hw.sh Hardware)
+REVISION = $(shell bash ./hw.sh Revision)
+
 DEBUGFLAGS = -g -W -Wall
-BUILDFLAGS = $(DEBUGFLAGS)
+BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
 
 all: drivetest bbcfdc
 
