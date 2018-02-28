@@ -534,7 +534,7 @@ int main(int argc,char **argv)
   hw_startmotor();
 
   // Wait for motor to get up to speed
-  sleep(1);
+  hw_sleep(1);
 
   // Determine if head is at track 00
   if (hw_attrackzero())
@@ -615,7 +615,7 @@ int main(int argc,char **argv)
   hw_sideselect(0);
 
   // Wait for a bit after seek to allow drive speed to settle
-  sleep(1);
+  hw_sleep(1);
 
   // Sample track
   hw_waitforindex();
@@ -637,7 +637,7 @@ int main(int argc,char **argv)
     hw_sideselect(1);
 
     // Wait for a bit after head switch to allow drive to settle
-    sleep(1);
+    hw_sleep(1);
 
     // Sample track
     hw_waitforindex();
@@ -716,7 +716,7 @@ int main(int argc,char **argv)
       for (retry=0; retry<RETRIES; retry++)
       {
         // Wait for a bit after seek/head select to allow drive speed to settle
-        sleep(1);
+        hw_sleep(1);
 
         if (retry==0)
           printf("Sampling data for track %.2X head %.2x\n", i, side);

@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <bcm2835.h>
 
 #include "hardware.h"
@@ -283,3 +284,7 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
   bcm2835_spi_transfern(buf, len);
 }
 
+void hw_sleep(const unsigned int seconds)
+{
+  sleep(seconds);
+}
