@@ -8,13 +8,19 @@ REVISION = $(shell bash ./hw.sh Revision)
 DEBUGFLAGS = -g -W -Wall
 BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
 
-all: drivetest bbcfdc
+all: drivetest bbcfdc checkfsd
 
 drivetest: drivetest.o hardware.o
 	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835 -lpthread -lrt
 
 drivetest.o: drivetest.c hardware.h
 	$(CC) $(BUILDFLAGS) -c -o drivetest.o drivetest.c
+
+checkfsd: checkfsd.o
+	$(CC) $(BUILDFLAGS) -o checkfsd checkfsd.o
+
+checkfsd.o: checkfsd.c
+	$(CC) $(BUILDFLAGS) -c -o checkfsd.o checkfsd.c
 
 bbcfdc: bbcfdc.o dfs.o diskstore.o fsd.o hardware.o
 	$(CC) $(BUILDFLAGS) -o bbcfdc bbcfdc.o dfs.o diskstore.o fsd.o hardware.o -lbcm2835 -lpthread -lrt
@@ -38,3 +44,4 @@ clean:
 	rm -f *.o
 	rm -f drivetest
 	rm -f bbcfdc
+	rm -f checkfsd
