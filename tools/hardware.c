@@ -111,7 +111,7 @@ void hw_seektotrackzero()
 }
 
 // Seek head to given track
-void hw_seektotrack(int track)
+void hw_seektotrack(const int track)
 {
   int steps;
   int i;
