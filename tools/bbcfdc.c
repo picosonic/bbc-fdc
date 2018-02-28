@@ -8,6 +8,7 @@
 #include "hardware.h"
 #include "diskstore.h"
 #include "dfs.h"
+#include "fsd.h"
 
 // SPI read buffer size
 #define SPIBUFFSIZE (1024*1024)
