@@ -34,7 +34,7 @@ dfs.o: dfs.c diskstore.h
 diskstore.o: diskstore.c
 	$(CC) $(BUILDFLAGS) -c -o diskstore.o diskstore.c
 
-fsd.o: fsd.c diskstore.h
+fsd.o: fsd.c diskstore.h fsd.h
 	$(CC) $(BUILDFLAGS) -c -o fsd.o fsd.c
 
 hardware.o: hardware.c hardware.h pins.h
