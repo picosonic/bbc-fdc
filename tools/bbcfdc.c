@@ -525,7 +525,7 @@ int main(int argc,char **argv)
       {
         sides=1;
 
-        diskimage=fopen(argv[1], "w+");
+        diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
         {
           capturetype=DISKIMG;
