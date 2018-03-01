@@ -77,7 +77,7 @@ int idamtrack, idamhead, idamsector, idamlength;
 int lasttrack, lasthead, lastsector, lastlength;
 unsigned char blocktype;
 unsigned int blocksize;
-unsigned int idblockcrc, datablockcrc;
+unsigned int idblockcrc, datablockcrc, bitstreamcrc;
 
 // Block data buffer
 unsigned char bitstream[BLOCKSIZE];
@@ -231,7 +231,8 @@ void addbit(unsigned char bit)
         if (bitlen==blocksize)
         {
           idblockcrc=calc_crc(&bitstream[0], bitlen-2);
-          dataCRC=(idblockcrc==(unsigned int)((bitstream[bitlen-2]<<8)|bitstream[bitlen-1]))?GOODDATA:BADDATA;
+          bitstreamcrc=(((unsigned int)bitstream[bitlen-2]<<8)|bitstream[bitlen-1]);
+          dataCRC=(idblockcrc==bitstreamcrc)?GOODDATA:BADDATA;
 
           if (debug)
           {
@@ -311,11 +312,12 @@ void addbit(unsigned char bit)
 
           // Calculate CRC
           datablockcrc=calc_crc(&bitstream[0], bitlen-2);
+          bitstreamcrc=(((unsigned int)bitstream[bitlen-2]<<8)|bitstream[bitlen-1]);
 
           if (debug)
-            printf("  %.2x CRC %.2x%.2x", blocktype, bitstream[bitlen-2], bitstream[bitlen-1]);
+            printf("  %.2x CRC %.4x", blocktype, bitstreamcrc);
 
-          dataCRC=(datablockcrc==((bitstream[bitlen-2]<<8)|bitstream[bitlen-1]))?GOODDATA:BADDATA;
+          dataCRC=(datablockcrc==bitstreamcrc)?GOODDATA:BADDATA;
 
           // Report and save if the CRC matches
           if (dataCRC==GOODDATA)
@@ -482,7 +484,11 @@ void sig_handler(const int sig)
 void showargs(const char *exename)
 {
   fprintf(stderr, "%s - Floppy disk raw flux capture and processor\n\n", exename);
-  fprintf(stderr, "Syntax : [[-c] | [-o outputfile]] [-v]\n");
+  fprintf(stderr, "Syntax : ");
+#ifdef NOPI
+  fprintf(stderr, "[-i inputfile] ");
+#endif
+  fprintf(stderr, "[[-c] | [-o outputfile]] [-v]\n");
 }
 
 int main(int argc,char **argv)
