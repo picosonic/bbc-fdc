@@ -245,7 +245,7 @@ void addbit(unsigned char bit)
             if (dataCRC==GOODDATA)
               printf(" OK\n");
             else
-              printf(" BAD\n");
+              printf(" BAD (%.4x)\n", idblockcrc);
           }
 
           if (dataCRC==GOODDATA)
@@ -330,7 +330,7 @@ void addbit(unsigned char bit)
           else
           {
             if (debug)
-              printf(" BAD\n");
+              printf(" BAD (%.4x)\n", datablockcrc);
           }
 
           // Do a catalogue if we haven't already and sector 00 and 01 have been read correctly for this side
