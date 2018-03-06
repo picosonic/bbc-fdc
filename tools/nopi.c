@@ -6,6 +6,7 @@
 #include <strings.h>
 
 #include "hardware.h"
+#include "rfi.h"
 
 int hw_currenttrack = 0;
 int hw_currenthead = 0;

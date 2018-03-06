@@ -34,6 +34,8 @@ RLE encoding
 
 */
 
+#define RFI_MAGIC "RFI"
+
 extern void rfi_writeheader(FILE *rfifile, const int tracks, const int sides, const long rate, const unsigned char writeable);
 extern void rfi_writetack(FILE *rfifile, const int track, const int side, const float rpm, const char *encoding, const unsigned char *rawtrackdata, const unsigned long rawdatalength);
 
