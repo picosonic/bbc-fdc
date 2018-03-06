@@ -288,3 +288,24 @@ void hw_sleep(const unsigned int seconds)
 {
   sleep(seconds);
 }
+
+// Measure time between index pulses to determine RPM
+float hw_measurerpm()
+{
+  unsigned long long starttime, endtime;
+
+  // Wait for next index rising edge
+  hw_waitforindex();
+
+  // Get time
+  gettimeofday(&tv, NULL);
+  starttime=(((unsigned long long)tv.tv_sec)*MICROSECONDSINSECOND)+tv.tv_usec;
+
+  // Wait for next index rising edge
+  hw_waitforindex();
+
+  gettimeofday(&tv, NULL);
+  endtime=(((unsigned long long)tv.tv_sec)*MICROSECONDSINSECOND)+tv.tv_usec;
+
+  return ((MICROSECONDSINSECOND/(float)(endtime-starttime))*SECONDSINMINUTE);
+}

@@ -129,3 +129,9 @@ void hw_sleep(const unsigned int seconds)
 
   // No sleep required as this is not using real hardware
 }
+
+// Assume 300 RPM
+float hw_measurerpm()
+{
+  return 300;
+}

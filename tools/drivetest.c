@@ -33,8 +33,6 @@ void sig_handler(const int sig)
 // Program enty pont
 int main(int argc,char **argv)
 {
-  struct timeval tv;
-  unsigned long long starttime, endtime;
   unsigned char drivestatus;
 
   // Check user permissions
@@ -94,26 +92,11 @@ int main(int argc,char **argv)
   else
     printf("Disk is writeable\n");
 
-  printf("Sampling index pin ... \n");
-
-  // Wait for next index rising edge
-  hw_waitforindex();
-
-  // Get time
-  gettimeofday(&tv, NULL);
-  starttime=(((unsigned long long)tv.tv_sec)*MICROSECONDSINSECOND)+tv.tv_usec;
-
-  // Wait for next index rising edge
-  hw_waitforindex();
-
-  gettimeofday(&tv, NULL);
-  endtime=(((unsigned long long)tv.tv_sec)*MICROSECONDSINSECOND)+tv.tv_usec;
+  printf("Approximate RPM %.2f\n", hw_measurepm());
 
   sleep(1);
 
   hw_stopmotor();
-
-  printf("Approximate RPM %f\n", ((MICROSECONDSINSECOND/(float)(endtime-starttime))*SECONDSINMINUTE));
 
   return 0;
 }

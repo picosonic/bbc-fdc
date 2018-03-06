@@ -44,6 +44,7 @@ extern void hw_waitforindex();
 extern int hw_writeprotected();
 extern void hw_samplerawtrackdata(char* buf, uint32_t len);
 extern void hw_sleep(const unsigned int seconds);
+extern float hw_measurerpm();
 
 // Clean up
 extern void hw_done();
