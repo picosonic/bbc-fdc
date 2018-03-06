@@ -107,7 +107,13 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
 // Clean up
 void hw_done()
 {
-  // No hardware to clean up
+  // Close sample file if open
+  if (samplefile!=NULL)
+  {
+    fclose(samplefile);
+
+    samplefile=NULL;
+  }
 }
 
 // Initialisation
