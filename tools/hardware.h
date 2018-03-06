@@ -15,6 +15,10 @@
 #define HW_NORMALSTEPPING 1
 #define HW_DOUBLESTEPPING 2
 
+// For RPM calculation
+#define SECONDSINMINUTE 60
+#define MICROSECONDSINSECOND 1000000
+
 extern int hw_currenttrack;
 extern int hw_currenthead;
 

@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <bcm2835.h>
+#include <sys/time.h>
 
 #include "hardware.h"
 #include "pins.h"
@@ -293,6 +294,7 @@ void hw_sleep(const unsigned int seconds)
 float hw_measurerpm()
 {
   unsigned long long starttime, endtime;
+  struct timeval tv;
 
   // Wait for next index rising edge
   hw_waitforindex();

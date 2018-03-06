@@ -5,13 +5,7 @@
 #include <signal.h>
 #include <string.h>
 
-#include <sys/time.h>
-
 #include "hardware.h"
-
-// For RPM calculation
-#define SECONDSINMINUTE 60
-#define MICROSECONDSINSECOND 1000000
 
 // Stop the motor and tidy up upon exit
 void exitFunction()
@@ -92,7 +86,7 @@ int main(int argc,char **argv)
   else
     printf("Disk is writeable\n");
 
-  printf("Approximate RPM %.2f\n", hw_measurepm());
+  printf("Approximate RPM %.2f\n", hw_measurerpm());
 
   sleep(1);
 
