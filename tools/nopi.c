@@ -80,8 +80,13 @@ void hw_waitforindex()
 
 int hw_writeprotected()
 {
-  // TODO Check sample file read/write status
-  return 1;
+  struct stat st;
+
+  // Check sample file read/write status
+  if (stat(samplefilename, &st)==0)
+    return ((st.st_mode&S_IWUSR)!=0);
+
+  return 0;
 }
 
 void hw_samplerawtrackdata(char* buf, uint32_t len)
