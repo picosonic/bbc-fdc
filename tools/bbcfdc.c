@@ -9,6 +9,7 @@
 #include "diskstore.h"
 #include "dfs.h"
 #include "fsd.h"
+#include "rfi.h"
 
 // SPI read buffer size
 #define SPIBUFFSIZE (1024*1024)
@@ -110,7 +111,7 @@ unsigned int calc_crc(unsigned char *data, int datalen)
 void addbit(unsigned char bit)
 {
   unsigned char clock, data;
-  unsigned char dataCRC;
+  unsigned char dataCRC; // EDC
 
   datacells=((datacells<<1)&0xffff);
   datacells|=bit;
@@ -310,7 +311,7 @@ void addbit(unsigned char bit)
         {
           // All the bytes for this "data" block have been read, so process them
 
-          // Calculate CRC
+          // Calculate CRC (EDC)
           datablockcrc=calc_crc(&bitstream[0], bitlen-2);
           bitstreamcrc=(((unsigned int)bitstream[bitlen-2]<<8)|bitstream[bitlen-1]);
 
@@ -486,9 +487,9 @@ void showargs(const char *exename)
   fprintf(stderr, "%s - Floppy disk raw flux capture and processor\n\n", exename);
   fprintf(stderr, "Syntax : ");
 #ifdef NOPI
-  fprintf(stderr, "[-i inputfile] ");
+  fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o outputfile]] [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -559,7 +560,7 @@ int main(int argc,char **argv)
           printf("Unable to save fsd image\n");
       }
       else
-      if (strstr(argv[argn], ".raw")!=NULL)
+      if (strstr(argv[argn], ".rfi")!=NULL)
       {
         rawdata=fopen(argv[argn], "w+");
         if (rawdata!=NULL)
@@ -757,6 +758,10 @@ int main(int argc,char **argv)
     }
   }
 
+  // Write RFI header when doing raw capture
+  if (capturetype==DISKRAW)
+    rfi_writeheader(rawdata, drivetracks, sides, SAMPLERATE, hw_writeprotected());
+
   // Start at track 0
   hw_seektotrackzero();
 
@@ -839,7 +844,7 @@ int main(int argc,char **argv)
       {
         // Write the raw sample data if required
         if (rawdata!=NULL)
-          fwrite(spibuffer, 1, SPIBUFFSIZE, rawdata);
+          rfi_writetack(rawdata, i, side, hw_measurerpm(), "raw", spibuffer, SPIBUFFSIZE);
       }
     } // side loop
 
