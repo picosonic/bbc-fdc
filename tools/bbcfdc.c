@@ -562,7 +562,7 @@ int main(int argc,char **argv)
       if (strstr(argv[argn], ".raw")!=NULL)
       {
         rawdata=fopen(argv[argn], "w+");
-        if (rawdata==NULL)
+        if (rawdata!=NULL)
         {
           capturetype=DISKRAW;
           outputtype=IMAGERAW;
