@@ -18,6 +18,8 @@ JSON file metadata .. {date:"02/03/2018",time:"17:00:00",tracks:80,sides:2,rate:
 Track header
 ============
 JSON track metadata .. {track:0,side:0,rate:12500000,rpm:300,enc:"rle",len:48560}
+* track is physical track
+* side is physical side (0 or 1)
 * rate in samples/sec
 * rpm is optional as it may not be known
 * enc can be "raw", "rle", or possibly gz
@@ -26,6 +28,8 @@ JSON track metadata .. {track:0,side:0,rate:12500000,rpm:300,enc:"rle",len:48560
 
 Track data
 ==========
+RAW encoding
+* The RAW flux transitions as read from the drive, every byte conatins 8 binary samples but takes 9 samples to capture (there is a missed 9th due to SPI sampling gap)
 RLE encoding
 * expects low level first, so if it's not low, then 0x00 first
 * runs more than 0xff are (e.g. 0x101) are encoded as [ 0xff 0x00 0x02 ]
