@@ -14,8 +14,8 @@ unsigned long hw_samplerate = 0;
 
 int hw_stepping = HW_NORMALSTEPPING;
 
-FILE *samplefile = NULL;
-char samplefilename[1024];
+FILE *hw_samplefile = NULL;
+char hw_samplefilename[1024];
 
 // Drive control
 unsigned char hw_detectdisk()
@@ -24,7 +24,7 @@ unsigned char hw_detectdisk()
   struct stat st;
 
   // Check sample file exists
-  if (stat(samplefilename, &st)==0)
+  if (stat(hw_samplefilename, &st)==0)
     retval=HW_HAVEDISK;
 
   return retval;
@@ -37,19 +37,10 @@ void hw_driveselect()
 
 void hw_startmotor()
 {
-  // Open sample file
-  samplefile=fopen(samplefilename, "rb");
 }
 
 void hw_stopmotor()
 {
-  // Close sample file
-  if (samplefile!=NULL)
-  {
-    fclose(samplefile);
-
-    samplefile=NULL;
-  }
 }
 
 // Track seeking
@@ -85,7 +76,7 @@ int hw_writeprotected()
   struct stat st;
 
   // Check sample file read/write status
-  if (stat(samplefilename, &st)==0)
+  if (stat(hw_samplefilename, &st)==0)
     return ((st.st_mode&S_IWUSR)!=0);
 
   return 0;
@@ -94,11 +85,11 @@ int hw_writeprotected()
 void hw_samplerawtrackdata(char* buf, uint32_t len)
 {
   // Find/Read track data into buffer
-  if (samplefile!=NULL)
+  if (hw_samplefile!=NULL)
   {
     if (hw_currenthead==0)
     {
-      fseek(samplefile, hw_currenttrack*(1024*1024), SEEK_SET);
+      fseek(hw_samplefile, hw_currenttrack*(1024*1024), SEEK_SET);
       fread(buf, len, 1, samplefile);
     }
     else
@@ -110,11 +101,11 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
 void hw_done()
 {
   // Close sample file if open
-  if (samplefile!=NULL)
+  if (hw_samplefile!=NULL)
   {
-    fclose(samplefile);
+    fclose(hw_samplefile);
 
-    samplefile=NULL;
+    hw_samplefile=NULL;
   }
 }
 
@@ -122,11 +113,11 @@ void hw_done()
 int hw_init(const char *rawfile, const int spiclockdivider)
 {
   // Blank out filename string
-  samplefilename[0]=0;
+  hw_samplefilename[0]=0;
 
   // Check raw filename is not blank and will fit into our buffer
-  if ((rawfile[0]!=0) && (strlen(rawfile)<(sizeof(samplefilename)+1)))
-    strcpy(samplefilename, rawfile);
+  if ((rawfile[0]!=0) && (strlen(rawfile)<(sizeof(hw_samplefilename)+1)))
+    strcpy(hw_samplefilename, rawfile);
 
   hw_samplerate=400000000/spiclockdivider;
 
