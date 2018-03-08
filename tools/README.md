@@ -31,3 +31,31 @@ Raw flux output is to .rfi files, these are raw capture data with JSON metadata,
 ## Requirements :
  
  * bcm2835 library, available from [http://www.airspayce.com/mikem/bcm2835/](http://www.airspayce.com/mikem/bcm2835/)
+
+# drivetest
+drivetest - Floppy disk drive testing tool
+
+drivetest is intended for testing basic PCB interface hardware functionality before doing capture.
+
+It will check if the drive and disk are detected, check if read head is at track zero, determine if the disk is write-protected and calculate an approximate RPM.
+
+## Return codes :
+
+ * `0` - Success
+ * `1` - Error failed hardware initialisation, or not enough user permissions
+ * `2` - Error failed to detect drive
+ * `3` - Error failed to detect disk in drive
+
+# checkfsd
+
+checkfsd - Check the contents of an **FSD** file for debug purposes
+
+checkfsd is intended for looking at the contents of **.FSD** files, its primary use is for debugging to make sure the file has been written correctly.
+
+It will check for the FSD magic identifier, show the creation details (date stamp, creator, release and the unused data), show the title, number of tracks then iterate through the available tracks printing out the track and sector information. The sector data will be shown (with non-printable characters replaced by ".").
+
+## Return codes :
+
+ * `0` - Success
+ * `1` - Error with command line arguments
+ * `2` - Error opening FSD file
