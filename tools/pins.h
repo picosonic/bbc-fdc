@@ -6,10 +6,16 @@
 #define GPIO_OUT  BCM2835_GPIO_FSEL_OUTP
 #define PULL_UP   BCM2835_GPIO_PUD_UP
 
-// GPIO and P1 numbers are for Raspberry Pi 2/3 with 40 pin header
 // All used inputs and outputs of 34 pin connector go through 74LS06
 
+// Try to detect RPi 1, based on information at https://elinux.org/RPi_HardwareHistory
+#if defined (REV_0002) || defined(REV_0003) || defined(REV_0004) || defined(REV_0005) || defined(REV_0006) || defined(REV_0007) || defined(REV_0008) || defined(REV_0009) || defined(REV_000d) || defined(REV_000e) || defined(REV_000f) 
+  #define RPI1 1
+#endif
+
 #ifdef RPI1
+  // GPIO and P1 numbers are for Raspberry Pi 1 with 26 pin header
+
   // Output pins to 34pin cable
   #define MOTOR_ON     RPI_GPIO_P1_12  // GPIO 18 P1_12 to cable 16
   #define DS0_OUT      RPI_GPIO_P1_16  // GPIO 23 P1_16 to cable 10 or cable 12 via jumper J3
@@ -25,6 +31,8 @@
   #define INDEX_PULSE    RPI_GPIO_P1_18  // GPIO 24 P1_18 from cable  8 or cable  4 via jumper J2
   #define READ_DATA      RPI_GPIO_P1_21  // GPIO  9 P1_21 from cable 30 (MISO)
 #else
+  // GPIO and P1 numbers are for Raspberry Pi 2/3 with 40 pin header
+
   // Output pins to 34pin cable
   #define MOTOR_ON     RPI_V2_GPIO_P1_12  // GPIO 18 P1_12 to cable 16
   #define DS0_OUT      RPI_V2_GPIO_P1_16  // GPIO 23 P1_16 to cable 10 or cable 12 via jumper J3
