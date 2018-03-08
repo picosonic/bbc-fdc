@@ -1,6 +1,11 @@
 #ifndef _DISKSTORE_H_
 #define _DISKSTORE_H_
 
+// For sector status
+#define NODATA 0
+#define BADDATA 1
+#define GOODDATA 2
+
 typedef struct DiskSector
 {
   // Physical position of sector on disk

@@ -19,16 +19,28 @@
 #define SECONDSINMINUTE 60
 #define MICROSECONDSINSECOND 1000000
 
+// For SPI clock dividers
+#define HW_SPIDIV1024 1024
+#define HW_SPIDIV512 512 
+#define HW_SPIDIV256 256
+#define HW_SPIDIV128 128
+#define HW_SPIDIV64 64
+#define HW_SPIDIV32 32
+#define HW_SPIDIV16 16
+#define HW_SPIDIV8 8
+#define HW_SPIDIV4 4
+
 extern int hw_currenttrack;
 extern int hw_currenthead;
+extern unsigned long hw_samplerate;
 
 extern int hw_stepping;
 
 // Initialisation
 #ifdef NOPI
-extern int hw_init(const char *rawfile);
+extern int hw_init(const char *rawfile, const int spiclockdivider);
 #else
-extern int hw_init();
+extern int hw_init(const int spiclockdivider);
 #endif
 
 // Drive control

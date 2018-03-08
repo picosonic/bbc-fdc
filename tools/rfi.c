@@ -23,7 +23,7 @@ void rfi_writeheader(FILE *rfifile, const int tracks, const int sides, const lon
   fprintf(rfifile, "{date:\"%02d/%02d/%d\",time:\"%02d:%02d:%02d\",tracks:%d,sides:%d,rate:%ld,writeable:%d}", tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900, tim.tm_hour, tim.tm_min, tim.tm_sec, tracks, sides, rate, writeable);
 }
 
-// RLE encode binary sample data
+// RLE encode raw binary sample data
 unsigned long rfi_rleencode(unsigned char *rlebuffer, const unsigned long maxrlelen, const unsigned char *rawtrackdata, const unsigned long rawdatalength)
 {
   unsigned long rlelen=0;

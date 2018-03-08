@@ -17,19 +17,11 @@
 // Microseconds in a bitcell window for single-density FM
 #define BITCELL 4
 
-// SPI sample rate in Hz
-#define SAMPLERATE 12500000
-
 // Microseconds in a second
 #define USINSECOND 1000000
 
 // Disk bitstream block size
 #define BLOCKSIZE (16384+5)
-
-// For sector status
-#define NODATA 0
-#define BADDATA 1
-#define GOODDATA 2
 
 // For type of capture
 #define DISKNONE 0
@@ -52,11 +44,11 @@
 #define DATA 3
 
 // FM Block types
-#define BLOCKNULL 0x00
-#define BLOCKINDEX 0xfc
-#define BLOCKADDR 0xfe
-#define BLOCKDATA 0xfb
-#define BLOCKDELDATA 0xf8
+#define FM_BLOCKNULL 0x00
+#define FM_BLOCKINDEX 0xfc
+#define FM_BLOCKADDR 0xfe
+#define FM_BLOCKDATA 0xfb
+#define FM_BLOCKDELDATA 0xf8
 
 int debug=0;
 int sides=1; // Default to single sided
@@ -192,7 +184,7 @@ void addbit(unsigned char bit)
             }
             else
             {
-              blocktype=BLOCKNULL;
+              blocktype=FM_BLOCKNULL;
               bitlen=0;
               state=SYNC;
             }
@@ -213,7 +205,7 @@ void addbit(unsigned char bit)
             }
             else
             {
-              blocktype=BLOCKNULL;
+              blocktype=FM_BLOCKNULL;
               bitlen=0;
               state=SYNC;
             }
@@ -299,7 +291,7 @@ void addbit(unsigned char bit)
           }
 
           state=SYNC;
-          blocktype=BLOCKNULL;
+          blocktype=FM_BLOCKNULL;
         }
         break;
 
@@ -351,7 +343,7 @@ void addbit(unsigned char bit)
 
           idpos=0;
 
-          blocktype=BLOCKNULL;
+          blocktype=FM_BLOCKNULL;
           blocksize=0;
           state=SYNC;
         }
@@ -359,7 +351,7 @@ void addbit(unsigned char bit)
 
       default:
         // Unknown state, should never happen
-        blocktype=BLOCKNULL;
+        blocktype=FM_BLOCKNULL;
         blocksize=0;
         state=SYNC;
         break;
@@ -386,7 +378,7 @@ void process(int attempt)
 
   state=SYNC;
 
-  defaultwindow=((float)BITCELL/((float)1/((float)SAMPLERATE/(float)USINSECOND)));
+  defaultwindow=((float)BITCELL/((float)1/((float)hw_samplerate/(float)USINSECOND)));
   bucket1=defaultwindow+(defaultwindow/2);
   bucket01=(defaultwindow*2)+(defaultwindow/2);
 
@@ -408,7 +400,7 @@ void process(int attempt)
   lastlength=-1;
 
   blocksize=0;
-  blocktype=BLOCKNULL;
+  blocktype=FM_BLOCKNULL;
   idpos=0;
 
   for (datapos=0;datapos<SPIBUFFSIZE; datapos++)
@@ -578,7 +570,7 @@ int main(int argc,char **argv)
     {
       ++argn;
 
-      if (!hw_init(argv[argn]))
+      if (!hw_init(argv[argn], HW_SPIDIV32))
       {
         fprintf(stderr, "Failed virtual hardware init\n");
         return 4;
@@ -617,7 +609,7 @@ int main(int argc,char **argv)
   printf("Start\n");
 
 #ifndef NOPI
-  if (!hw_init())
+  if (!hw_init(HW_SPIDIV32))
   {
     fprintf(stderr, "Failed hardware init\n");
     return 4;
@@ -760,7 +752,7 @@ int main(int argc,char **argv)
 
   // Write RFI header when doing raw capture
   if (capturetype==DISKRAW)
-    rfi_writeheader(rawdata, drivetracks, sides, SAMPLERATE, hw_writeprotected());
+    rfi_writeheader(rawdata, drivetracks, sides, hw_samplerate, hw_writeprotected());
 
   // Start at track 0
   hw_seektotrackzero();

@@ -10,6 +10,7 @@
 
 int hw_currenttrack = 0;
 int hw_currenthead = 0;
+unsigned long hw_samplerate = 0;
 
 int hw_stepping = HW_NORMALSTEPPING;
 
@@ -118,7 +119,7 @@ void hw_done()
 }
 
 // Initialisation
-int hw_init(const char *rawfile)
+int hw_init(const char *rawfile, const int spiclockdivider)
 {
   // Blank out filename string
   samplefilename[0]=0;
@@ -126,6 +127,8 @@ int hw_init(const char *rawfile)
   // Check raw filename is not blank and will fit into our buffer
   if ((rawfile[0]!=0) && (strlen(rawfile)<(sizeof(samplefilename)+1)))
     strcpy(samplefilename, rawfile);
+
+  hw_samplerate=400000000/spiclockdivider;
 
   return (hw_detectdisk()==HW_HAVEDISK);
 }

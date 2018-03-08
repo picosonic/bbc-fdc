@@ -7,11 +7,12 @@
 
 int hw_currenttrack = 0;
 int hw_currenthead = 0;
+unsigned long hw_samplerate = 0;
 
 int hw_stepping = HW_NORMALSTEPPING;
 
 // Initialise GPIO and SPI
-int hw_init()
+int hw_init(const int spiclockdivider)
 {
   int i;
 
@@ -47,15 +48,54 @@ int hw_init()
   //bcm2835_gpio_fsel(READ_DATA, GPIO_IN);
   //bcm2835_gpio_set_pud(READ_DATA, PULL_UP);
 
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_1024); // 390.625kHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_512); // 781.25kHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256); // 1.562MHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128); // 3.125MHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_64); // 6.250MHz on RPI3
-  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_32); // 12.5MHz on RPI3 ***** WORKS
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_16); // 25MHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_8); // 50MHz on RPI3
-//  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_4); // 100MHz on RPI3 - UNRELIABLE
+  switch (spiclockdivider)
+  {
+    case HW_SPIDIV1024:
+      bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_1024); // 390.625kHz on RPI3
+      break;
+
+    case HW_SPIDIV512:
+      bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_512); // 781.25kHz on RPI3
+      break;
+
+    case HW_SPIDIV256:
+      bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256); // 1.562MHz on RPI3
+      break;
+
+    case HW_SPIDIV128:
+      bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128); // 3.125MHz on RPI3
+      break;
+
+    case HW_SPIDIV64:
+      bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_64); // 6.250MHz on RPI3
+      break;
+
+    case HW_SPIDIV32:
+      bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_32); // 12.5MHz on RPI3 ***** WORKS
+      break;
+
+    case HW_SPIDIV16:
+      bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_16); // 25MHz on RPI3
+      break;
+
+    case HW_SPIDIV8:
+      bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_8); // 50MHz on RPI3
+      break;
+
+    case HW_SPIDIV4:
+      bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_4); // 100MHz on RPI3 - UNRELIABLE
+      break;
+
+    default:
+      return 0;
+      break;
+  }
+
+#ifdef RPI1
+  hw_samplerate=250000000/spiclockdivider;
+#else
+  hw_samplerate=400000000/spiclockdivider;
+#endif
 
   bcm2835_spi_setDataMode(BCM2835_SPI_MODE2); // CPOL (Clock Polarity) = 1, CPHA (Clock Phase) = 0 
 
