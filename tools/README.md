@@ -3,7 +3,7 @@ bbcfdc - Floppy disk raw flux capture and processor
 
 bbcfdc is intended for capturing raw **.RFI** flux data from floppy disk and optionally converting it into a **.SSD**, **.DSD** or **.FSD** file.
 
-It is designed to work with floppy disk interface PCB attached to GPIO of Raspberry Pi 2 or Raspberry Pi 3 running at 400Mhz (not overclocked). With some modifications the PCB and sample code can be made to work with the Raspberry Pi 1.
+It is designed to work with floppy disk interface PCB attached to GPIO of Raspberry Pi 2 or Raspberry Pi 3 running at 400Mhz (not overclocked). With some modifications the PCB and sample code can be made to work with the Raspberry Pi 1 running at 250Mhz.
 
 Raw flux output is to .rfi files, these are raw capture data with JSON metadata, the format for these is detailed in rfi.h
 
