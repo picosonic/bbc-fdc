@@ -37,7 +37,7 @@ bbcfdc-nopi.o: bbcfdc.c dfs.h diskstore.h fsd.h hardware.h rfi.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o bbcfdc-nopi.o bbcfdc.c
 
 nopi.o: nopi.c hardware.h rfi.h
-	$(CC) $(BUILDFLAGS) -c -o nopi.o nopi.c
+	$(CC) $(BUILDFLAGS) -DNOPI -c -o nopi.o nopi.c
 
 ##########################
 
