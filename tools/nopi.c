@@ -87,12 +87,27 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
   // Find/Read track data into buffer
   if (hw_samplefile!=NULL)
   {
-    if (hw_currenthead==0)
+    if (strstr(hw_samplefilename, ".raw")!=NULL)
     {
-      fseek(hw_samplefile, hw_currenttrack*(1024*1024), SEEK_SET);
-      fread(buf, len, 1, samplefile);
+      if (hw_currenthead==0)
+      {
+        fseek(hw_samplefile, hw_currenttrack*(1024*1024), SEEK_SET);
+        fread(buf, len, 1, hw_samplefile);
+      }
+      else
+        bzero(buf, len);
     }
     else
+    if (strstr(hw_samplefilename, ".rfi")!=NULL)
+    {
+      long status;
+
+      status=rfi_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
+
+      if (status<=0)
+        bzero(buf, len);
+    }
+    else // Unknown sample file format
       bzero(buf, len);
   }
 }
@@ -121,7 +136,14 @@ int hw_init(const char *rawfile, const int spiclockdivider)
 
   hw_samplerate=400000000/spiclockdivider;
 
-  return (hw_detectdisk()==HW_HAVEDISK);
+  // Open sample file
+  hw_samplefile=fopen(rawfile, "rb");
+
+  // If opened and valid, read header values
+  if (hw_samplefile!=NULL)
+    rfi_readheader(hw_samplefile);
+
+  return ((hw_detectdisk()==HW_HAVEDISK) && (rfi_tracks>0));
 }
 
 void hw_sleep(const unsigned int seconds)

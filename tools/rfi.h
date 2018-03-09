@@ -2,6 +2,7 @@
 #define _RFI_H_
 
 #include <stdio.h>
+#include <stdint.h>
 
 /*
 
@@ -40,7 +41,16 @@ RLE encoding
 
 #define RFI_MAGIC "RFI"
 
+// From RFI header JSON
+extern int rfi_tracks;
+extern int rfi_sides;
+extern long rfi_rate;
+extern unsigned char rfi_writeable;
+
+// Library functions
+extern int rfi_readheader(FILE *rfifile);
 extern void rfi_writeheader(FILE *rfifile, const int tracks, const int sides, const long rate, const unsigned char writeable);
 extern void rfi_writetack(FILE *rfifile, const int track, const int side, const float rpm, const char *encoding, const unsigned char *rawtrackdata, const unsigned long rawdatalength);
+extern long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, const uint32_t buflen);
 
 #endif
