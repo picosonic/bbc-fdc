@@ -836,7 +836,7 @@ int main(int argc,char **argv)
       {
         // Write the raw sample data if required
         if (rawdata!=NULL)
-          rfi_writetack(rawdata, i, side, hw_measurerpm(), "raw", spibuffer, SPIBUFFSIZE);
+          rfi_writetack(rawdata, i, side, hw_measurerpm(), "rle", spibuffer, SPIBUFFSIZE);
       }
     } // side loop
 
