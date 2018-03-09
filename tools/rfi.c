@@ -389,7 +389,52 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
         else
         if (strstr(rfi_trackencoding, "rle")!=NULL)
         {
-          // TODO
+          unsigned char c, b, blen, s;
+          long rlen=0;
+          char *rlebuff;
+
+          rlebuff=malloc(rfi_trackdatalen);
+
+          if (rlebuff==NULL) return 0;
+
+          blen=0; s=0;
+          fread(rlebuff, rfi_trackdatalen, 1, rfifile);
+
+          for (i=0; i<rfi_trackdatalen; i++)
+          {
+            // Extract next RLE value
+            c=rlebuff[i];
+
+            while (c>0)
+            {
+              b=(b<<1)|s;
+              blen++;
+
+              if (blen==8)
+              {
+                buf[rlen++]=b;
+
+                // Check for unpacking overflow
+                if (rlen>=buflen)
+                {
+                  free(rlebuff);
+                  return rlen;
+                }
+
+                b=0;
+                blen=0;
+              }
+
+              c--;
+            }
+
+            // Switch states
+            s=1-s;
+          }
+
+          free(rlebuff);
+
+          return rlen;
         }
       }
       else
