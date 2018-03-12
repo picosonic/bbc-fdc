@@ -72,7 +72,7 @@ int main(int argc,char **argv)
   hw_startmotor();
 
   // Wait for motor to get up to speed
-  sleep(1);
+  hw_sleep(1);
 
   // Determine if head is at track 00
   if (hw_attrackzero())
@@ -88,7 +88,7 @@ int main(int argc,char **argv)
 
   printf("Approximate RPM %.2f\n", hw_measurerpm());
 
-  sleep(1);
+  hw_sleep(1);
 
   hw_stopmotor();
 
