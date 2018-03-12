@@ -19,6 +19,9 @@
 #define SECONDSINMINUTE 60
 #define MICROSECONDSINSECOND 1000000
 
+// Microseconds in a second
+#define USINSECOND 1000000
+
 // For SPI clock dividers
 #define HW_SPIDIV1024 1024
 #define HW_SPIDIV512 512 

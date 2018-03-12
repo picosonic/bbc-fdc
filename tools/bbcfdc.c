@@ -10,18 +10,10 @@
 #include "dfs.h"
 #include "fsd.h"
 #include "rfi.h"
+#include "fm.h"
 
 // SPI read buffer size
 #define SPIBUFFSIZE (1024*1024)
-
-// Microseconds in a bitcell window for single-density FM
-#define BITCELL 4
-
-// Microseconds in a second
-#define USINSECOND 1000000
-
-// Disk bitstream block size
-#define BLOCKSIZE (16384+5)
 
 // For type of capture
 #define DISKNONE 0
@@ -36,19 +28,8 @@
 #define IMAGEDSD 3
 #define IMAGEFSD 4
 
+// Capture retries when not in raw mode
 #define RETRIES 5
-
-// State machine
-#define SYNC 1
-#define ADDR 2
-#define DATA 3
-
-// FM Block types
-#define FM_BLOCKNULL 0x00
-#define FM_BLOCKINDEX 0xfc
-#define FM_BLOCKADDR 0xfe
-#define FM_BLOCKDATA 0xfb
-#define FM_BLOCKDELDATA 0xf8
 
 int debug=0;
 int sides=1; // Default to single sided
@@ -57,24 +38,8 @@ int drivetracks;
 int capturetype=DISKNONE; // Default to no output
 int outputtype=IMAGENONE; // Default to no image
 
-int state=SYNC;
-
 unsigned char *spibuffer;
-unsigned int datacells;
-int bits=0;
 int info=0;
-
-// Most recent address mark
-unsigned long idpos, blockpos;
-int idamtrack, idamhead, idamsector, idamlength;
-int lasttrack, lasthead, lastsector, lastlength;
-unsigned char blocktype;
-unsigned int blocksize;
-unsigned int idblockcrc, datablockcrc, bitstreamcrc;
-
-// Block data buffer
-unsigned char bitstream[BLOCKSIZE];
-unsigned int bitlen=0;
 
 // Processing position within the SPI buffer
 unsigned long datapos=0;
@@ -83,372 +48,12 @@ unsigned long datapos=0;
 FILE *diskimage=NULL;
 FILE *rawdata=NULL;
 
-// CCITT CRC16 (Floppy Disk Data)
-unsigned int calc_crc(unsigned char *data, int datalen)
+// Used for reversing bit order within a byte
+static unsigned char revlookup[16] = {0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe, 0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf};
+unsigned char reverse(unsigned char n)
 {
-  unsigned int crc=0xffff;
-  int i, j;
-
-  for (i=0; i<datalen; i++)
-  {
-    crc ^= data[i] << 8;
-    for (j=0; j<8; j++)
-      crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
-  }
-
-  return (crc & 0xffff);
-}
-
-// Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
-void addbit(unsigned char bit)
-{
-  unsigned char clock, data;
-  unsigned char dataCRC; // EDC
-
-  datacells=((datacells<<1)&0xffff);
-  datacells|=bit;
-  bits++;
-
-  // Keep processing until we have 8 clock bits + 8 data bits
-  if (bits>=16)
-  {
-    // Extract clock byte
-    clock=((datacells&0x8000)>>8);
-    clock|=((datacells&0x2000)>>7);
-    clock|=((datacells&0x0800)>>6);
-    clock|=((datacells&0x0200)>>5);
-    clock|=((datacells&0x0080)>>4);
-    clock|=((datacells&0x0020)>>3);
-    clock|=((datacells&0x0008)>>2);
-    clock|=((datacells&0x0002)>>1);
-
-    // Extract data byte
-    data=((datacells&0x4000)>>7);
-    data|=((datacells&0x1000)>>6);
-    data|=((datacells&0x0400)>>5);
-    data|=((datacells&0x0100)>>4);
-    data|=((datacells&0x0040)>>3);
-    data|=((datacells&0x0010)>>2);
-    data|=((datacells&0x0004)>>1);
-    data|=((datacells&0x0001)>>0);
-
-    switch (state)
-    {
-      case SYNC:
-        // Detect standard FM address marks
-        switch (datacells)
-        {
-          case 0xf77a: // d7 fc
-            if (debug)
-              printf("\n[%lx] Index Address Mark\n", datapos);
-            blocktype=data;
-            bitlen=0;
-            state=SYNC;
-
-            // Clear IDAM cache, although I've not seen IAM on Acorn DFS
-            idamtrack=-1;
-            idamhead=-1;
-            idamsector=-1;
-            idamlength=-1;
-            break;
-
-          case 0xf57e: // c7 fe
-            if (debug)
-              printf("\n[%lx] ID Address Mark\n", datapos);
-            blocktype=data;
-            blocksize=6+1;
-            bitlen=0;
-            bitstream[bitlen++]=data;
-            idpos=datapos;
-            state=ADDR;
-
-            // Clear IDAM cache incase previous was good and this one is bad
-            idamtrack=-1;
-            idamhead=-1;
-            idamsector=-1;
-            idamlength=-1;
-            break;
-
-          case 0xf56f: // c7 fb
-            if (debug)
-              printf("\n[%lx] Data Address Mark, distance from ID %lx\n", datapos, datapos-idpos);
-
-            // Don't process if don't have a valid preceding IDAM
-            if ((idamtrack!=-1) && (idamhead!=-1) && (idamsector!=-1) && (idamlength!=-1))
-            {
-              blocktype=data;
-              bitlen=0;
-              bitstream[bitlen++]=data;
-              blockpos=datapos;
-              state=DATA;
-            }
-            else
-            {
-              blocktype=FM_BLOCKNULL;
-              bitlen=0;
-              state=SYNC;
-            }
-            break;
-
-          case 0xf56a: // c7 f8
-            if (debug)
-              printf("\n[%lx] Deleted Data Address Mark, distance from ID %lx\n", datapos, datapos-idpos);
-
-            // Don't process if don't have a valid preceding IDAM
-            if ((idamtrack!=-1) && (idamhead!=-1) && (idamsector!=-1) && (idamlength!=-1))
-            {
-              blocktype=data;
-              bitlen=0;
-              bitstream[bitlen++]=data;
-              blockpos=datapos;
-              state=DATA;
-            }
-            else
-            {
-              blocktype=FM_BLOCKNULL;
-              bitlen=0;
-              state=SYNC;
-            }
-            break;
-
-          default:
-            // No matching address marks
-            break;
-        }
-        break;
-
-      case ADDR:
-        // Keep reading until we have the whole block in bitsteam[]
-        bitstream[bitlen++]=data;
-
-        if (bitlen==blocksize)
-        {
-          idblockcrc=calc_crc(&bitstream[0], bitlen-2);
-          bitstreamcrc=(((unsigned int)bitstream[bitlen-2]<<8)|bitstream[bitlen-1]);
-          dataCRC=(idblockcrc==bitstreamcrc)?GOODDATA:BADDATA;
-
-          if (debug)
-          {
-            printf("Track %d (%d) ", bitstream[1], hw_currenttrack);
-            printf("Head %d (%d) ", bitstream[2], hw_currenthead);
-            printf("Sector %d ", bitstream[3]);
-            printf("Data size %d ", bitstream[4]);
-            printf("CRC %.2x%.2x", bitstream[5], bitstream[6]);
-
-            if (dataCRC==GOODDATA)
-              printf(" OK\n");
-            else
-              printf(" BAD (%.4x)\n", idblockcrc);
-          }
-
-          if (dataCRC==GOODDATA)
-          {
-            // Record IDAM values
-            idamtrack=bitstream[1];
-            idamhead=bitstream[2];
-            idamsector=bitstream[3];
-            idamlength=bitstream[4];
-
-            // Record last known good IDAM values for this track
-            lasttrack=idamtrack;
-            lasthead=idamhead;
-            lastsector=idamsector;
-            lastlength=idamlength;
-
-            // Sanitise data block length
-            switch(idamlength)
-            {
-              case 0x00: // 128
-              case 0x01: // 256
-              case 0x02: // 512
-              case 0x03: // 1024
-              case 0x04: // 2048
-              case 0x05: // 4096
-              case 0x06: // 8192
-              case 0x07: // 16384
-                blocksize=(128<<idamlength)+3;
-                break;
-
-              default:
-                if (debug)
-                  printf("Invalid record length %.2x\n", idamlength);
-
-                // Default to DFS standard sector size + (blocktype + (2 x crc))
-                blocksize=DFS_SECTORSIZE+3;
-                break;
-            }
-          }
-          else
-          {
-            // IDAM failed CRC, ignore following data block (for now)
-            blocksize=0;
-
-            // Clear IDAM cache
-            idamtrack=-1;
-            idamhead=-1;
-            idamsector=-1;
-            idamlength=-1;
-          }
-
-          state=SYNC;
-          blocktype=FM_BLOCKNULL;
-        }
-        break;
-
-      case DATA:
-        // Keep reading until we have the whole block in bitsteam[]
-        bitstream[bitlen++]=data;
-
-        if (bitlen==blocksize)
-        {
-          // All the bytes for this "data" block have been read, so process them
-
-          // Calculate CRC (EDC)
-          datablockcrc=calc_crc(&bitstream[0], bitlen-2);
-          bitstreamcrc=(((unsigned int)bitstream[bitlen-2]<<8)|bitstream[bitlen-1]);
-
-          if (debug)
-            printf("  %.2x CRC %.4x", blocktype, bitstreamcrc);
-
-          dataCRC=(datablockcrc==bitstreamcrc)?GOODDATA:BADDATA;
-
-          // Report and save if the CRC matches
-          if (dataCRC==GOODDATA)
-          {
-            if (debug)
-              printf(" OK [%lx]\n", datapos);
-
-            diskstore_addsector(hw_currenttrack, hw_currenthead, idamtrack, idamhead, idamsector, idamlength, idblockcrc, blocktype, blocksize-3, &bitstream[1], datablockcrc);
-          }
-          else
-          {
-            if (debug)
-              printf(" BAD (%.4x)\n", datablockcrc);
-          }
-
-          // Do a catalogue if we haven't already and sector 00 and 01 have been read correctly for this side
-          if ((info==0) && (diskstore_findhybridsector(0, hw_currenthead, 0)!=NULL) && (diskstore_findhybridsector(0, hw_currenthead, 1)!=NULL))
-          {
-            printf("\nSide : %d\n", hw_currenthead);
-            dfs_showinfo(diskstore_findhybridsector(0, hw_currenthead, 0), diskstore_findhybridsector(0, hw_currenthead, 1));
-            info++;
-            printf("\n");
-          }
-
-          // Require subsequent data blocks to have a valid ID block first
-          idamtrack=-1;
-          idamhead=-1;
-          idamsector=-1;
-          idamlength=-1;
-
-          idpos=0;
-
-          blocktype=FM_BLOCKNULL;
-          blocksize=0;
-          state=SYNC;
-        }
-        break;
-
-      default:
-        // Unknown state, should never happen
-        blocktype=FM_BLOCKNULL;
-        blocksize=0;
-        state=SYNC;
-        break;
-    }
-
-    // If waiting for sync, then keep width at 16 bits and continue shifting/adding new bits
-    if (state==SYNC)
-      bits=16;
-    else
-      bits=0;
-  }
-}
-
-void process(int attempt)
-{
-  int j,k, pos;
-  char level,bi=0;
-  unsigned char c, clock, data;
-  int count;
-  unsigned long avg[50];
-  int bitwidth=0;
-  float defaultwindow;
-  int bucket1, bucket01;
-
-  state=SYNC;
-
-  defaultwindow=((float)BITCELL/((float)1/((float)hw_samplerate/(float)USINSECOND)));
-  bucket1=defaultwindow+(defaultwindow/2);
-  bucket01=(defaultwindow*2)+(defaultwindow/2);
-
-  level=(spibuffer[0]&0x80)>>7;
-  bi=level;
-  count=0;
-  datacells=0;
-
-  // Initialise last sector IDAM to invalid
-  idamtrack=-1;
-  idamhead=-1;
-  idamsector=-1;
-  idamlength=-1;
-
-  // Initialise last known good IDAM to invalid
-  lasttrack=-1;
-  lasthead=-1;
-  lastsector=-1;
-  lastlength=-1;
-
-  blocksize=0;
-  blocktype=FM_BLOCKNULL;
-  idpos=0;
-
-  for (datapos=0;datapos<SPIBUFFSIZE; datapos++)
-  {
-    c=spibuffer[datapos];
-
-    // Fill in missing sample between SPI bytes
-    count++;
-
-    for (j=0; j<8; j++)
-    {
-      bi=((c&0x80)>>7);
-
-      count++;
-
-      if (bi!=level)
-      {
-        level=1-level;
-
-        // Look for rising edge
-        if (level==1)
-        {
-          if (count<bucket1)
-          {
-            addbit(1);
-          }
-          else
-          if (count<bucket01)
-          {
-            addbit(0);
-            addbit(1);
-          }
-          else
-          {
-            // This shouldn't happen in single-density FM encoding
-            addbit(0);
-            addbit(0);
-            addbit(1);
-          }
-
-          // Reset sample counter
-          count=0;
-        }
-      }
-
-      c=c<<1;
-    }
-  }
+   // Reverse the top and bottom nibble then swap them.
+   return (revlookup[n&0x0f]<<4) | revlookup[n>>4];
 }
 
 // Stop the motor and tidy up upon exit
@@ -590,6 +195,8 @@ int main(int argc,char **argv)
 
   diskstore_init();
 
+  fm_init(debug);
+
 #ifndef NOPI
   if (geteuid() != 0)
   {
@@ -675,18 +282,18 @@ int main(int argc,char **argv)
   // Sample track
   hw_waitforindex();
   hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
-  process(99);
+  fm_process(spibuffer, SPIBUFFSIZE, 99);
   // Check readability
-  if ((lasttrack==-1) || (lasthead==-1) || (lastsector==-1) || (lastlength==-1))
+  if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
   {
     printf("No valid FM sector IDs found\n");
   }
   else
   {
-    unsigned char othertrack=lasttrack;
-    unsigned char otherhead=lasthead;
-    unsigned char othersector=lastsector;
-    unsigned char otherlength=lastlength;
+    unsigned char othertrack=fm_lasttrack;
+    unsigned char otherhead=fm_lasthead;
+    unsigned char othersector=fm_lastsector;
+    unsigned char otherlength=fm_lastlength;
 
     // Select lower side
     hw_sideselect(1);
@@ -697,9 +304,9 @@ int main(int argc,char **argv)
     // Sample track
     hw_waitforindex();
     hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
-    process(99);
+    fm_process(spibuffer, SPIBUFFSIZE, 99);
     // Check readability
-    if ((lasttrack==-1) || (lasthead==-1) || (lastsector==-1) || (lastlength==-1))
+    if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
     {
       // Only upper side was readable
         printf("Single-sided disk detected\n");
@@ -714,7 +321,7 @@ int main(int argc,char **argv)
       }
 
       // If IDAM shows same head, then double-sided separate
-      if (lasthead==otherhead)
+      if (fm_lasthead==otherhead)
         printf("Double-sided with separate sides disk detected\n");
       else
         printf("Double-sided disk detected\n");
@@ -790,7 +397,7 @@ int main(int argc,char **argv)
         // Process the raw sample data to extract FM encoded data
         if (capturetype!=DISKRAW)
         {
-          process(retry);
+          fm_process(spibuffer, SPIBUFFSIZE, retry);
 
           // Determine if we have successfully read the whole track
           if ((diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 0)!=NULL) &&
@@ -816,6 +423,15 @@ int main(int argc,char **argv)
 
       if (capturetype!=DISKRAW)
       {
+        // Do a catalogue if we haven't already and sector 00 and 01 have been read correctly for this side
+        if ((info==0) && (diskstore_findhybridsector(0, hw_currenthead, 0)!=NULL) && (diskstore_findhybridsector(0, hw_currenthead, 1)!=NULL))
+        {
+          printf("\nSide : %d\n", hw_currenthead);
+          dfs_showinfo(diskstore_findhybridsector(0, hw_currenthead, 0), diskstore_findhybridsector(0, hw_currenthead, 1));
+          info++;
+          printf("\n");
+        }
+
         // If we're on side 1 track 1 and no second catalogue found, then assume single sided
         if ((side==1) && (i==1))
         {
