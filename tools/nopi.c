@@ -140,10 +140,13 @@ int hw_init(const char *rawfile, const int spiclockdivider)
   hw_samplefile=fopen(rawfile, "rb");
 
   // If opened and valid, read header values
-  if (hw_samplefile!=NULL)
+  if ((hw_samplefile!=NULL) && (strstr(hw_samplefilename, ".rfi")!=NULL))
+  {
     rfi_readheader(hw_samplefile);
+    if (rfi_tracks<=0) return 0;
+  }
 
-  return ((hw_detectdisk()==HW_HAVEDISK) && (rfi_tracks>0));
+  return (hw_detectdisk()==HW_HAVEDISK);
 }
 
 void hw_sleep(const unsigned int seconds)
