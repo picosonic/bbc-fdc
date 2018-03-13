@@ -1,13 +1,14 @@
 #include <stdio.h>
 
 #include "crc.h"
+#include "diskstore.h"
 #include "dfs.h"
 #include "fm.h"
 #include "hardware.h"
 
 int fm_state=FM_SYNC; // fm_state machine
 unsigned int fm_datacells=0; // 16 bit sliding buffer
-int fm_bits=0; // Number of used fm_bits within sliding buffer
+int fm_bits=0; // Number of used bits within sliding buffer
 
 // Most recent address mark
 unsigned long fm_idpos, fm_blockpos;
@@ -36,7 +37,7 @@ void fm_addbit(const unsigned char bit)
   fm_datacells|=bit;
   fm_bits++;
 
-  // Keep processing until we have 8 clock fm_bits + 8 data fm_bits
+  // Keep processing until we have 8 clock bits + 8 data bits
   if (fm_bits>=16)
   {
     // Extract clock byte
@@ -67,7 +68,7 @@ void fm_addbit(const unsigned char bit)
         {
           case 0xf77a: // d7 fc
             if (fm_debug)
-              printf("\n[%lx] Index Address Mark\n", fm_datapos);
+              fprintf(stderr, "\n[%lx] Index Address Mark\n", fm_datapos);
             fm_blocktype=data;
             fm_bitlen=0;
             fm_state=FM_SYNC;
@@ -81,7 +82,7 @@ void fm_addbit(const unsigned char bit)
 
           case 0xf57e: // c7 fe
             if (fm_debug)
-              printf("\n[%lx] ID Address Mark\n", fm_datapos);
+              fprintf(stderr, "\n[%lx] ID Address Mark\n", fm_datapos);
             fm_blocktype=data;
             fm_blocksize=6+1;
             fm_bitlen=0;
@@ -98,7 +99,7 @@ void fm_addbit(const unsigned char bit)
 
           case 0xf56f: // c7 fb
             if (fm_debug)
-              printf("\n[%lx] Data Address Mark, distance from ID %lx\n", fm_datapos, fm_datapos-fm_idpos);
+              fprintf(stderr, "\n[%lx] Data Address Mark, distance from ID %lx\n", fm_datapos, fm_datapos-fm_idpos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((fm_idamtrack!=-1) && (fm_idamhead!=-1) && (fm_idamsector!=-1) && (fm_idamlength!=-1))
@@ -119,7 +120,7 @@ void fm_addbit(const unsigned char bit)
 
           case 0xf56a: // c7 f8
             if (fm_debug)
-              printf("\n[%lx] Deleted Data Address Mark, distance from ID %lx\n", fm_datapos, fm_datapos-fm_idpos);
+              fprintf(stderr, "\n[%lx] Deleted Data Address Mark, distance from ID %lx\n", fm_datapos, fm_datapos-fm_idpos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((fm_idamtrack!=-1) && (fm_idamhead!=-1) && (fm_idamsector!=-1) && (fm_idamlength!=-1))
@@ -145,7 +146,7 @@ void fm_addbit(const unsigned char bit)
         break;
 
       case FM_ADDR:
-        // Keep reading until we have the whole block in fm_bitsteam[]
+        // Keep reading until we have the whole block in fm_bitstream[]
         fm_bitstream[fm_bitlen++]=data;
 
         if (fm_bitlen==fm_blocksize)
@@ -156,16 +157,16 @@ void fm_addbit(const unsigned char bit)
 
           if (fm_debug)
           {
-            printf("Track %d (%d) ", fm_bitstream[1], hw_currenttrack);
-            printf("Head %d (%d) ", fm_bitstream[2], hw_currenthead);
-            printf("Sector %d ", fm_bitstream[3]);
-            printf("Data size %d ", fm_bitstream[4]);
-            printf("CRC %.2x%.2x", fm_bitstream[5], fm_bitstream[6]);
+            fprintf(stderr, "Track %d (%d) ", fm_bitstream[1], hw_currenttrack);
+            fprintf(stderr, "Head %d (%d) ", fm_bitstream[2], hw_currenthead);
+            fprintf(stderr, "Sector %d ", fm_bitstream[3]);
+            fprintf(stderr, "Data size %d ", fm_bitstream[4]);
+            fprintf(stderr, "CRC %.2x%.2x", fm_bitstream[5], fm_bitstream[6]);
 
             if (dataCRC==GOODDATA)
-              printf(" OK\n");
+              fprintf(stderr, " OK\n");
             else
-              printf(" BAD (%.4x)\n", fm_idblockcrc);
+              fprintf(stderr, " BAD (%.4x)\n", fm_idblockcrc);
           }
 
           if (dataCRC==GOODDATA)
@@ -198,7 +199,7 @@ void fm_addbit(const unsigned char bit)
 
               default:
                 if (fm_debug)
-                  printf("Invalid record length %.2x\n", fm_idamlength);
+                  fprintf(stderr, "Invalid record length %.2x\n", fm_idamlength);
 
                 // Default to DFS standard sector size + (fm_blocktype + (2 x crc))
                 fm_blocksize=DFS_SECTORSIZE+3;
@@ -223,7 +224,7 @@ void fm_addbit(const unsigned char bit)
         break;
 
       case FM_DATA:
-        // Keep reading until we have the whole block in fm_bitsteam[]
+        // Keep reading until we have the whole block in fm_bitstream[]
         fm_bitstream[fm_bitlen++]=data;
 
         if (fm_bitlen==fm_blocksize)
@@ -235,7 +236,7 @@ void fm_addbit(const unsigned char bit)
           fm_bitstreamcrc=(((unsigned int)fm_bitstream[fm_bitlen-2]<<8)|fm_bitstream[fm_bitlen-1]);
 
           if (fm_debug)
-            printf("  %.2x CRC %.4x", fm_blocktype, fm_bitstreamcrc);
+            fprintf(stderr, "  %.2x CRC %.4x", fm_blocktype, fm_bitstreamcrc);
 
           dataCRC=(fm_datablockcrc==fm_bitstreamcrc)?GOODDATA:BADDATA;
 
@@ -243,14 +244,14 @@ void fm_addbit(const unsigned char bit)
           if (dataCRC==GOODDATA)
           {
             if (fm_debug)
-              printf(" OK [%lx]\n", fm_datapos);
+              fprintf(stderr, " OK [%lx]\n", fm_datapos);
 
             diskstore_addsector(hw_currenttrack, hw_currenthead, fm_idamtrack, fm_idamhead, fm_idamsector, fm_idamlength, fm_idblockcrc, fm_blocktype, fm_blocksize-3, &fm_bitstream[1], fm_datablockcrc);
           }
           else
           {
             if (fm_debug)
-              printf(" BAD (%.4x)\n", fm_datablockcrc);
+              fprintf(stderr, " BAD (%.4x)\n", fm_datablockcrc);
           }
 
           // Require subsequent data blocks to have a valid ID block first
@@ -275,7 +276,7 @@ void fm_addbit(const unsigned char bit)
         break;
     }
 
-    // If waiting for sync, then keep width at 16 fm_bits and continue shifting/adding new fm_bits
+    // If waiting for sync, then keep width at 16 bits and continue shifting/adding new bits
     if (fm_state==FM_SYNC)
       fm_bits=16;
     else
