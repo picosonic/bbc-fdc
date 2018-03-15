@@ -441,13 +441,24 @@ int main(int argc,char **argv)
 
       if (capturetype!=DISKRAW)
       {
-        // Do a catalogue if we haven't already and sector 00 and 01 have been read correctly for this side
-        if ((info==0) && (diskstore_findhybridsector(0, hw_currenthead, 0)!=NULL) && (diskstore_findhybridsector(0, hw_currenthead, 1)!=NULL))
+        // Check if catalogue has been done
+        if (info==0)
         {
-          printf("\nSide : %d\n", hw_currenthead);
-          dfs_showinfo(diskstore_findhybridsector(0, hw_currenthead, 0), diskstore_findhybridsector(0, hw_currenthead, 1));
-          info++;
-          printf("\n");
+          Disk_Sector *cat1;
+          Disk_Sector *cat2;
+
+          // Search for catalogue sectors
+          cat1=diskstore_findhybridsector(0, hw_currenthead, 0);
+          cat2=diskstore_findhybridsector(0, hw_currenthead, 1);
+
+          // If they were found and they appear to be DFS catalogue then do a catalogue
+          if ((cat1!=NULL) && (cat2!=NULL) && (dfs_validcatalogue(cat1, cat2)))
+          {
+            printf("\nSide : %d\n", hw_currenthead);
+            dfs_showinfo(diskstore_findhybridsector(0, hw_currenthead, 0), diskstore_findhybridsector(0, hw_currenthead, 1));
+            info++;
+            printf("\n");
+          }
         }
 
         // If we're on side 1 track 1 and no second catalogue found, then assume single sided
