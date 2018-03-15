@@ -14,7 +14,7 @@
 #endif
 
 // Try to detect RPi 3, based on information at https://elinux.org/RPi_HardwareHistory
-#if defined (REV_a02082) || defined(REV_a22082) || defined(a32082) || defined(a020d3)
+#if defined (REV_a02082) || defined(REV_a22082) || defined(REV_a32082) || defined(REV_a020d3)
   #define RPI3 1
 #endif
 
