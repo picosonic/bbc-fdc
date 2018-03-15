@@ -21,5 +21,6 @@ extern unsigned long dfs_getexecaddress(Disk_Sector *sector1, const int entry);
 extern unsigned long dfs_getfilelength(Disk_Sector *sector1, const int entry);
 extern unsigned long dfs_getstartsector(Disk_Sector *sector1, const int entry);
 extern void dfs_showinfo(Disk_Sector *sector0, Disk_Sector *sector1);
+extern int dfs_validcatalogue(Disk_Sector *sector0, Disk_Sector *sector1);
 
 #endif

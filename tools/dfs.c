@@ -169,3 +169,50 @@ void dfs_showinfo(Disk_Sector *sector0, Disk_Sector *sector1)
   printf("Total disk usage : %d bytes (%d%% of disk)\n", totalusage, (totalusage*100)/(totalsize-(2*DFS_SECTORSIZE)));
   printf("Remaining catalogue space : %d files, %d unused disk sectors\n", DFS_MAXFILES-numfiles, (((sector1->data[6]&0x03)<<8) | (sector1->data[7])) - sectorusage);
 }
+
+// Test for valid DFS catalogue, checks from http://beebwiki.mdfs.net/Acorn_DFS_disc_format
+int dfs_validcatalogue(Disk_Sector *sector0, Disk_Sector *sector1)
+{
+  // Check we have both DFS catalogue sectors
+  if ((sector0==NULL) || (sector1==NULL))
+    return 0;
+
+  // Check we have both DFS catalogue sectors
+  if ((sector0->data==NULL) || (sector1->data==NULL))
+    return 0;
+
+  // Check both sectors are 256 bytes in length
+  if ((sector0->datasize!=DFS_SECTORSIZE) || (sector1->datasize!=DFS_SECTORSIZE))
+    return 0;
+
+  // TODO check reserved bits
+  if ((sector1->data[5]&0x07)!=0) return 0;
+
+  // TODO check the file offset is a multipe of 8
+
+  // TODO check that the disk size is between 2 and 800 sectors (maybe also up to 1023)
+  if ((((sector1->data[6]&0x03)<<8) | (sector1->data[7]))<1)
+    return 0;
+
+  // TODO check the title contains printable ASCII padded with NULs or spaces
+
+  // TODO for each file
+
+    // TODO filename contains one to seven valid characters (0x20..0x7e, except '.',':','"','#','*',' ') and be padded with spaces
+
+    // TODO filename directory character (without attribute bit) must be a valid name character
+
+    // TODO filename (including directory) must be unique
+
+    // TODO file start sector should be more than 1 and less than disc size
+
+    // TODO files may not overlap
+
+    // TODO files may not overshoot end of the disk
+
+  // ************ FURTHER
+
+  // TODO disc size should be 400 or 800 sectors (for 40 or 80 tracks)
+
+  return 1;
+}
