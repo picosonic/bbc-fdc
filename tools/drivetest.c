@@ -39,7 +39,7 @@ int main(int argc,char **argv)
   printf("Start\n");
 
   // Initialise PCB
-  if (!hw_init())
+  if (!hw_init(HW_SPIDIV32))
   {
     printf("Failed init\n");
     return 1;
