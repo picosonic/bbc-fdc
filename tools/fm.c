@@ -6,7 +6,7 @@
 #include "fm.h"
 #include "hardware.h"
 
-int fm_state=FM_SYNC; // fm_state machine
+int fm_state=FM_SYNC; // state machine
 unsigned int fm_datacells=0; // 16 bit sliding buffer
 int fm_bits=0; // Number of used bits within sliding buffer
 
@@ -27,6 +27,38 @@ unsigned long fm_datapos=0;
 
 int fm_debug=0;
 
+unsigned char fm_getclock(const unsigned int datacells)
+{
+  unsigned char clock;
+
+  clock=((datacells&0x8000)>>8);
+  clock|=((datacells&0x2000)>>7);
+  clock|=((datacells&0x0800)>>6);
+  clock|=((datacells&0x0200)>>5);
+  clock|=((datacells&0x0080)>>4);
+  clock|=((datacells&0x0020)>>3);
+  clock|=((datacells&0x0008)>>2);
+  clock|=((datacells&0x0002)>>1);
+
+  return clock;
+}
+
+unsigned char fm_getdata(const unsigned int datacells)
+{
+  unsigned char data;
+
+  data=((datacells&0x4000)>>7);
+  data|=((datacells&0x1000)>>6);
+  data|=((datacells&0x0400)>>5);
+  data|=((datacells&0x0100)>>4);
+  data|=((datacells&0x0040)>>3);
+  data|=((datacells&0x0010)>>2);
+  data|=((datacells&0x0004)>>1);
+  data|=((datacells&0x0001)>>0);
+
+  return data;
+}
+
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
 void fm_addbit(const unsigned char bit)
 {
@@ -41,24 +73,10 @@ void fm_addbit(const unsigned char bit)
   if (fm_bits>=16)
   {
     // Extract clock byte
-    clock=((fm_datacells&0x8000)>>8);
-    clock|=((fm_datacells&0x2000)>>7);
-    clock|=((fm_datacells&0x0800)>>6);
-    clock|=((fm_datacells&0x0200)>>5);
-    clock|=((fm_datacells&0x0080)>>4);
-    clock|=((fm_datacells&0x0020)>>3);
-    clock|=((fm_datacells&0x0008)>>2);
-    clock|=((fm_datacells&0x0002)>>1);
+    clock=fm_getclock(fm_datacells);
 
     // Extract data byte
-    data=((fm_datacells&0x4000)>>7);
-    data|=((fm_datacells&0x1000)>>6);
-    data|=((fm_datacells&0x0400)>>5);
-    data|=((fm_datacells&0x0100)>>4);
-    data|=((fm_datacells&0x0040)>>3);
-    data|=((fm_datacells&0x0010)>>2);
-    data|=((fm_datacells&0x0004)>>1);
-    data|=((fm_datacells&0x0001)>>0);
+    data=fm_getdata(fm_datacells);
 
     switch (fm_state)
     {
@@ -269,7 +287,7 @@ void fm_addbit(const unsigned char bit)
         break;
 
       default:
-        // Unknown fm_state, should never happen
+        // Unknown state, should never happen
         fm_blocktype=FM_BLOCKNULL;
         fm_blocksize=0;
         fm_state=FM_SYNC;
@@ -323,7 +341,7 @@ void fm_process(const unsigned char *sampledata, const unsigned long samplesize,
   fm_blocktype=FM_BLOCKNULL;
   fm_idpos=0;
 
-  for (fm_datapos=0;fm_datapos<samplesize; fm_datapos++)
+  for (fm_datapos=0; fm_datapos<samplesize; fm_datapos++)
   {
     c=sampledata[fm_datapos];
 
