@@ -117,6 +117,80 @@ unsigned char diskstore_countsectors(const unsigned char physical_track, const u
   return n;
 }
 
+// Compare two sectors to determine if they should be swapped
+int diskstore_comparesectors(Disk_Sector *item1, Disk_Sector *item2)
+{
+  if ((item1==NULL) || (item2==NULL))
+    return 0;
+
+  // Compare physical tracks
+  if (item1->physical_track > item2->physical_track)
+    return 1;
+
+  if (item1->physical_track < item2->physical_track)
+    return -1;
+
+  // Compare physical heads, tracks were the same
+  if (item1->physical_head > item2->physical_head)
+    return 1;
+
+  if (item1->physical_head < item2->physical_head)
+    return -1;
+
+  // Compare sectors, heads were the same
+  if (item1->logical_sector > item2->logical_sector)
+    return 1;
+
+  if (item1->logical_sector < item2->logical_sector)
+    return -1;
+
+  // Everything was the same
+  return 0;
+}
+
+// Bubble sort the sectors to be in TRACK/HEAD/SECTOR order rather than the order they were added
+void diskstore_sortsectors()
+{
+  int swaps;
+  Disk_Sector *curr;
+  Disk_Sector *prev;
+  Disk_Sector *swap;
+
+  // Check for empty diskstore
+  if (Disk_SectorsRoot==NULL)
+    return;
+
+  do
+  {
+    swaps=0;
+    curr=Disk_SectorsRoot;
+    prev=NULL;
+
+    while ((curr!=NULL) && (curr->next!=NULL))
+    {
+      // Check if these two sectors need swapping
+      if (diskstore_comparesectors(curr, curr->next)==1)
+      {
+        // Swap the pointers over in the linked list
+        swap=curr->next;
+        curr->next=swap->next;
+        swap->next=curr;
+
+        if (prev==NULL)
+          Disk_SectorsRoot=swap;
+        else
+          prev->next=swap;
+
+        swaps++;
+      }
+
+      // Move on to the next pair of sectors
+      prev=curr;
+      curr=curr->next;
+    }
+  } while (swaps>0);
+}
+
 // Add a sector to linked list
 void diskstore_addsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc)
 {
@@ -216,8 +290,8 @@ void diskstore_dumpsectorlist(const int maxtracks)
           fprintf(stderr, "%d[%d] ", curr->logical_sector, curr->physical_head);
         }
       } while (curr!=NULL);
-      fprintf(stderr, "\n");
     }
+    fprintf(stderr, "\n");
   }
 
   fprintf(stderr, "Total extracted sectors: %d\n", totalsectors);

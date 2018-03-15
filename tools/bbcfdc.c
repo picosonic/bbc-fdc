@@ -86,14 +86,15 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-r retries] [-s] [-v]\n");
 }
 
 int main(int argc,char **argv)
 {
   int argn=0;
   unsigned int i, j;
-  unsigned char retry, side, drivestatus;
+  unsigned char retry, retries, side, drivestatus;
+  int sortsectors=0;
 
   // Check we have some arguments
   if (argc==1)
@@ -101,6 +102,8 @@ int main(int argc,char **argv)
     showargs(argv[0]);
     return 1;
   }
+
+  retries=RETRIES;
 
   // Process command line arguments
   while (argn<argc)
@@ -113,6 +116,21 @@ int main(int argc,char **argv)
     if (strcmp(argv[argn], "-c")==0)
     {
       capturetype=DISKCAT;
+    }
+    else
+    if (strcmp(argv[argn], "-s")==0)
+    {
+      sortsectors=1;
+    }
+    else
+    if ((strcmp(argv[argn], "-r")==0) && ((argn+1)<argc))
+    {
+      int retval;
+
+      ++argn;
+
+      if (sscanf(argv[argn], "%3d", &retval)==1)
+        retries=retval;
     }
     else
     if ((strcmp(argv[argn], "-o")==0) && ((argn+1)<argc))
@@ -379,7 +397,7 @@ int main(int argc,char **argv)
       hw_sideselect(side);
 
       // Retry the capture if any sectors are missing
-      for (retry=0; retry<RETRIES; retry++)
+      for (retry=0; retry<retries; retry++)
       {
         // Wait for a bit after seek/head select to allow drive speed to settle
         hw_sleep(1);
@@ -445,7 +463,7 @@ int main(int argc,char **argv)
             printf("Double sided disk\n");
         }
 
-        if (retry>=RETRIES)
+        if (retry>=retries)
           printf("I/O error reading head %d track %d\n", hw_currenthead, i);
       }
       else
@@ -472,6 +490,10 @@ int main(int argc,char **argv)
 
   // Stop the drive motor
   hw_stopmotor();
+
+  // Check if sectors have been requested to be sorted
+  if (sortsectors)
+    diskstore_sortsectors();
 
   // Write the data to disk image file (if required)
   if (diskimage!=NULL)

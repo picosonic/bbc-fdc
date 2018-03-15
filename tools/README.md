@@ -9,13 +9,15 @@ Raw flux output is to .rfi files, these are raw capture data with JSON metadata,
 
 ## Syntax :
 
-`[-i input_rfi_file] [[-c] | [-o output_file]] [-v]`
+`[-i input_rfi_file] [[-c] | [-o output_file]] [-r retries] [-s] [-v]`
 
 ## Where :
 
  * `-i` Specify input rfi file (when not being run on RPi hardware)
  * `-c` Catalogue the disk contents (DFS)
  * `-o` Specify output file, with one of the following extensions (.rfi, .ssd, .dsd, .fsd)
+ * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi or .raw)
+ * `-s` Sort sectors in diskstore prior to writing image
  * `-v` Verbose
 
 ## Return codes :

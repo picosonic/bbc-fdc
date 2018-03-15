@@ -28,7 +28,7 @@ typedef struct DiskSector
   unsigned char *data;
   unsigned int datacrc;
 
-  void *next;
+  struct DiskSector *next;
 } Disk_Sector;
 
 // Linked list
@@ -46,6 +46,7 @@ extern Disk_Sector *diskstore_findlogicalsector(const unsigned char logical_trac
 extern Disk_Sector *diskstore_findhybridsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_sector);
 extern Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char nth_sector);
 extern unsigned char diskstore_countsectors(const unsigned char physical_track, const unsigned char physical_head);
+extern void diskstore_sortsectors();
 
 // Dump the contents of the disk storage for debug purposes
 extern void diskstore_dumpsectorlist(const int maxtracks);
