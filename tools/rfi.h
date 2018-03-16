@@ -13,15 +13,17 @@ RFI - Raw Flux Image
 File header
 ===========
 3 bytes .. "RFI"
-JSON file metadata .. {date:"02/03/2018",time:"17:00:00",tracks:80,sides:2,rate:12500000}
+JSON file metadata .. {date:"02/03/2018",time:"17:00:00",tracks:80,sides:2,rate:12500000,writeable:0}
 * date/time relate to capture and are in "localtime" and is in dd/mm/YYYY format, time is in HH:MM:SS format and is 24hr
+* sides is the number of physical sides
+* rate in samples/sec
+* writeable either 1 or 0 to record if source was writeable
 
 Track header
 ============
 JSON track metadata .. {track:0,side:0,rate:12500000,rpm:300,enc:"rle",len:48560}
 * track is physical track
 * side is physical side (0 or 1)
-* rate in samples/sec
 * rpm is optional as it may not be known
 * enc can be "raw", "rle", or possibly gz
 * len refers to encoded data, to allow skipping tracks when seeking
