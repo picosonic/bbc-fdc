@@ -84,18 +84,15 @@ int hw_writeprotected()
 
 void hw_samplerawtrackdata(char* buf, uint32_t len)
 {
+  bzero(buf, len);
+
   // Find/Read track data into buffer
   if (hw_samplefile!=NULL)
   {
     if (strstr(hw_samplefilename, ".raw")!=NULL)
     {
-      if (hw_currenthead==0)
-      {
-        fseek(hw_samplefile, hw_currenttrack*(1024*1024), SEEK_SET);
+      if (fseek(hw_samplefile, ((HW_MAXTRACKS*hw_currenthead)+hw_currenttrack)*(1024*1024), SEEK_SET)==0)
         fread(buf, len, 1, hw_samplefile);
-      }
-      else
-        bzero(buf, len);
     }
     else
     if (strstr(hw_samplefilename, ".rfi")!=NULL)
@@ -103,12 +100,7 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
       long status;
 
       status=rfi_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
-
-      if (status<=0)
-        bzero(buf, len);
     }
-    else // Unknown sample file format
-      bzero(buf, len);
   }
 }
 
