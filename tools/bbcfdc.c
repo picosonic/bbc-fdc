@@ -417,6 +417,11 @@ int main(int argc,char **argv)
         {
           fm_process(spibuffer, SPIBUFFSIZE, retry);
 
+#ifdef NOPI
+          // No point in retrying when not using real hardware
+          break;
+#endif
+
           // Determine if we have successfully read the whole track
           if ((diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 0)!=NULL) &&
               (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 1)!=NULL) &&
