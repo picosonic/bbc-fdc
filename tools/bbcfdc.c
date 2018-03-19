@@ -157,6 +157,8 @@ int main(int argc,char **argv)
             break;
 
           default:
+            fprintf(stderr, "Invalid SPI divider\n");
+            return 7;
             break;
         }
       }

@@ -30,6 +30,7 @@ Raw flux output is to **.rfi** files, these are raw capture data with JSON metad
  * `4` - Error failed hardware initialisation
  * `5` - Error failed to detect drive
  * `6` - Error failed to detect disk in drive
+ * `7` - Error invalid SPI divider
  
 ## Requirements :
  
