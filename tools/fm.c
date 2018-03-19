@@ -9,6 +9,7 @@
 int fm_state=FM_SYNC; // state machine
 unsigned int fm_datacells=0; // 16 bit sliding buffer
 int fm_bits=0; // Number of used bits within sliding buffer
+unsigned int fm_p1, fm_p2, fm_p3=0;
 
 // Most recent address mark
 unsigned long fm_idpos, fm_blockpos;
@@ -64,6 +65,11 @@ void fm_addbit(const unsigned char bit)
 {
   unsigned char clock, data;
   unsigned char dataCRC; // EDC
+
+  // Maintain previous 48 bits of data
+  fm_p1=(fm_p1<<1)|((fm_p2&0x8000)>>15);
+  fm_p2=(fm_p2<<1)|((fm_p3&0x8000)>>15);
+  fm_p3=(fm_p3<<1)|((fm_datacells&0x8000)>>15);
 
   fm_datacells=((fm_datacells<<1)&0xffff);
   fm_datacells|=bit;
@@ -421,4 +427,8 @@ void fm_init(const int debug)
   fm_bitlen=0;
 
   fm_datapos=0;
+
+  fm_p1=0;
+  fm_p2=0;
+  fm_p3=0;
 }
