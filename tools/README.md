@@ -16,7 +16,7 @@ Raw flux output is to **.rfi** files, these are raw capture data with JSON metad
  * `-i` Specify input **.rfi** file (when not being run on RPi hardware)
  * `-c` Catalogue the disk contents (DFS)
  * `-o` Specify output file, with one of the following extensions (.rfi, .ssd, .dsd, .fsd)
- * `-spidiv` Specify SPI clock divider to adjust sample rate (one of 4,8,32,64,128,256,512,1024)
+ * `-spidiv` Specify SPI clock divider to adjust sample rate (one of 4,8,16,32,64,128,256,512,1024)
  * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi or .raw)
  * `-s` Sort sectors in diskstore prior to writing image
  * `-v` Verbose
