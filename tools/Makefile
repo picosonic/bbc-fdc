@@ -11,7 +11,7 @@ BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
 all: drivetest bbcfdc checkfsd
 
 drivetest: drivetest.o hardware.o
-	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835 -lpthread -lrt
+	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835
 
 drivetest.o: drivetest.c hardware.h
 	$(CC) $(BUILDFLAGS) -c -o drivetest.o drivetest.c
@@ -23,7 +23,7 @@ checkfsd.o: checkfsd.c
 	$(CC) $(BUILDFLAGS) -c -o checkfsd.o checkfsd.c
 
 bbcfdc: bbcfdc.o crc.o dfs.o diskstore.o fm.o fsd.o hardware.o jsmn.o rfi.o
-	$(CC) $(BUILDFLAGS) -o bbcfdc bbcfdc.o crc.o dfs.o diskstore.o fm.o fsd.o hardware.o jsmn.o rfi.o -lbcm2835 -lpthread -lrt
+	$(CC) $(BUILDFLAGS) -o bbcfdc bbcfdc.o crc.o dfs.o diskstore.o fm.o fsd.o hardware.o jsmn.o rfi.o -lbcm2835
 
 bbcfdc.o: bbcfdc.c dfs.h diskstore.h fm.h fsd.h hardware.h jsmn.h rfi.h
 	$(CC) $(BUILDFLAGS) -c -o bbcfdc.o bbcfdc.c
@@ -31,7 +31,7 @@ bbcfdc.o: bbcfdc.c dfs.h diskstore.h fm.h fsd.h hardware.h jsmn.h rfi.h
 ##########################
 
 bbcfdc-nopi: bbcfdc-nopi.o crc.o dfs.o diskstore.o fm.o fsd.o jsmn.o nopi.o rfi.o
-	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o crc.o dfs.o diskstore.o fm.o fsd.o jsmn.o nopi.o rfi.o -lpthread -lrt
+	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o crc.o dfs.o diskstore.o fm.o fsd.o jsmn.o nopi.o rfi.o
 
 bbcfdc-nopi.o: bbcfdc.c dfs.h diskstore.h fm.h fsd.h hardware.h jsmn.h rfi.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o bbcfdc-nopi.o bbcfdc.c
