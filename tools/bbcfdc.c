@@ -86,13 +86,13 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-r retries] [-s] [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [-r retries] [-s] [-v]\n");
 }
 
 int main(int argc,char **argv)
 {
   int argn=0;
-  unsigned int i, j;
+  unsigned int i, j, rate;
   unsigned char retry, retries, side, drivestatus;
   int sortsectors=0;
 
@@ -104,6 +104,7 @@ int main(int argc,char **argv)
   }
 
   retries=RETRIES;
+  rate=HW_SPIDIV32;
 
   // Process command line arguments
   while (argn<argc)
@@ -131,6 +132,34 @@ int main(int argc,char **argv)
 
       if (sscanf(argv[argn], "%3d", &retval)==1)
         retries=retval;
+    }
+    else
+    if ((strcmp(argv[argn], "-spidiv")==0) && ((argn+1)<argc))
+    {
+      int retval;
+
+      ++argn;
+
+      if (sscanf(argv[argn], "%4d", &retval)==1)
+      {
+        switch (retval)
+        {
+          case 4:
+          case 8:
+          case 16:
+          case 32:
+          case 64:
+          case 128:
+          case 256:
+          case 512:
+          case 1024:
+            rate=retval;
+            break;
+
+          default:
+            break;
+        }
+      }
     }
     else
     if ((strcmp(argv[argn], "-o")==0) && ((argn+1)<argc))
@@ -193,7 +222,7 @@ int main(int argc,char **argv)
     {
       ++argn;
 
-      if (!hw_init(argv[argn], HW_SPIDIV32))
+      if (!hw_init(argv[argn], rate))
       {
         fprintf(stderr, "Failed virtual hardware init\n");
         return 4;
@@ -234,7 +263,7 @@ int main(int argc,char **argv)
   printf("Start\n");
 
 #ifndef NOPI
-  if (!hw_init(HW_SPIDIV32))
+  if (!hw_init(rate))
   {
     fprintf(stderr, "Failed hardware init\n");
     return 4;
