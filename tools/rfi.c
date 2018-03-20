@@ -217,7 +217,7 @@ unsigned long rfi_rleencode(unsigned char *rlebuffer, const unsigned long maxrle
 }
 
 // Write track metadata and track sample data
-void rfi_writetack(FILE *rfifile, const int track, const int side, const float rpm, const char *encoding, const unsigned char *rawtrackdata, const unsigned long rawdatalength)
+void rfi_writetrack(FILE *rfifile, const int track, const int side, const float rpm, const char *encoding, const unsigned char *rawtrackdata, const unsigned long rawdatalength)
 {
   if (rfifile==NULL) return;
 

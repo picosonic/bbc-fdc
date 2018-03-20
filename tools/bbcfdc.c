@@ -7,6 +7,7 @@
 
 #include "hardware.h"
 #include "diskstore.h"
+#include "dfi.h"
 #include "dfs.h"
 #include "fsd.h"
 #include "rfi.h"
@@ -27,6 +28,7 @@
 #define IMAGESSD 2
 #define IMAGEDSD 3
 #define IMAGEFSD 4
+#define IMAGEDFI 5
 
 // Used for values which can be overriden
 #define AUTODETECT -1
@@ -239,6 +241,18 @@ int main(int argc,char **argv)
         else
           printf("Unable to save rawdata\n");
       }
+      else
+      if (strstr(argv[argn], ".dfi")!=NULL)
+      {
+        rawdata=fopen(argv[argn], "w+");
+        if (rawdata!=NULL)
+        {
+          capturetype=DISKRAW;
+          outputtype=IMAGEDFI;
+        }
+        else
+          printf("Unable to save dfi image\n");
+      }
     }
 #ifdef NOPI
     else
@@ -435,7 +449,13 @@ int main(int argc,char **argv)
 
   // Write RFI header when doing raw capture
   if (capturetype==DISKRAW)
-    rfi_writeheader(rawdata, drivetracks, sides, hw_samplerate, hw_writeprotected());
+  {
+    if (outputtype==IMAGERAW)
+      rfi_writeheader(rawdata, drivetracks, sides, hw_samplerate, hw_writeprotected());
+
+    if (outputtype==IMAGEDFI)
+      dfi_writeheader(rawdata);
+  }
 
   // Start at track 0
   hw_seektotrackzero();
@@ -540,7 +560,13 @@ int main(int argc,char **argv)
       {
         // Write the raw sample data if required
         if (rawdata!=NULL)
-          rfi_writetack(rawdata, i, side, hw_measurerpm(), "rle", spibuffer, SPIBUFFSIZE);
+        {
+          if (outputtype==IMAGERAW)
+            rfi_writetrack(rawdata, i, side, hw_measurerpm(), "rle", spibuffer, SPIBUFFSIZE);
+
+          if (outputtype==IMAGEDFI)
+            dfi_writetrack(rawdata, i, side, spibuffer, SPIBUFFSIZE);
+        }
       }
     } // side loop
 
