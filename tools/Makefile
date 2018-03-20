@@ -19,7 +19,7 @@ drivetest.o: drivetest.c hardware.h
 checkfsd: checkfsd.o
 	$(CC) $(BUILDFLAGS) -o checkfsd checkfsd.o
 
-checkfsd.o: checkfsd.c
+checkfsd.o: checkfsd.c fsd.h
 	$(CC) $(BUILDFLAGS) -c -o checkfsd.o checkfsd.c
 
 bbcfdc: bbcfdc.o crc.o dfs.o diskstore.o fm.o fsd.o hardware.o jsmn.o mfm.o rfi.o
