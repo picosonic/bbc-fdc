@@ -28,11 +28,14 @@
 #define IMAGEDSD 3
 #define IMAGEFSD 4
 
+// Used for values which can be overriden
+#define AUTODETECT -1
+
 // Capture retries when not in raw mode
 #define RETRIES 5
 
 int debug=0;
-int sides=1; // Default to single sided
+int sides=AUTODETECT;
 int disktracks;
 int drivetracks;
 int capturetype=DISKNONE; // Default to no output
@@ -86,7 +89,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [-r retries] [-s] [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-s] [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -103,6 +106,7 @@ int main(int argc,char **argv)
     return 1;
   }
 
+  // Set some defaults
   retries=RETRIES;
   rate=HW_SPIDIV32;
 
@@ -122,6 +126,22 @@ int main(int argc,char **argv)
     if (strcmp(argv[argn], "-s")==0)
     {
       sortsectors=1;
+    }
+    else
+    if (strcmp(argv[argn], "-ds")==0)
+    {
+      printf("Forced double-sided capture\n");
+
+      // Request double-sided
+      sides=2;
+    }
+    else
+    if (strcmp(argv[argn], "-ss")==0)
+    {
+      printf("Forced single-sided capture\n");
+
+      // Request single-sided
+      sides=1;
     }
     else
     if ((strcmp(argv[argn], "-r")==0) && ((argn+1)<argc))
@@ -154,6 +174,7 @@ int main(int argc,char **argv)
           case 512:
           case 1024:
             rate=retval;
+            printf("Setting SPI divider to %d\n", retval);
             break;
 
           default:
@@ -170,6 +191,7 @@ int main(int argc,char **argv)
 
       if (strstr(argv[argn], ".ssd")!=NULL)
       {
+        // .SSD is single sided
         sides=1;
 
         diskimage=fopen(argv[argn], "w+");
@@ -322,7 +344,7 @@ int main(int argc,char **argv)
   // Seek to track 2
   hw_seektotrack(2);
 
-  // Select upper side
+  // Select lower side
   hw_sideselect(0);
 
   // Wait for a bit after seek to allow drive speed to settle
@@ -344,49 +366,54 @@ int main(int argc,char **argv)
     unsigned char othersector=fm_lastsector;
     unsigned char otherlength=fm_lastlength;
 
-    // Select lower side
-    hw_sideselect(1);
-
-    // Wait for a bit after head switch to allow drive to settle
-    hw_sleep(1);
-
-    // Sample track
-    hw_waitforindex();
-    hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
-    fm_process(spibuffer, SPIBUFFSIZE, 99);
-    // Check readability
-    if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
+    // Only look at other side if user hasn't specified number of sides
+    if (sides==-1)
     {
-      // Only upper side was readable
-        printf("Single-sided disk detected\n");
-    }
-    else
-    {
-      // Only mark as double-sided when not using single-sided output
-      if ((outputtype!=IMAGEFSD) && (outputtype!=IMAGESSD))
+      // Select upper side
+      hw_sideselect(1);
+
+      // Wait for a bit after head switch to allow drive to settle
+      hw_sleep(1);
+
+      // Sample track
+      hw_waitforindex();
+      hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
+      fm_process(spibuffer, SPIBUFFSIZE, 99);
+      // Check readability
+      if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
       {
-        // Both sides readable
-        sides=2;
-      }
+        // Only lower side was readable
+        printf("Single-sided disk detected\n");
 
-      // If IDAM shows same head, then double-sided separate
-      if (fm_lasthead==otherhead)
-        printf("Double-sided with separate sides disk detected\n");
+        sides=1;
+      }
       else
-        printf("Double-sided disk detected\n");
+      {
+        // If IDAM shows same head, then double-sided separate
+        if (fm_lasthead==otherhead)
+          printf("Double-sided with separate sides disk detected\n");
+        else
+          printf("Double-sided disk detected\n");
+
+        // Only mark as double-sided when not using single-sided output
+        if (outputtype!=IMAGESSD)
+          sides=2;
+        else
+          sides=1;
+      }
     }
 
     // If IDAM cylinder shows 2 then correct stepping
     if (othertrack==2)
     {
-      printf("Correct drive stepping for this disk\n");
+      printf("Correct drive stepping for this disk and drive\n");
     }
     else
     {
-      // If IDAM cylinder shows 1 then 40 track in 80 track drive
+      // If IDAM cylinder shows 1 then 40 track disk in 80 track drive
       if (othertrack==1)
       {
-        printf("40 track disk detected in 80 track drive\n");
+        printf("40 track disk detected in 80 track drive, enabled double stepping\n");
 
         // Enable double stepping
         hw_stepping=HW_DOUBLESTEPPING;
@@ -398,7 +425,7 @@ int main(int argc,char **argv)
       // If IDAM cylinder shows 4 then 80 track in 40 track drive
       if (othertrack==4)
       {
-        printf("80 track disk detected in 40 track drive\n*** Unable to image this disk in this drive ***\n");
+        printf("80 track disk detected in 40 track drive\n*** Unable to fully image this disk in this drive ***\n");
 
         disktracks=80;
         drivetracks=40;
@@ -501,13 +528,9 @@ int main(int argc,char **argv)
         if ((side==1) && (i==1))
         {
           if (info==0)
-          {
-            sides=1;
-
-            printf("Single sided disk\n");
-          }
+            printf("Looks like a single-sided disk\n");
           else
-            printf("Double sided disk\n");
+            printf("Looks like a double-sided disk\n");
         }
 
         if (retry>=retries)
