@@ -101,7 +101,7 @@ unsigned long dfi_encodedata(unsigned char *buffer, const unsigned long maxdfile
 
       if (carry==DFI_CARRY)
       {
-        // Check for RLE buffer overflow
+        // Check for buffer overflow
         if ((dfilen+1)>=maxdfilen) return 0;
 
         buffer[dfilen++]=DFI_CARRY;
@@ -112,11 +112,15 @@ unsigned long dfi_encodedata(unsigned char *buffer, const unsigned long maxdfile
       {
         state=1-state;
 
-        // Check for RLE buffer overflow
-        if ((dfilen+1)>=maxdfilen) return 0;
+        // Having seen an "original" .dfi file, it looks like it only stores READ pin rising edge deltas
+        if (state==1)
+        {
+          // Check for buffer overflow
+          if ((dfilen+1)>=maxdfilen) return 0;
 
-        buffer[dfilen++]=carry;
-        carry=0;
+          buffer[dfilen++]=carry;
+          carry=0;
+        }
       }
 
       c=c<<1;
