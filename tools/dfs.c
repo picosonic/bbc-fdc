@@ -185,10 +185,14 @@ int dfs_validcatalogue(Disk_Sector *sector0, Disk_Sector *sector1)
   if ((sector0->datasize!=DFS_SECTORSIZE) || (sector1->datasize!=DFS_SECTORSIZE))
     return 0;
 
-  // TODO check reserved bits
-  if ((sector1->data[5]&0x07)!=0) return 0;
+  // Check cycle number is BCD
+  if ((sector1->data[4]&0xf0)>0x90) return 0;
+  if ((sector1->data[4]&0x0f)>0x09) return 0;
 
-  // TODO check the file offset is a multipe of 8
+  // Check reserved bits
+  if ((sector1->data[5]&0x07)!=0) return 0;
+  if ((sector1->data[6]&0xc0)!=0) return 0;
+  if ((sector1->data[6]&0x0c)!=0) return 0;
 
   // TODO check that the disk size is between 2 and 800 sectors (maybe also up to 1023)
   if ((((sector1->data[6]&0x03)<<8) | (sector1->data[7]))<1)
