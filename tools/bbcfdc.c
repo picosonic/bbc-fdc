@@ -100,6 +100,9 @@ int main(int argc,char **argv)
   unsigned int i, j, rate;
   unsigned char retry, retries, side, drivestatus;
   int sortsectors=0;
+#ifdef NOPI
+  char *samplefile;
+#endif
 
   // Check we have some arguments
   if (argc==1)
@@ -111,6 +114,9 @@ int main(int argc,char **argv)
   // Set some defaults
   retries=RETRIES;
   rate=HW_SPIDIV32;
+#ifdef NOPI
+  samplefile=NULL;
+#endif
 
   // Process command line arguments
   while (argn<argc)
@@ -176,7 +182,7 @@ int main(int argc,char **argv)
           case 512:
           case 1024:
             rate=retval;
-            printf("Setting SPI divider to %d\n", retval);
+            printf("Setting SPI divider to %d\n", rate);
             break;
 
           default:
@@ -260,16 +266,21 @@ int main(int argc,char **argv)
     {
       ++argn;
 
-      if (!hw_init(argv[argn], rate))
-      {
-        fprintf(stderr, "Failed virtual hardware init\n");
-        return 4;
-      }
+      samplefile=argv[argn];
+
     }
 #endif
 
     ++argn;
   }
+
+#ifdef NOPI
+    if ((samplefile==NULL) || (!hw_init(samplefile, rate)))
+    {
+      fprintf(stderr, "Failed virtual hardware init\n");
+      return 4;
+    }
+#endif
 
   // Make sure we have something to do
   if (capturetype==DISKNONE)
