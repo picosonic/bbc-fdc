@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include "hardware.h"
 #include "rfi.h"
 #include "jsmn.h"
 
@@ -117,7 +118,8 @@ int rfi_readheader(FILE *rfifile)
               rfic=rfi_headerstring[tokens[i+1].end];
               rfi_headerstring[tokens[i+1].end]=0;
 
-              sscanf(&rfi_headerstring[tokens[i+1].start], "%10ld", &rfi_rate);
+              if (sscanf(&rfi_headerstring[tokens[i+1].start], "%10ld", &rfi_rate)==1)
+                hw_samplerate=rfi_rate;
 
               rfi_headerstring[tokens[i+1].end]=rfic;
             }

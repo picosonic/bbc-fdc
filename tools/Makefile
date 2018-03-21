@@ -65,7 +65,7 @@ fsd.o: fsd.c diskstore.h fsd.h
 jsmn.o: jsmn.c jsmn.h
 	$(CC) $(BUILDFLAGS) -c -o jsmn.o jsmn.c
 
-rfi.o: rfi.c jsmn.h rfi.h
+rfi.o: rfi.c hardware.h jsmn.h rfi.h
 	$(CC) $(BUILDFLAGS) -c -o rfi.o rfi.c
 
 hardware.o: hardware.c hardware.h pins.h
