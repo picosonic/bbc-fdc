@@ -22,18 +22,18 @@ checkfsd: checkfsd.o
 checkfsd.o: checkfsd.c fsd.h
 	$(CC) $(BUILDFLAGS) -c -o checkfsd.o checkfsd.c
 
-bbcfdc: bbcfdc.o crc.o dfi.o dfs.o diskstore.o fm.o fsd.o hardware.o jsmn.o mfm.o rfi.o
-	$(CC) $(BUILDFLAGS) -o bbcfdc bbcfdc.o crc.o dfi.o dfs.o diskstore.o fm.o fsd.o hardware.o jsmn.o mfm.o rfi.o -lbcm2835
+bbcfdc: bbcfdc.o crc.o dfi.o dfs.o diskstore.o fm.o fsd.o hardware.o jsmn.o mfm.o mod.o rfi.o
+	$(CC) $(BUILDFLAGS) -o bbcfdc bbcfdc.o crc.o dfi.o dfs.o diskstore.o fm.o fsd.o hardware.o jsmn.o mfm.o mod.o rfi.o -lbcm2835
 
-bbcfdc.o: bbcfdc.c dfi.h dfs.h diskstore.h fm.h fsd.h hardware.h jsmn.h mfm.h rfi.h
+bbcfdc.o: bbcfdc.c dfi.h dfs.h diskstore.h fm.h fsd.h hardware.h jsmn.h mfm.h mod.h rfi.h
 	$(CC) $(BUILDFLAGS) -c -o bbcfdc.o bbcfdc.c
 
 ##########################
 
-bbcfdc-nopi: bbcfdc-nopi.o crc.o dfi.o dfs.o diskstore.o fm.o fsd.o jsmn.o mfm.o nopi.o rfi.o
-	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o crc.o dfi.o dfs.o diskstore.o fm.o fsd.o jsmn.o mfm.o nopi.o rfi.o
+bbcfdc-nopi: bbcfdc-nopi.o crc.o dfi.o dfs.o diskstore.o fm.o fsd.o jsmn.o mfm.o mod.o nopi.o rfi.o
+	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o crc.o dfi.o dfs.o diskstore.o fm.o fsd.o jsmn.o mfm.o mod.o nopi.o rfi.o
 
-bbcfdc-nopi.o: bbcfdc.c dfi.h dfs.h diskstore.h fm.h fsd.h hardware.h jsmn.h mfm.h rfi.h
+bbcfdc-nopi.o: bbcfdc.c dfi.h dfs.h diskstore.h fm.h fsd.h hardware.h jsmn.h mfm.h mod.h rfi.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o bbcfdc-nopi.o bbcfdc.c
 
 nopi.o: nopi.c hardware.h jsmn.h rfi.h
@@ -58,6 +58,9 @@ fm.o: fm.c crc.h diskstore.h dfs.h fm.h hardware.h
 
 mfm.o: mfm.c crc.h diskstore.h mfm.h hardware.h
 	$(CC) $(BUILDFLAGS) -c -o mfm.o mfm.c
+
+mod.o: mod.c fm.h mfm.h hardware.h
+	$(CC) $(BUILDFLAGS) -c -o mod.o mod.c
 
 fsd.o: fsd.c diskstore.h fsd.h
 	$(CC) $(BUILDFLAGS) -c -o fsd.o fsd.c

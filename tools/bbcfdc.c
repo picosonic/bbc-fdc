@@ -11,8 +11,9 @@
 #include "dfs.h"
 #include "fsd.h"
 #include "rfi.h"
+#include "mod.h"
 #include "fm.h"
-
+#include "mfm.h"
 
 // For type of capture
 #define DISKNONE 0
@@ -293,7 +294,7 @@ int main(int argc,char **argv)
 
   diskstore_init();
 
-  fm_init(debug);
+  mod_init(debug);
 
 #ifndef NOPI
   if (geteuid() != 0)
@@ -381,7 +382,7 @@ int main(int argc,char **argv)
   // Sample track
   hw_waitforindex();
   hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
-  fm_process(samplebuffer, samplebuffsize, 99);
+  mod_process(samplebuffer, samplebuffsize, 99);
   // Check readability
   if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
   {
@@ -406,7 +407,7 @@ int main(int argc,char **argv)
       // Sample track
       hw_waitforindex();
       hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
-      fm_process(samplebuffer, samplebuffsize, 99);
+      mod_process(samplebuffer, samplebuffsize, 99);
       // Check readability
       if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
       {
@@ -507,7 +508,7 @@ int main(int argc,char **argv)
         // Process the raw sample data to extract FM encoded data
         if (capturetype!=DISKRAW)
         {
-          fm_process(samplebuffer, samplebuffsize, retry);
+          mod_process(samplebuffer, samplebuffsize, retry);
 
 #ifdef NOPI
           // No point in retrying when not using real hardware
