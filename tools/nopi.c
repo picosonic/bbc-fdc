@@ -11,6 +11,7 @@
 int hw_currenttrack = 0;
 int hw_currenthead = 0;
 unsigned long hw_samplerate = 0;
+float hw_rpm = DEFAULTRPM;
 
 int hw_stepping = HW_NORMALSTEPPING;
 
@@ -151,5 +152,5 @@ void hw_sleep(const unsigned int seconds)
 // Assume 300 RPM
 float hw_measurerpm()
 {
-  return 300;
+  return hw_rpm;
 }

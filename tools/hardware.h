@@ -36,6 +36,7 @@
 extern int hw_currenttrack;
 extern int hw_currenthead;
 extern unsigned long hw_samplerate;
+extern float hw_rpm;
 
 extern int hw_stepping;
 
