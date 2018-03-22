@@ -22,6 +22,11 @@
 // Microseconds in a second
 #define USINSECOND 1000000
 
+// For buffer calculations
+#define BITSPERBYTE 8
+#define HW_DEFAULTRPM 300
+#define HW_ROTATIONSPERSEC (HW_DEFAULTRPM/SECONDSINMINUTE)
+
 // For SPI clock dividers
 #define HW_SPIDIV1024 1024
 #define HW_SPIDIV512 512 

@@ -13,8 +13,6 @@
 #include "rfi.h"
 #include "fm.h"
 
-// SPI read buffer size
-#define SPIBUFFSIZE (1024*1024)
 
 // For type of capture
 #define DISKNONE 0
@@ -36,6 +34,9 @@
 // Capture retries when not in raw mode
 #define RETRIES 5
 
+// Number of rotations to cature per track
+#define ROTATIONS 3
+
 int debug=0;
 int sides=AUTODETECT;
 int disktracks;
@@ -43,7 +44,8 @@ int drivetracks;
 int capturetype=DISKNONE; // Default to no output
 int outputtype=IMAGENONE; // Default to no image
 
-unsigned char *spibuffer;
+unsigned char *samplebuffer;
+unsigned long samplebuffsize;
 int info=0;
 
 // Processing position within the SPI buffer
@@ -67,10 +69,10 @@ void exitFunction()
   printf("Exit function\n");
   hw_done();
 
-  if (spibuffer!=NULL)
+  if (samplebuffer!=NULL)
   {
-    free(spibuffer);
-    spibuffer=NULL;
+    free(samplebuffer);
+    samplebuffer=NULL;
   }
 }
 
@@ -301,16 +303,6 @@ int main(int argc,char **argv)
   }
 #endif
 
-  // Allocate memory for SPI buffer
-  spibuffer=malloc(SPIBUFFSIZE);
-  if (spibuffer==NULL)
-  {
-    fprintf(stderr, "\n");
-    return 3;
-  }
-
-  printf("Start\n");
-
 #ifndef NOPI
   if (!hw_init(rate))
   {
@@ -318,6 +310,17 @@ int main(int argc,char **argv)
     return 4;
   }
 #endif
+
+  // Allocate memory for SPI buffer
+  samplebuffsize=((hw_samplerate/HW_ROTATIONSPERSEC)/BITSPERBYTE)*ROTATIONS;
+  samplebuffer=malloc(samplebuffsize);
+  if (samplebuffer==NULL)
+  {
+    fprintf(stderr, "\n");
+    return 3;
+  }
+
+  printf("Start using %ld byte sample buffer\n", samplebuffsize);
 
   // Install signal handlers to make sure motor is stopped
   atexit(exitFunction);
@@ -377,8 +380,8 @@ int main(int argc,char **argv)
 
   // Sample track
   hw_waitforindex();
-  hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
-  fm_process(spibuffer, SPIBUFFSIZE, 99);
+  hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
+  fm_process(samplebuffer, samplebuffsize, 99);
   // Check readability
   if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
   {
@@ -402,8 +405,8 @@ int main(int argc,char **argv)
 
       // Sample track
       hw_waitforindex();
-      hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
-      fm_process(spibuffer, SPIBUFFSIZE, 99);
+      hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
+      fm_process(samplebuffer, samplebuffsize, 99);
       // Check readability
       if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
       {
@@ -499,12 +502,12 @@ int main(int argc,char **argv)
         hw_waitforindex();
 
         // Sampling data
-        hw_samplerawtrackdata((char *)spibuffer, SPIBUFFSIZE);
+        hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
 
         // Process the raw sample data to extract FM encoded data
         if (capturetype!=DISKRAW)
         {
-          fm_process(spibuffer, SPIBUFFSIZE, retry);
+          fm_process(samplebuffer, samplebuffsize, retry);
 
 #ifdef NOPI
           // No point in retrying when not using real hardware
@@ -573,10 +576,10 @@ int main(int argc,char **argv)
         if (rawdata!=NULL)
         {
           if (outputtype==IMAGERAW)
-            rfi_writetrack(rawdata, i, side, hw_measurerpm(), "rle", spibuffer, SPIBUFFSIZE);
+            rfi_writetrack(rawdata, i, side, hw_measurerpm(), "rle", samplebuffer, samplebuffsize);
 
           if (outputtype==IMAGEDFI)
-            dfi_writetrack(rawdata, i, side, spibuffer, SPIBUFFSIZE);
+            dfi_writetrack(rawdata, i, side, samplebuffer, samplebuffsize);
         }
       }
     } // side loop
@@ -652,10 +655,10 @@ int main(int argc,char **argv)
   if (rawdata!=NULL) fclose(rawdata);
 
   // Free memory allocated to SPI buffer
-  if (spibuffer!=NULL)
+  if (samplebuffer!=NULL)
   {
-    free(spibuffer);
-    spibuffer=NULL;
+    free(samplebuffer);
+    samplebuffer=NULL;
   }
 
   // Dump a list of valid sectors
