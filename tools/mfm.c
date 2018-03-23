@@ -279,7 +279,11 @@ void mfm_addbit(const unsigned char bit)
 
           if (dataCRC==GOODDATA)
           {
-            diskstore_addsector(hw_currenttrack, hw_currenthead, mfm_idamtrack, mfm_idamhead, mfm_idamsector, mfm_idamlength, mfm_idblockcrc, mfm_blocktype, mfm_blocksize-3-1-2, &mfm_bitstream[4], mfm_datablockcrc);
+            if (diskstore_addsector(hw_currenttrack, hw_currenthead, mfm_idamtrack, mfm_idamhead, mfm_idamsector, mfm_idamlength, mfm_idblockcrc, mfm_blocktype, mfm_blocksize-3-1-2, &mfm_bitstream[4], mfm_datablockcrc)==1)
+            {
+              if (mfm_debug)
+                fprintf(stderr, "** MFM new sector T%d H%d - C%d H%d R%d N%d - IDCRC %.4x DATACRC %.4x **\n", hw_currenttrack, hw_currenthead, mfm_idamtrack, mfm_idamhead, mfm_idamsector, mfm_idamlength, mfm_idblockcrc, mfm_datablockcrc);
+            }
           }
 
           mfm_state=MFM_SYNC;
