@@ -462,6 +462,9 @@ int main(int argc,char **argv)
     }
   }
 
+  // Number of sides failed to autodetect and was not forced, so assume 1
+  if (sides==-1) sides=1;
+
   // Write RFI header when doing raw capture
   if (capturetype==DISKRAW)
   {
