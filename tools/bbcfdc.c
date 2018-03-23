@@ -39,6 +39,7 @@
 #define ROTATIONS 3
 
 int debug=0;
+int summary=0;
 int sides=AUTODETECT;
 int disktracks;
 int drivetracks;
@@ -94,7 +95,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-s] [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -134,9 +135,14 @@ int main(int argc,char **argv)
       capturetype=DISKCAT;
     }
     else
-    if (strcmp(argv[argn], "-s")==0)
+    if (strcmp(argv[argn], "-sort")==0)
     {
       sortsectors=1;
+    }
+    else
+    if (strcmp(argv[argn], "-summary")==0)
+    {
+      summary=1;
     }
     else
     if (strcmp(argv[argn], "-ds")==0)
@@ -666,8 +672,22 @@ int main(int argc,char **argv)
   }
 
   // Dump a list of valid sectors
-  if (debug)
+  if ((debug) || (summary))
+  {
+    int fmsectors=diskstore_countsectormod(MODFM);
+    int mfmsectors=diskstore_countsectormod(MODMFM);
+
     diskstore_dumpsectorlist(DFS_MAXTRACKS);
+
+    printf("FM sectors found %d\n", fmsectors);
+    printf("MFM sectors found %d\n", mfmsectors);
+
+    if ((diskstore_minsectorsize!=-1) && (diskstore_maxsectorsize!=-1))
+      printf("Sector sizes range from %d to %d bytes\n", diskstore_minsectorsize, diskstore_maxsectorsize);
+
+    if ((diskstore_minsectorid!=-1) && (diskstore_maxsectorid!=-1))
+      printf("Sector ids range from %d to %d\n", diskstore_minsectorid, diskstore_maxsectorid);
+  }
 
   return 0;
 }

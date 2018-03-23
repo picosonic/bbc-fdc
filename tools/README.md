@@ -11,7 +11,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
 ## Syntax :
 
-`[-i input_rfi_file] [[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-s] [-v]`
+`[-i input_rfi_file] [[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-v]`
 
 ## Where :
 
@@ -22,7 +22,8 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
  * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi or .raw)
  * `-ss` Force single-sided capture
  * `-ds` Force double-sided capture (unless output is to .ssd)
- * `-s` Sort sectors in diskstore prior to writing image
+ * `-sort` Sort sectors in diskstore prior to writing image
+ * `-summary` Present a summary of operations once complete
  * `-v` Verbose
 
 ## Return codes :
