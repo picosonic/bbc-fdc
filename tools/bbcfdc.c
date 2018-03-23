@@ -104,6 +104,7 @@ int main(int argc,char **argv)
   unsigned int i, j, rate;
   unsigned char retry, retries, side, drivestatus;
   int sortsectors=0;
+  unsigned char modulation=AUTODETECT;
 #ifdef NOPI
   char *samplefile;
 #endif
@@ -327,7 +328,7 @@ int main(int argc,char **argv)
     return 3;
   }
 
-  printf("Start using %ld byte sample buffer\n", samplebuffsize);
+  printf("Start with %ld byte sample buffer\n", samplebuffsize);
 
   // Install signal handlers to make sure motor is stopped
   atexit(exitFunction);
@@ -389,20 +390,45 @@ int main(int argc,char **argv)
   hw_waitforindex();
   hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
   mod_process(samplebuffer, samplebuffsize, 99);
+
   // Check readability
-  if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
-  {
-    printf("No valid FM sector IDs found\n");
-  }
+  if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1))
+    printf("No FM sector IDs found\n");
   else
+    modulation=MODFM;
+
+  if ((mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
+    printf("No MFM sector IDs found\n");
+  else
+    modulation=MODFM;
+
+  if (modulation!=AUTODETECT)
   {
-    unsigned char othertrack=fm_lasttrack;
-    unsigned char otherhead=fm_lasthead;
-    unsigned char othersector=fm_lastsector;
-    unsigned char otherlength=fm_lastlength;
+    int othertrack;
+    int otherhead;
+    int othersector;
+    int otherlength;
+
+    // Check if it was FM sectors found
+    if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1))
+    {
+      othertrack=fm_lasttrack;
+      otherhead=fm_lasthead;
+      othersector=fm_lastsector;
+      otherlength=fm_lastlength;
+    }
+
+    // Check if it was MFM sectors found
+    if ((mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
+    {
+      othertrack=mfm_lasttrack;
+      otherhead=mfm_lasthead;
+      othersector=mfm_lastsector;
+      otherlength=mfm_lastlength;
+    }
 
     // Only look at other side if user hasn't specified number of sides
-    if (sides==-1)
+    if (sides==AUTODETECT)
     {
       // Select upper side
       hw_sideselect(1);
@@ -414,8 +440,10 @@ int main(int argc,char **argv)
       hw_waitforindex();
       hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
       mod_process(samplebuffer, samplebuffsize, 99);
+
       // Check readability
-      if ((fm_lasttrack==-1) || (fm_lasthead==-1) || (fm_lastsector==-1) || (fm_lastlength==-1))
+      if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1)
+         && (mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
       {
         // Only lower side was readable
         printf("Single-sided disk detected\n");
@@ -425,7 +453,7 @@ int main(int argc,char **argv)
       else
       {
         // If IDAM shows same head, then double-sided separate
-        if (fm_lasthead==otherhead)
+        if ((fm_lasthead==otherhead) || (mfm_lasthead==otherhead))
           printf("Double-sided with separate sides disk detected\n");
         else
           printf("Double-sided disk detected\n");
@@ -469,7 +497,7 @@ int main(int argc,char **argv)
   }
 
   // Number of sides failed to autodetect and was not forced, so assume 1
-  if (sides==-1) sides=1;
+  if (sides==AUTODETECT) sides=1;
 
   // Write RFI header when doing raw capture
   if (capturetype==DISKRAW)
@@ -679,6 +707,15 @@ int main(int argc,char **argv)
 
     diskstore_dumpsectorlist(DFS_MAXTRACKS);
 
+    printf("\nSummary: \n");
+
+    printf("Disk tracks %d\n", disktracks);
+    printf("Drive tracks %d\n", drivetracks);
+    if (sides==1)
+      printf("Single sided\n");
+    if (sides==2)
+      printf("Double sided\n");
+
     printf("FM sectors found %d\n", fmsectors);
     printf("MFM sectors found %d\n", mfmsectors);
 
@@ -687,6 +724,18 @@ int main(int argc,char **argv)
 
     if ((diskstore_minsectorid!=-1) && (diskstore_maxsectorid!=-1))
       printf("Sector ids range from %d to %d\n", diskstore_minsectorid, diskstore_maxsectorid);
+
+    if ((diskstore_minsectorsize!=-1) && (diskstore_maxsectorsize!=-1) && (diskstore_minsectorid!=-1) && (diskstore_maxsectorid!=-1) && (diskstore_minsectorsize==diskstore_maxsectorsize))
+    {
+      long totalstorage;
+
+      totalstorage=diskstore_maxsectorsize*((diskstore_maxsectorid-diskstore_minsectorid)+1);
+      totalstorage*=disktracks;
+      if (sides==2)
+        totalstorage*=2;
+
+      printf("Total storage is %ld bytes\n", totalstorage);
+    }
   }
 
   return 0;

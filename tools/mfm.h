@@ -13,6 +13,9 @@
 #define MFM_ADDR 3
 #define MFM_DATA 4
 
+extern int mfm_idamtrack, mfm_idamhead, mfm_idamsector, mfm_idamlength; 
+extern int mfm_lasttrack, mfm_lasthead, mfm_lastsector, mfm_lastlength;
+
 extern void mfm_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt);
 
 extern void mfm_init(const int debug);
