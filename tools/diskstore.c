@@ -7,10 +7,10 @@
 Disk_Sector *Disk_SectorsRoot;
 
 // For stats
-unsigned int diskstore_minsectorsize=-1;
-unsigned int diskstore_maxsectorsize=-1;
-unsigned int diskstore_minsectorid=-1;
-unsigned int diskstore_maxsectorid=-1;
+int diskstore_minsectorsize=-1;
+int diskstore_maxsectorsize=-1;
+int diskstore_minsectorid=-1;
+int diskstore_maxsectorid=-1;
 
 // Find sector in store to make sure there is no exact match when adding
 Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)

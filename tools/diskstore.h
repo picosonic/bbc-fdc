@@ -39,10 +39,10 @@ typedef struct DiskSector
 extern Disk_Sector *Disk_SectorsRoot;
 
 // Summary information
-unsigned int diskstore_minsectorsize;
-unsigned int diskstore_maxsectorsize;
-unsigned int diskstore_minsectorid;
-unsigned int diskstore_maxsectorid;
+int diskstore_minsectorsize;
+int diskstore_maxsectorsize;
+int diskstore_minsectorid;
+int diskstore_maxsectorid;
 
 // Initialise disk storage
 extern void diskstore_init();
