@@ -6,6 +6,9 @@
 #define BADDATA 1
 #define GOODDATA 2
 
+#define MODFM 0
+#define MODMFM 1
+
 typedef struct DiskSector
 {
   // Physical position of sector on disk
@@ -22,6 +25,7 @@ typedef struct DiskSector
   unsigned int idcrc;
 
   // Sector data
+  unsigned char modulation;
   unsigned int data_rawpos;
   unsigned int datatype;
   unsigned int datasize;
@@ -34,11 +38,17 @@ typedef struct DiskSector
 // Linked list
 extern Disk_Sector *Disk_SectorsRoot;
 
+// Summary information
+unsigned int diskstore_minsectorsize;
+unsigned int diskstore_maxsectorsize;
+unsigned int diskstore_minsectorid;
+unsigned int diskstore_maxsectorid;
+
 // Initialise disk storage
 extern void diskstore_init();
 
 // Add a sector to the disk storage
-extern int diskstore_addsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc);
+extern int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc);
 
 // Search for a sector within the disk storage
 extern Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc);
@@ -48,6 +58,7 @@ extern Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, 
 
 // Processing of sectors
 extern unsigned char diskstore_countsectors(const unsigned char physical_track, const unsigned char physical_head);
+extern unsigned char diskstore_countsectormod(const unsigned char modulation);
 extern void diskstore_sortsectors();
 
 // Dump the contents of the disk storage for debug purposes

@@ -6,6 +6,12 @@
 
 Disk_Sector *Disk_SectorsRoot;
 
+// For stats
+unsigned int diskstore_minsectorsize=-1;
+unsigned int diskstore_maxsectorsize=-1;
+unsigned int diskstore_minsectorid=-1;
+unsigned int diskstore_maxsectorid=-1;
+
 // Find sector in store to make sure there is no exact match when adding
 Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
 {
@@ -117,6 +123,26 @@ unsigned char diskstore_countsectors(const unsigned char physical_track, const u
   return n;
 }
 
+// Count how many sectors were found with given modulation
+unsigned char diskstore_countsectormod(const unsigned char modulation)
+{
+  Disk_Sector *curr;
+  int n;
+
+  curr=Disk_SectorsRoot;
+  n=0;
+
+  while (curr!=NULL)
+  {
+    if (curr->modulation==modulation)
+      n++;
+
+    curr=curr->next;
+  }
+
+  return n;
+}
+
 // Compare two sectors to determine if they should be swapped
 int diskstore_comparesectors(Disk_Sector *item1, Disk_Sector *item2)
 {
@@ -192,7 +218,7 @@ void diskstore_sortsectors()
 }
 
 // Add a sector to linked list
-int diskstore_addsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc)
+int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc)
 {
   Disk_Sector *curr;
   Disk_Sector *newitem;
@@ -215,6 +241,8 @@ int diskstore_addsector(const unsigned char physical_track, const unsigned char 
   newitem->logical_size=logical_size;
   newitem->idcrc=idcrc;
 
+  newitem->modulation=modulation;
+
   newitem->datatype=datatype;
   newitem->datasize=datasize;
 
@@ -225,6 +253,18 @@ int diskstore_addsector(const unsigned char physical_track, const unsigned char 
   newitem->datacrc=datacrc;
 
   newitem->next=NULL;
+
+  if ((diskstore_minsectorsize==-1) || (datasize<diskstore_minsectorsize))
+    diskstore_minsectorsize=datasize;
+
+  if ((diskstore_maxsectorsize==-1) || (datasize>diskstore_maxsectorsize))
+    diskstore_maxsectorsize=datasize;
+
+  if ((diskstore_maxsectorid==-1) || (logical_sector>diskstore_maxsectorid))
+    diskstore_maxsectorid=logical_sector;
+
+  if ((diskstore_minsectorid==-1) || (logical_sector<diskstore_minsectorid))
+    diskstore_minsectorid=logical_sector;
 
   // Add the new sector to the dynamic linked list
   if (Disk_SectorsRoot==NULL)
@@ -302,6 +342,11 @@ void diskstore_dumpsectorlist(const int maxtracks)
 void diskstore_init()
 {
   Disk_SectorsRoot=NULL;
+
+  diskstore_minsectorsize=-1;
+  diskstore_maxsectorsize=-1;
+  diskstore_minsectorid=-1;
+  diskstore_maxsectorid=-1;
 
   atexit(diskstore_clearallsectors);
 }

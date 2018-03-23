@@ -270,7 +270,7 @@ void fm_addbit(const unsigned char bit)
             if (fm_debug)
               fprintf(stderr, " OK [%lx]\n", fm_datapos);
 
-            if (diskstore_addsector(hw_currenttrack, hw_currenthead, fm_idamtrack, fm_idamhead, fm_idamsector, fm_idamlength, fm_idblockcrc, fm_blocktype, fm_blocksize-3, &fm_bitstream[1], fm_datablockcrc)==1)
+            if (diskstore_addsector(MODFM, hw_currenttrack, hw_currenthead, fm_idamtrack, fm_idamhead, fm_idamsector, fm_idamlength, fm_idblockcrc, fm_blocktype, fm_blocksize-3, &fm_bitstream[1], fm_datablockcrc)==1)
             {
               if (fm_debug)
                 fprintf(stderr, "** FM new sector T%d H%d - C%d H%d R%d N%d - IDCRC %.4x DATACRC %.4x **\n", hw_currenttrack, hw_currenthead, fm_idamtrack, fm_idamhead, fm_idamsector, fm_idamlength, fm_idblockcrc, fm_datablockcrc);
