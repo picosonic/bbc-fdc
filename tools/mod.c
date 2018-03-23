@@ -8,6 +8,8 @@
 int mod_debug=0;
 
 long mod_hist[MOD_HISTOGRAMSIZE];
+int mod_peak[MOD_PEAKSIZE];
+int mod_peaks;
 
 void mod_buildhistogram(const unsigned char *sampledata, const unsigned long samplesize)
 {
@@ -68,7 +70,6 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
   long localmaxima;
   long threshold;
   int inpeak;
-  int peaks;
 
   mod_buildhistogram(sampledata, samplesize);
 
@@ -90,7 +91,7 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
       mod_hist[j]=0;
 
   // Find peaks
-  inpeak=0; peaks=0; localmaxima=0;
+  inpeak=0; mod_peaks=0; localmaxima=0;
   for (j=0; j<MOD_HISTOGRAMSIZE; j++)
   {
     if (mod_hist[j]!=0)
@@ -101,7 +102,7 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
       // Mark the start of a new peak
       if (inpeak==0)
       {
-        peaks++;
+        mod_peaks++;
         inpeak=1;
       }
     }
@@ -112,6 +113,9 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
         if (mod_debug)
           fprintf(stderr, "  Peak at %ld %.3fms\n", localmaxima, mod_samplestoms(localmaxima));
 
+        if (mod_peaks<MOD_PEAKSIZE)
+          mod_peak[mod_peaks-1]=localmaxima;
+
         localmaxima=0;
       }
 
@@ -120,9 +124,9 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
   }
 
   if (mod_debug)
-    fprintf(stderr, "Found %d peaks\n", peaks);
+    fprintf(stderr, "Found %d peaks\n", mod_peaks);
 
-  return peaks;
+  return mod_peaks;
 }
 
 void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt)
@@ -137,6 +141,8 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
 void mod_init(const int debug)
 {
   mod_debug=debug;
+
+  mod_peaks=0;
 
   fm_init(debug);
   mfm_init(debug);
