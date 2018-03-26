@@ -105,6 +105,7 @@ int main(int argc,char **argv)
   unsigned int i, j, rate;
   unsigned char retry, retries, side, drivestatus;
   int sortsectors=0;
+  int missingsectors=0;
   char modulation=AUTODETECT;
 #ifdef NOPI
   char *samplefile;
@@ -459,7 +460,7 @@ int main(int argc,char **argv)
          && (mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
       {
         // Only lower side was readable
-        printf("Single-sided disk detected\n");
+        printf("Single-sided disk assumed, only found data on side 0\n");
 
         sides=1;
       }
@@ -685,34 +686,29 @@ int main(int argc,char **argv)
     {
       Disk_Sector *sec;
       unsigned char blanksector[DFS_SECTORSIZE];
+      int imgside;
 
       // Prepare a blank sector when no sector is found in store
       bzero(blanksector, sizeof(blanksector));
 
       for (i=0; ((i<HW_MAXTRACKS) && (i<disktracks)); i++)
       {
-        for (j=0; j<DFS_SECTORSPERTRACK; j++)
-        {
-          // Write
-          sec=diskstore_findhybridsector(i, 0, j);
-
-          if ((sec!=NULL) && (sec->data!=NULL))
-            fwrite(sec->data, 1, DFS_SECTORSIZE, diskimage);
-          else
-            fwrite(blanksector, 1, DFS_SECTORSIZE, diskimage);
-        }
-
-        // Write DSD interlaced as per BeebEm
-        if (sides==2)
+        for (imgside=0; imgside<sides; imgside++)
         {
           for (j=0; j<DFS_SECTORSPERTRACK; j++)
           {
-            sec=diskstore_findhybridsector(i, 1, j);
+            // Write
+            sec=diskstore_findhybridsector(i, imgside, j);
 
             if ((sec!=NULL) && (sec->data!=NULL))
+            {
               fwrite(sec->data, 1, DFS_SECTORSIZE, diskimage);
+            }
             else
+            {
               fwrite(blanksector, 1, DFS_SECTORSIZE, diskimage);
+              missingsectors++;
+            }
           }
         }
       }
@@ -733,7 +729,7 @@ int main(int argc,char **argv)
         if ((diskstore_minsectorsize!=-1) && (diskstore_maxsectorsize!=-1) && (diskstore_minsectorsize==diskstore_maxsectorsize))
           sectorsize=diskstore_minsectorsize;
 
-        for (i=0; i<disktracks; i++)
+        for (i=0; ((i<HW_MAXTRACKS) && (i<disktracks)); i++)
         {
           for (imgside=0; imgside<sides; imgside++)
           {
@@ -743,9 +739,14 @@ int main(int argc,char **argv)
               sec=diskstore_findhybridsector(i, imgside, j);
 
               if ((sec!=NULL) && (sec->data!=NULL))
+              {
                 fwrite(sec->data, 1, sec->datasize, diskimage);
+              }
               else
+              {
                 fwrite(blanksector, 1, sectorsize, diskimage);
+                missingsectors++;
+              }
             }
           }
         }
@@ -807,6 +808,9 @@ int main(int argc,char **argv)
       printf("Total storage is %ld bytes\n", totalstorage);
     }
   }
+
+  if (missingsectors>0)
+    printf("Missing %d sectors\n", missingsectors);
 
   return 0;
 }
