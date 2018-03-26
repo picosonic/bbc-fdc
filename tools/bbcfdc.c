@@ -644,6 +644,10 @@ int main(int argc,char **argv)
   // Stop the drive motor
   hw_stopmotor();
 
+  // Determine how many tracks we actually had data on
+  if ((disktracks==80) && (diskstore_maxtrack<79))
+    disktracks=(diskstore_maxtrack+1);
+
   // Check if sectors have been requested to be sorted
   if (sortsectors)
     diskstore_sortsectors();
