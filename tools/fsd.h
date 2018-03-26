@@ -13,6 +13,6 @@
 
 #define FSD_CREATORID 0x0a
 
-extern void fsd_write(FILE *fsdfile, const unsigned char tracks);
+extern void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title);
 
 #endif

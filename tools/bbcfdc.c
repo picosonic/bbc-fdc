@@ -648,7 +648,24 @@ int main(int argc,char **argv)
   {
     if (outputtype==IMAGEFSD)
     {
-      fsd_write(diskimage, disktracks);
+      char title[100];
+      Disk_Sector *cat1;
+      Disk_Sector *cat2;
+
+      title[0]=0;
+
+      // Search for catalogue sectors
+      cat1=diskstore_findhybridsector(0, 0, 0);
+      cat2=diskstore_findhybridsector(0, 0, 1);
+
+      // If they were found and they appear to be DFS catalogue then do a catalogue
+      if ((cat1!=NULL) && (cat2!=NULL) && (dfs_validcatalogue(cat1, cat2)))
+        dfs_gettitle(cat1, cat2, title, sizeof(title));
+
+      if (title[0]==0)
+        strcpy(title, "NO TITLE");
+
+      fsd_write(diskimage, disktracks, title);
     }
     else
     {

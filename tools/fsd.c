@@ -51,7 +51,7 @@ Decoding of the "creator" 5 byte field:
    Release_num = ((byte5 AND &C0)/64)*256 + byte4
 */
 
-void fsd_write(FILE *fsdfile, const unsigned char tracks)
+void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title)
 {
   unsigned char buffer[10];
   unsigned char curtrack, curhead, cursector;
@@ -74,7 +74,7 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks)
   buffer[4]=0;
   fwrite(buffer, 1, 5, fsdfile);
 
-  fwrite("NO TITLE", 1, 8, fsdfile);
+  fprintf(fsdfile, "%s", title);
   buffer[0]=0;
   fwrite(buffer, 1, 1, fsdfile);
 

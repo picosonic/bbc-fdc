@@ -83,6 +83,41 @@ unsigned long dfs_getstartsector(Disk_Sector *sector1, const int entry)
           ((sector1->data[8+((entry-1)*8)+7])));
 }
 
+// Return the disk title
+void dfs_gettitle(Disk_Sector *sector0, Disk_Sector *sector1, char *title, const int titlelen)
+{
+  int i, j;
+
+  // Blank out title
+  title[0]=0;
+
+  // Check we have both DFS catalogue sectors
+  if ((sector0==NULL) || (sector1==NULL))
+    return;
+
+  // Check we have both DFS catalogue sectors
+  if ((sector0->data==NULL) || (sector1->data==NULL))
+    return;
+
+  // Check there is enough space in return string
+  if (titlelen<13) return;
+
+  j=0;
+
+  for (i=0; i<8; i++)
+  {
+    if ((sector0->data[i]==0) || (sector0->data[i]==13)) return;
+    title[j++]=sector0->data[i] & 0x7f;
+    title[j]=0;
+  }
+  for (i=0; i<4; i++)
+  {
+    if ((sector1->data[i]==0) || (sector1->data[i]==13)) return;
+    title[j++]=sector1->data[i] & 0x7f;
+    title[j]=0;
+  }
+}
+
 void dfs_showinfo(Disk_Sector *sector0, Disk_Sector *sector1)
 {
   int i;
