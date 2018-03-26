@@ -424,7 +424,7 @@ int main(int argc,char **argv)
     int otherlength;
 
     // Check if it was FM sectors found
-    if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1))
+    if ((fm_lasttrack!=-1) && (fm_lasthead!=-1) && (fm_lastsector!=-1) && (fm_lastlength!=-1))
     {
       othertrack=fm_lasttrack;
       otherhead=fm_lasthead;
@@ -433,7 +433,7 @@ int main(int argc,char **argv)
     }
 
     // Check if it was MFM sectors found
-    if ((mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
+    if ((mfm_lasttrack!=-1) && (mfm_lasthead!=-1) && (mfm_lastsector!=-1) && (mfm_lastlength!=-1))
     {
       othertrack=mfm_lasttrack;
       otherhead=mfm_lasthead;
@@ -672,10 +672,11 @@ int main(int argc,char **argv)
       cat1=diskstore_findhybridsector(0, 0, 0);
       cat2=diskstore_findhybridsector(0, 0, 1);
 
-      // If they were found and they appear to be DFS catalogue then do a catalogue
+      // If they were found and they appear to be DFS catalogue then extract title
       if ((cat1!=NULL) && (cat2!=NULL) && (dfs_validcatalogue(cat1, cat2)))
         dfs_gettitle(cat1, cat2, title, sizeof(title));
 
+      // If no title or blank title, then use default
       if (title[0]==0)
         strcpy(title, "NO TITLE");
 
