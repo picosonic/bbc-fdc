@@ -39,6 +39,8 @@ typedef struct DiskSector
 extern Disk_Sector *Disk_SectorsRoot;
 
 // Summary information
+int diskstore_mintrack;
+int diskstore_maxtrack;
 int diskstore_minsectorsize;
 int diskstore_maxsectorsize;
 int diskstore_minsectorid;

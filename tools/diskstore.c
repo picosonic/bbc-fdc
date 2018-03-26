@@ -7,6 +7,8 @@
 Disk_Sector *Disk_SectorsRoot;
 
 // For stats
+int diskstore_mintrack=-1;
+int diskstore_maxtrack=-1;
 int diskstore_minsectorsize=-1;
 int diskstore_maxsectorsize=-1;
 int diskstore_minsectorid=-1;
@@ -254,6 +256,12 @@ int diskstore_addsector(const unsigned char modulation, const unsigned char phys
 
   newitem->next=NULL;
 
+  if ((diskstore_mintrack==-1) || (physical_track<diskstore_mintrack))
+    diskstore_mintrack=physical_track;
+
+  if ((diskstore_maxtrack==-1) || (physical_track>diskstore_maxtrack))
+    diskstore_maxtrack=physical_track;
+
   if ((diskstore_minsectorsize==-1) || (datasize<diskstore_minsectorsize))
     diskstore_minsectorsize=datasize;
 
@@ -343,6 +351,8 @@ void diskstore_init()
 {
   Disk_SectorsRoot=NULL;
 
+  diskstore_mintrack=-1;
+  diskstore_maxtrack=-1;
   diskstore_minsectorsize=-1;
   diskstore_maxsectorsize=-1;
   diskstore_minsectorid=-1;
