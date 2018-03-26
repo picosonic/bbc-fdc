@@ -610,15 +610,6 @@ int main(int argc,char **argv)
           }
         }
 
-        // If we're on side 1 track 1 and no second catalogue found, then assume single sided
-        if ((side==1) && (i==1))
-        {
-          if (info==0)
-            printf("Looks like a single-sided disk\n");
-          else
-            printf("Looks like a double-sided disk\n");
-        }
-
         if (retry>=retries)
           printf("I/O error reading head %d track %d\n", hw_currenthead, i);
       }
