@@ -64,6 +64,6 @@ extern unsigned char diskstore_countsectormod(const unsigned char modulation);
 extern void diskstore_sortsectors();
 
 // Dump the contents of the disk storage for debug purposes
-extern void diskstore_dumpsectorlist(const int maxtracks);
+extern void diskstore_dumpsectorlist();
 
 #endif

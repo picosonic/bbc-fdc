@@ -316,14 +316,14 @@ void diskstore_clearallsectors()
 }
 
 // Dump a list of all sectors found
-void diskstore_dumpsectorlist(const int maxtracks)
+void diskstore_dumpsectorlist()
 {
   Disk_Sector *curr;
   int dtrack, dhead;
   int n;
   int totalsectors=0;
 
-  for (dtrack=0; dtrack<maxtracks; dtrack++)
+  for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack++)
   {
     fprintf(stderr, "TRACK %.2d: ", dtrack);
 
