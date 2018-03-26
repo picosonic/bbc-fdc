@@ -28,6 +28,7 @@
 #define IMAGEDSD 3
 #define IMAGEFSD 4
 #define IMAGEDFI 5
+#define IMAGEIMG 6
 
 // Used for values which can be overriden
 #define AUTODETECT -1
@@ -104,7 +105,7 @@ int main(int argc,char **argv)
   unsigned int i, j, rate;
   unsigned char retry, retries, side, drivestatus;
   int sortsectors=0;
-  unsigned char modulation=AUTODETECT;
+  char modulation=AUTODETECT;
 #ifdef NOPI
   char *samplefile;
 #endif
@@ -241,6 +242,18 @@ int main(int argc,char **argv)
         {
           capturetype=DISKIMG;
           outputtype=IMAGEFSD;
+        }
+        else
+          printf("Unable to save fsd image\n");
+      }
+      else
+      if (strstr(argv[argn], ".img")!=NULL)
+      {
+        diskimage=fopen(argv[argn], "w+");
+        if (diskimage!=NULL)
+        {
+          capturetype=DISKIMG;
+          outputtype=IMAGEIMG;
         }
         else
           printf("Unable to save fsd image\n");
@@ -668,6 +681,7 @@ int main(int argc,char **argv)
       fsd_write(diskimage, disktracks, title);
     }
     else
+    if ((outputtype==IMAGEDSD) || (outputtype==IMAGESSD))
     {
       Disk_Sector *sec;
       unsigned char blanksector[DFS_SECTORSIZE];
@@ -703,6 +717,44 @@ int main(int argc,char **argv)
         }
       }
     }
+    else
+    if (outputtype==IMAGEIMG)
+    {
+      Disk_Sector *sec;
+      unsigned char blanksector[16384];
+      int sectorsize;
+      int imgside;
+
+      // Prepare a blank sector when no sector is found in store
+      bzero(blanksector, sizeof(blanksector));
+
+      if ((diskstore_minsectorid!=-1) && (diskstore_maxsectorid!=-1))
+      {
+        if ((diskstore_minsectorsize!=-1) && (diskstore_maxsectorsize!=-1) && (diskstore_minsectorsize==diskstore_maxsectorsize))
+          sectorsize=diskstore_minsectorsize;
+
+        for (i=0; i<disktracks; i++)
+        {
+          for (imgside=0; imgside<sides; imgside++)
+          {
+            // Write sectors for this side
+            for (j=diskstore_minsectorid; j<=diskstore_maxsectorid; j++)
+            {
+              sec=diskstore_findhybridsector(i, imgside, j);
+
+              if ((sec!=NULL) && (sec->data!=NULL))
+                fwrite(sec->data, 1, sec->datasize, diskimage);
+              else
+                fwrite(blanksector, 1, sectorsize, diskimage);
+            }
+          }
+        }
+      }
+      else
+        printf("No sectors found to save\n");
+    }
+    else
+      printf("Unknown output format\n");
   }
 
   // Close disk image files (if open)
@@ -728,10 +780,11 @@ int main(int argc,char **argv)
 
     printf("Disk tracks %d\n", disktracks);
     printf("Drive tracks %d\n", drivetracks);
+
     if (sides==1)
-      printf("Single sided\n");
-    if (sides==2)
-      printf("Double sided\n");
+      printf("Single sided capture\n");
+    else
+      printf("Double sided capture\n");
 
     printf("FM sectors found %d\n", fmsectors);
     printf("MFM sectors found %d\n", mfmsectors);
