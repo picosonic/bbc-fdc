@@ -771,11 +771,11 @@ int main(int argc,char **argv)
     int fmsectors=diskstore_countsectormod(MODFM);
     int mfmsectors=diskstore_countsectormod(MODMFM);
 
-    diskstore_dumpsectorlist(DFS_MAXTRACKS);
+    diskstore_dumpsectorlist();
 
     printf("\nSummary: \n");
 
-    printf("Disk tracks %d\n", disktracks);
+    printf("Disk tracks range from %d to %d\n", diskstore_mintrack, diskstore_maxtrack);
     printf("Drive tracks %d\n", drivetracks);
 
     if (sides==1)
