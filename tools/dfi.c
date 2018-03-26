@@ -157,7 +157,11 @@ void dfi_writetrack(FILE *dfifile, const int track, const int side, const unsign
   if (dfidata==NULL) return;
 
   dfidatalength=dfi_encodedata(dfidata, rawdatalength, rawtrackdata, rawdatalength);
-  if (dfidatalength==0) return;
+  if (dfidatalength==0)
+  {
+    free(dfidata);
+    return;
+  }
  
   // Data length
   trackheader[6]=(dfidatalength&0xff000000)>>24;
