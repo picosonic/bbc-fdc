@@ -38,40 +38,46 @@ void hw_driveselect()
 
 void hw_startmotor()
 {
+  // Motor not used in hardware emulation mode
 }
 
 void hw_stopmotor()
 {
+  // Motor not used in hardware emulation mode
 }
 
-// Track seeking
+// Find out if "head" is at track zero
 int hw_attrackzero()
 {
   return (hw_currenttrack==0);
 }
 
+// Seek to track zero
 void hw_seektotrackzero()
 {
   hw_currenttrack=0;
 }
 
+// Seek to given track number
 void hw_seektotrack(const int track)
 {
-  // Seeking will be done by sampling function
+  // Actual seeking within input file will be done by sampling function
   hw_currenttrack=track;
 }
 
+// Switch disk sides
 void hw_sideselect(const int side)
 {
   hw_currenthead=side;
 }
 
-// Signaling and data sampling
+// Wait for an index pulse to synchronise capture
 void hw_waitforindex()
 {
   // Only used to sync sampling, so ignore for now
 }
 
+// Determine if disk is write protected
 int hw_writeprotected()
 {
   struct stat st;
@@ -83,13 +89,16 @@ int hw_writeprotected()
   return 0;
 }
 
+// Read raw flux data for current track/head
 void hw_samplerawtrackdata(char* buf, uint32_t len)
 {
+  // Clear output buffer to prevent failed reads potentially returning previous data
   bzero(buf, len);
 
   // Find/Read track data into buffer
   if (hw_samplefile!=NULL)
   {
+    // Obsolete .raw files were 8 megabits per track, either 40 or 80 tracks, with second side (if any) folowing th whole of the first
     if (strstr(hw_samplefilename, ".raw")!=NULL)
     {
       if (fseek(hw_samplefile, ((HW_MAXTRACKS*hw_currenthead)+hw_currenttrack)*(1024*1024), SEEK_SET)==0)
@@ -127,12 +136,13 @@ int hw_init(const char *rawfile, const int spiclockdivider)
   if ((rawfile[0]!=0) && (strlen(rawfile)<(sizeof(hw_samplefilename)+1)))
     strcpy(hw_samplefilename, rawfile);
 
-  hw_samplerate=400000000/spiclockdivider;
+  // Default to Pi2/Pi3 clock rate
+  hw_samplerate=HW_400MHZ/spiclockdivider;
 
   // Open sample file
   hw_samplefile=fopen(rawfile, "rb");
 
-  // If opened and valid, read header values
+  // If RFI opened and valid, read header values to determine capture settings
   if ((hw_samplefile!=NULL) && (strstr(hw_samplefilename, ".rfi")!=NULL))
   {
     rfi_readheader(hw_samplefile);
@@ -142,6 +152,7 @@ int hw_init(const char *rawfile, const int spiclockdivider)
   return (hw_detectdisk()==HW_HAVEDISK);
 }
 
+// Sleep for a number of seconds
 void hw_sleep(const unsigned int seconds)
 {
   (void) seconds;
@@ -149,7 +160,7 @@ void hw_sleep(const unsigned int seconds)
   // No sleep required as this is not using real hardware
 }
 
-// Assume 300 RPM
+// Measure RPM, defaults to 300RPM
 float hw_measurerpm()
 {
   return hw_rpm;

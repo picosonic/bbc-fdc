@@ -38,6 +38,9 @@
 #define HW_SPIDIV8 8
 #define HW_SPIDIV4 4
 
+#define HW_250MHZ 250000000
+#define HW_400MHZ 400000000
+
 extern int hw_currenttrack;
 extern int hw_currenthead;
 extern unsigned long hw_samplerate;

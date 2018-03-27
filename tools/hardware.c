@@ -102,9 +102,9 @@ int hw_init(const int spiclockdivider)
   }
 
 #ifdef RPI3
-  hw_samplerate=400000000/spiclockdivider; // 400MHz core
+  hw_samplerate=HW_400MHZ/spiclockdivider; // 400MHz core
 #else
-  hw_samplerate=250000000/spiclockdivider; // 250MHz core
+  hw_samplerate=HW_250MHZ/spiclockdivider; // 250MHz core
 #endif
 
   bcm2835_spi_setDataMode(BCM2835_SPI_MODE2); // CPOL (Clock Polarity) = 1, CPHA (Clock Phase) = 0 
