@@ -332,6 +332,9 @@ void hw_sideselect(const int side)
 // Sample raw track data
 void hw_samplerawtrackdata(char* buf, uint32_t len)
 {
+  // Sample using SPI
+  hw_waitforindex();
+
   bcm2835_spi_transfern(buf, len);
 }
 

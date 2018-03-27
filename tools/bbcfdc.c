@@ -401,7 +401,6 @@ int main(int argc,char **argv)
   hw_sleep(1);
 
   // Sample track
-  hw_waitforindex();
   hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
   mod_process(samplebuffer, samplebuffsize, 99);
 
@@ -451,7 +450,6 @@ int main(int argc,char **argv)
       hw_sleep(1);
 
       // Sample track
-      hw_waitforindex();
       hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
       mod_process(samplebuffer, samplebuffsize, 99);
 
@@ -548,10 +546,6 @@ int main(int argc,char **argv)
 
         if (retry==0)
           printf("Sampling data for track %.2X head %.2x\n", i, side);
-
-        // Wait for index rising edge prior to sampling to align as much as possible with index hole
-        // Values seen on a scope are 200ms between pulses of 4.28ms width
-        hw_waitforindex();
 
         // Sampling data
         hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
