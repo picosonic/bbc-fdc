@@ -314,7 +314,7 @@ void mfm_process(const unsigned char *sampledata, const unsigned long samplesize
 
   mfm_state=MFM_SYNC;
 
-  defaultwindow=(hw_samplerate/USINSECOND)*bitcell;
+  defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)bitcell;
 
   level=(sampledata[0]&0x80)>>7;
   bi=level;
@@ -354,7 +354,6 @@ void mfm_process(const unsigned char *sampledata, const unsigned long samplesize
         // Look for rising edge
         if (level==1)
         {
-          // DD
           if ((count>34) && (count<54))
           {
             mfm_addbit(0);
@@ -376,29 +375,6 @@ void mfm_process(const unsigned char *sampledata, const unsigned long samplesize
             mfm_addbit(1);
           }
 
-/*
-          // HD
-          if ((count>15) && (count<29)) // 22
-          {
-            mfm_addbit(0);
-            mfm_addbit(1);
-          }
-          else
-          if ((count>29) && (count<43)) // 35
-          {
-            mfm_addbit(0);
-            mfm_addbit(0);
-            mfm_addbit(1);
-          }
-          else
-          if ((count>43) && (count<57)) // 47
-          {
-            mfm_addbit(0);
-            mfm_addbit(0);
-            mfm_addbit(0);
-            mfm_addbit(1);
-          }
-*/
           count=0;
         }
       }

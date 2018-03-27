@@ -78,7 +78,7 @@ void fm_addbit(const unsigned char bit)
   // Keep processing until we have 8 clock bits + 8 data bits
   if (fm_bits>=16)
   {
-    // Extract clock byte
+    // Extract clock byte, for data this should be 0xff
     clock=fm_getclock(fm_datacells);
 
     // Extract data byte
@@ -90,7 +90,7 @@ void fm_addbit(const unsigned char bit)
         // Detect standard FM address marks
         switch (fm_datacells)
         {
-          case 0xf77a: // d7 fc
+          case 0xf77a: // clock=d7 data=fc
             if (fm_debug)
               fprintf(stderr, "\n[%lx] Index Address Mark\n", fm_datapos);
             fm_blocktype=data;
@@ -104,7 +104,7 @@ void fm_addbit(const unsigned char bit)
             fm_idamlength=-1;
             break;
 
-          case 0xf57e: // c7 fe
+          case 0xf57e: // clock=c7 data=fe
             if (fm_debug)
               fprintf(stderr, "\n[%lx] ID Address Mark\n", fm_datapos);
             fm_blocktype=data;
@@ -121,7 +121,7 @@ void fm_addbit(const unsigned char bit)
             fm_idamlength=-1;
             break;
 
-          case 0xf56f: // c7 fb
+          case 0xf56f: // clock=c7 data=fb
             if (fm_debug)
               fprintf(stderr, "\n[%lx] Data Address Mark, distance from ID %lx\n", fm_datapos, fm_datapos-fm_idpos);
 
@@ -142,7 +142,7 @@ void fm_addbit(const unsigned char bit)
             }
             break;
 
-          case 0xf56a: // c7 f8
+          case 0xf56a: // clock=c7 data=f8
             if (fm_debug)
               fprintf(stderr, "\n[%lx] Deleted Data Address Mark, distance from ID %lx\n", fm_datapos, fm_datapos-fm_idpos);
 
@@ -326,7 +326,7 @@ void fm_process(const unsigned char *sampledata, const unsigned long samplesize,
 
   fm_state=FM_SYNC;
 
-  defaultwindow=(hw_samplerate/USINSECOND)*bitcell;
+  defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)bitcell;
   bucket1=defaultwindow+(defaultwindow/2);
   bucket01=(defaultwindow*2)+(defaultwindow/2);
 
