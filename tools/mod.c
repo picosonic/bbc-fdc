@@ -129,6 +129,38 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
   return mod_peaks;
 }
 
+unsigned char mod_getclock(const unsigned int datacells)
+{
+  unsigned char clock;
+
+  clock=((datacells&0x8000)>>8);
+  clock|=((datacells&0x2000)>>7);
+  clock|=((datacells&0x0800)>>6);
+  clock|=((datacells&0x0200)>>5);
+  clock|=((datacells&0x0080)>>4);
+  clock|=((datacells&0x0020)>>3);
+  clock|=((datacells&0x0008)>>2);
+  clock|=((datacells&0x0002)>>1);
+
+  return clock;
+}
+
+unsigned char mod_getdata(const unsigned int datacells)
+{
+  unsigned char data;
+
+  data=((datacells&0x4000)>>7);
+  data|=((datacells&0x1000)>>6);
+  data|=((datacells&0x0400)>>5);
+  data|=((datacells&0x0100)>>4);
+  data|=((datacells&0x0040)>>3);
+  data|=((datacells&0x0010)>>2);
+  data|=((datacells&0x0004)>>1);
+  data|=((datacells&0x0001)>>0);
+
+  return data;
+}
+
 void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt)
 {
   mod_findpeaks(sampledata, samplesize);

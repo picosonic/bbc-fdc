@@ -7,6 +7,9 @@
 extern int mod_peak[MOD_PEAKSIZE];
 extern int mod_peaks;
 
+unsigned char mod_getclock(const unsigned int datacells);
+unsigned char mod_getdata(const unsigned int datacells);
+
 extern void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt);
 
 extern void mod_init(const int debug);

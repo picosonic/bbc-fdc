@@ -3,6 +3,7 @@
 #include "crc.h"
 #include "diskstore.h"
 #include "dfs.h"
+#include "mod.h"
 #include "fm.h"
 #include "hardware.h"
 
@@ -28,38 +29,6 @@ unsigned long fm_datapos=0;
 
 int fm_debug=0;
 
-unsigned char fm_getclock(const unsigned int datacells)
-{
-  unsigned char clock;
-
-  clock=((datacells&0x8000)>>8);
-  clock|=((datacells&0x2000)>>7);
-  clock|=((datacells&0x0800)>>6);
-  clock|=((datacells&0x0200)>>5);
-  clock|=((datacells&0x0080)>>4);
-  clock|=((datacells&0x0020)>>3);
-  clock|=((datacells&0x0008)>>2);
-  clock|=((datacells&0x0002)>>1);
-
-  return clock;
-}
-
-unsigned char fm_getdata(const unsigned int datacells)
-{
-  unsigned char data;
-
-  data=((datacells&0x4000)>>7);
-  data|=((datacells&0x1000)>>6);
-  data|=((datacells&0x0400)>>5);
-  data|=((datacells&0x0100)>>4);
-  data|=((datacells&0x0040)>>3);
-  data|=((datacells&0x0010)>>2);
-  data|=((datacells&0x0004)>>1);
-  data|=((datacells&0x0001)>>0);
-
-  return data;
-}
-
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
 void fm_addbit(const unsigned char bit)
 {
@@ -79,10 +48,10 @@ void fm_addbit(const unsigned char bit)
   if (fm_bits>=16)
   {
     // Extract clock byte, for data this should be 0xff
-    clock=fm_getclock(fm_datacells);
+    clock=mod_getclock(fm_datacells);
 
     // Extract data byte
-    data=fm_getdata(fm_datacells);
+    data=mod_getdata(fm_datacells);
 
     switch (fm_state)
     {

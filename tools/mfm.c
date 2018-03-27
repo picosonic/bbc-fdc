@@ -28,38 +28,6 @@ unsigned long mfm_datapos=0;
 
 int mfm_debug=0;
 
-unsigned char mfm_getclock(const unsigned int datacells)
-{
-  unsigned char clock;
-
-  clock=((datacells&0x8000)>>8);
-  clock|=((datacells&0x2000)>>7);
-  clock|=((datacells&0x0800)>>6);
-  clock|=((datacells&0x0200)>>5);
-  clock|=((datacells&0x0080)>>4);
-  clock|=((datacells&0x0020)>>3);
-  clock|=((datacells&0x0008)>>2);
-  clock|=((datacells&0x0002)>>1);
-
-  return clock;
-}
-
-unsigned char mfm_getdata(const unsigned int datacells)
-{
-  unsigned char data;
-
-  data=((datacells&0x4000)>>7);
-  data|=((datacells&0x1000)>>6);
-  data|=((datacells&0x0400)>>5);
-  data|=((datacells&0x0100)>>4);
-  data|=((datacells&0x0040)>>3);
-  data|=((datacells&0x0010)>>2);
-  data|=((datacells&0x0004)>>1);
-  data|=((datacells&0x0001)>>0);
-
-  return data;
-}
-
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
 void mfm_addbit(const unsigned char bit)
 {
@@ -78,10 +46,10 @@ void mfm_addbit(const unsigned char bit)
   if (mfm_bits>=16)
   {
     // Extract clock byte
-    clock=mfm_getclock(mfm_datacells);
+    clock=mod_getclock(mfm_datacells);
 
     // Extract data byte
-    data=mfm_getdata(mfm_datacells);
+    data=mod_getdata(mfm_datacells);
 
     switch (mfm_state)
     {
@@ -112,9 +80,9 @@ void mfm_addbit(const unsigned char bit)
             mfm_blocktype=data;
 
             mfm_bitlen=0;
-            mfm_bitstream[mfm_bitlen++]=mfm_getdata(mfm_p1);
-            mfm_bitstream[mfm_bitlen++]=mfm_getdata(mfm_p2);
-            mfm_bitstream[mfm_bitlen++]=mfm_getdata(mfm_p3);
+            mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p1);
+            mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p2);
+            mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p3);
             mfm_bitstream[mfm_bitlen++]=data;
 
             mfm_blocksize=3+1+4+2;
@@ -140,9 +108,9 @@ void mfm_addbit(const unsigned char bit)
               mfm_blocktype=data;
 
               mfm_bitlen=0;
-              mfm_bitstream[mfm_bitlen++]=mfm_getdata(mfm_p1);
-              mfm_bitstream[mfm_bitlen++]=mfm_getdata(mfm_p2);
-              mfm_bitstream[mfm_bitlen++]=mfm_getdata(mfm_p3);
+              mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p1);
+              mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p2);
+              mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p3);
               mfm_bitstream[mfm_bitlen++]=data;
 
               mfm_state=MFM_DATA;
@@ -167,9 +135,9 @@ void mfm_addbit(const unsigned char bit)
               mfm_blocktype=data;
 
               mfm_bitlen=0;
-              mfm_bitstream[mfm_bitlen++]=mfm_getdata(mfm_p1);
-              mfm_bitstream[mfm_bitlen++]=mfm_getdata(mfm_p2);
-              mfm_bitstream[mfm_bitlen++]=mfm_getdata(mfm_p3);
+              mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p1);
+              mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p2);
+              mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p3);
               mfm_bitstream[mfm_bitlen++]=data;
 
               mfm_state=MFM_DATA;
