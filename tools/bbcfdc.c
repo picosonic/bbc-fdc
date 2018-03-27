@@ -775,7 +775,9 @@ int main(int argc,char **argv)
 
     printf("\nSummary: \n");
 
-    printf("Disk tracks range from %d to %d\n", diskstore_mintrack, diskstore_maxtrack);
+    if ((diskstore_mintrack!=AUTODETECT) && (diskstore_maxtrack!=AUTODETECT))
+      printf("Disk tracks range from %d to %d\n", diskstore_mintrack, diskstore_maxtrack);
+
     printf("Drive tracks %d\n", drivetracks);
 
     if (sides==1)
