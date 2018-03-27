@@ -133,8 +133,10 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
 {
   mod_findpeaks(sampledata, samplesize);
 
-  fm_process(sampledata, samplesize, attempt);
-  //mfm_process(sampledata, samplesize, attempt);
+  fm_process(sampledata, samplesize, FM_BITCELL, attempt);
+
+  //mfm_process(sampledata, samplesize, MFM_BITCELLDD, attempt);
+  //mfm_process(sampledata, samplesize, MFM_BITCELLHD, attempt);
 }
 
 // Initialise modulation

@@ -304,14 +304,17 @@ void mfm_addbit(const unsigned char bit)
   }
 }
 
-void mfm_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt)
+void mfm_process(const unsigned char *sampledata, const unsigned long samplesize, const long bitcell, const int attempt)
 {
   int j;
   char level,bi=0;
   unsigned char c, clock, data;
   int count;
+  float defaultwindow;
 
   mfm_state=MFM_SYNC;
+
+  defaultwindow=(hw_samplerate/USINSECOND)*bitcell;
 
   level=(sampledata[0]&0x80)>>7;
   bi=level;

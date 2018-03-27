@@ -313,7 +313,7 @@ void fm_addbit(const unsigned char bit)
 }
 
 // Process a sample buffer looking for FM data
-void fm_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt)
+void fm_process(const unsigned char *sampledata, const unsigned long samplesize, const long bitcell, const int attempt)
 {
   int j,k, pos;
   char level,bi=0;
@@ -326,7 +326,7 @@ void fm_process(const unsigned char *sampledata, const unsigned long samplesize,
 
   fm_state=FM_SYNC;
 
-  defaultwindow=((float)FM_BITCELL/((float)1/((float)hw_samplerate/(float)USINSECOND)));
+  defaultwindow=(hw_samplerate/USINSECOND)*bitcell;
   bucket1=defaultwindow+(defaultwindow/2);
   bucket01=(defaultwindow*2)+(defaultwindow/2);
 
