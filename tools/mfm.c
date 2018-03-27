@@ -338,9 +338,6 @@ void mfm_process(const unsigned char *sampledata, const unsigned long samplesize
   {
     c=sampledata[mfm_datapos];
 
-    // Fill in missing sample between SPI bytes
-//    count++;
-
     for (j=0; j<BITSPERBYTE; j++)
     {
       bi=((c&0x80)>>7);

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -7,6 +8,8 @@
 
 #include "hardware.h"
 #include "rfi.h"
+
+#define HW_OLDRAWTRACKSIZE (1024*1024)
 
 int hw_currenttrack = 0;
 int hw_currenthead = 0;
@@ -89,6 +92,51 @@ int hw_writeprotected()
   return 0;
 }
 
+// Fix SPI sample buffer timings
+void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen)
+{
+  long inpos, outpos;
+  unsigned char c, o, olen, bitpos;
+
+  outpos=0; o=0; olen=0;
+
+  for (inpos=0; inpos<inlen; inpos++)
+  {
+    c=inbuf[inpos];
+
+    // Insert extra sample, this is due to SPI sampling leaving a 1 sample gap between each group of 8 samples
+    o=(o<<1)|((c&0x80)>>7);
+    olen++;
+    if (olen==BITSPERBYTE)
+    {
+      if (outpos<outlen)
+        outbuf[outpos++]=o;
+
+      olen=0; o=0;
+    }
+
+    // Process the 8 valid samples we did get
+    for (bitpos=0; bitpos<BITSPERBYTE; bitpos++)
+    {
+      o=(o<<1)|((c&0x80)>>7);
+      olen++;
+
+      if (olen==BITSPERBYTE)
+      {
+        if (outpos<outlen)
+          outbuf[outpos++]=o;
+
+        olen=0; o=0;
+      }
+
+      c=c<<1;
+    }
+
+    // Stop on output buffer overflow
+    if (outpos>=outlen) return;
+  }
+}
+
 // Read raw flux data for current track/head
 void hw_samplerawtrackdata(char* buf, uint32_t len)
 {
@@ -98,11 +146,22 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
   // Find/Read track data into buffer
   if (hw_samplefile!=NULL)
   {
-    // Obsolete .raw files were 8 megabits per track, either 40 or 80 tracks, with second side (if any) folowing th whole of the first
+    // Obsolete .raw files were 8 megabits per track, sampled at 12.5Mhz, either 40 or 80 tracks, with second side (if any) folowing th whole of the first
     if (strstr(hw_samplefilename, ".raw")!=NULL)
     {
-      if (fseek(hw_samplefile, ((HW_MAXTRACKS*hw_currenthead)+hw_currenttrack)*(1024*1024), SEEK_SET)==0)
-        fread(buf, len, 1, hw_samplefile);
+      if (fseek(hw_samplefile, ((HW_MAXTRACKS*hw_currenthead)+hw_currenttrack)*HW_OLDRAWTRACKSIZE, SEEK_SET)==0)
+      {
+        char *rawbuf;
+
+        rawbuf=malloc(HW_OLDRAWTRACKSIZE);
+        if (rawbuf==NULL) return;
+
+        fread(rawbuf, HW_OLDRAWTRACKSIZE, 1, hw_samplefile);
+
+        hw_fixspisamples(rawbuf, HW_OLDRAWTRACKSIZE, buf, len);
+
+        free(rawbuf);
+      }
     }
     else
     if (strstr(hw_samplefilename, ".rfi")!=NULL)

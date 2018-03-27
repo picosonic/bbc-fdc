@@ -73,6 +73,7 @@ extern int hw_writeprotected();
 extern void hw_samplerawtrackdata(char* buf, uint32_t len);
 extern void hw_sleep(const unsigned int seconds);
 extern float hw_measurerpm();
+extern void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen);
 
 // Clean up
 extern void hw_done();

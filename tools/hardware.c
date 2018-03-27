@@ -329,13 +329,70 @@ void hw_sideselect(const int side)
   }
 }
 
+// Fix SPI sample buffer timings
+void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen)
+{
+  long inpos, outpos;
+  unsigned char c, o, olen, bitpos;
+
+  outpos=0; o=0; olen=0;
+
+  for (inpos=0; inpos<inlen; inpos++)
+  {
+    c=inbuf[inpos];
+
+    // Insert extra sample, this is due to SPI sampling leaving a 1 sample gap between each group of 8 samples
+    o=(o<<1)|((c&0x80)>>7);
+    olen++;
+    if (olen==BITSPERBYTE)
+    {
+      if (outpos<outlen)
+        outbuf[outpos++]=o;
+
+      olen=0; o=0;
+    }
+
+    // Process the 8 valid samples we did get
+    for (bitpos=0; bitpos<BITSPERBYTE; bitpos++)
+    {
+      o=(o<<1)|((c&0x80)>>7);
+      olen++;
+
+      if (olen==BITSPERBYTE)
+      {
+        if (outpos<outlen)
+          outbuf[outpos++]=o;
+
+        olen=0; o=0;
+      }
+
+      c=c<<1;
+    }
+
+    // Stop on output buffer overflow
+    if (outpos>=outlen) return;
+  }
+}
+
 // Sample raw track data
 void hw_samplerawtrackdata(char* buf, uint32_t len)
 {
+  char *rawbuf;
+
+  // Clear output buffer to prevent failed reads potentially returning previous data
+  bzero(buf, len);
+
+  rawbuf=malloc(len);
+  if (rawbuf==NULL) return;
+
   // Sample using SPI
   hw_waitforindex();
+  bcm2835_spi_transfern(rawbuf, len);
 
-  bcm2835_spi_transfern(buf, len);
+  // Fix SPI timings
+  hw_fixspisamples(rawbuf, len, buf, len);
+
+  free(rawbuf);
 }
 
 void hw_sleep(const unsigned int seconds)

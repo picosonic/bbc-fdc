@@ -171,20 +171,6 @@ unsigned long rfi_rleencode(unsigned char *rlebuffer, const unsigned long maxrle
   {
     c=rawtrackdata[i];
 
-    // Assume sample same as previous (missed between SPI bytes)
-    count++;
-
-    // Check for sample counter overflow
-    if (count>0xff)
-    {
-      // Check for RLE buffer overflow
-      if ((rlelen+2)>=maxrlelen) return 0;
-
-      rlebuffer[rlelen++]=0xff;
-      rlebuffer[rlelen++]=0;
-      count=0;
-    }
-
     // Process each of the 8 sample bits looking for state change
     for (j=0; j<8; j++)
     {
