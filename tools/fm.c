@@ -293,55 +293,65 @@ void fm_process(const unsigned char *sampledata, const unsigned long samplesize,
   float defaultwindow;
   int bucket1, bucket01;
 
-  fm_state=FM_SYNC;
-
+  // Determine number of samples between "1" pulses (default window)
   defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)bitcell;
+
+  // From default window, determine bucket sizes for assigning bits "1" or "01"
   bucket1=defaultwindow+(defaultwindow/2);
   bucket01=(defaultwindow*2)+(defaultwindow/2);
 
+  // Set up FM parser
+  fm_state=FM_SYNC;
   level=(sampledata[0]&0x80)>>7;
   bi=level;
   count=0;
   fm_datacells=0;
+  fm_blocksize=0;
+  fm_blocktype=FM_BLOCKNULL;
+  fm_idpos=0;
 
-  // Initialise last sector IDAM to invalid
+  // Initialise last found sector IDAM to invalid
   fm_idamtrack=-1;
   fm_idamhead=-1;
   fm_idamsector=-1;
   fm_idamlength=-1;
 
-  // Initialise last known good IDAM to invalid
+  // Initialise last known good sector IDAM to invalid
   fm_lasttrack=-1;
   fm_lasthead=-1;
   fm_lastsector=-1;
   fm_lastlength=-1;
 
-  fm_blocksize=0;
-  fm_blocktype=FM_BLOCKNULL;
-  fm_idpos=0;
-
+  // Process each byte of the raw flux data
   for (fm_datapos=0; fm_datapos<samplesize; fm_datapos++)
   {
+    // Extract byte from buffer
     c=sampledata[fm_datapos];
 
+    // Process each bit of the extracted byte
     for (j=0; j<BITSPERBYTE; j++)
     {
+      // Determine next level
       bi=((c&0x80)>>7);
 
+      // Increment samples counter
       count++;
 
+      // Look for level changes
       if (bi!=level)
       {
+        // Flip level cache
         level=1-level;
 
         // Look for rising edge
         if (level==1)
         {
+          // Does number of samples fit within "1" bucket ..
           if (count<bucket1)
           {
             fm_addbit(1);
           }
-          else
+          else // .. does number of samples fit within "01" bucket
           if (count<bucket01)
           {
             fm_addbit(0);
@@ -349,17 +359,18 @@ void fm_process(const unsigned char *sampledata, const unsigned long samplesize,
           }
           else
           {
-            // This shouldn't happen in single-density FM encoding
+            // TODO This shouldn't happen in single-density FM encoding
             fm_addbit(0);
             fm_addbit(0);
             fm_addbit(1);
           }
 
-          // Reset sample counter
+          // Reset samples counter 
           count=0;
         }
       }
 
+      // Move on to next sample level (bit)
       c=c<<1;
     }
   }
