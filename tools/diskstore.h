@@ -17,7 +17,7 @@ typedef struct DiskSector
   unsigned char physical_sector;
 
   // Logical position of sector from IDAM
-  unsigned int id_rawpos;
+  unsigned long id_pos;
   unsigned char logical_track;
   unsigned char logical_head;
   unsigned char logical_sector;
@@ -26,7 +26,7 @@ typedef struct DiskSector
 
   // Sector data
   unsigned char modulation;
-  unsigned int data_rawpos;
+  unsigned long data_pos;
   unsigned int datatype;
   unsigned int datasize;
   unsigned char *data;
@@ -50,7 +50,7 @@ int diskstore_maxsectorid;
 extern void diskstore_init();
 
 // Add a sector to the disk storage
-extern int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc);
+extern int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const long id_pos, const unsigned int idcrc, const long data_pos, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc);
 
 // Search for a sector within the disk storage
 extern Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc);

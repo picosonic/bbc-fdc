@@ -220,7 +220,7 @@ void diskstore_sortsectors()
 }
 
 // Add a sector to linked list
-int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc)
+int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const long id_pos, const unsigned int idcrc, const long data_pos, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc)
 {
   Disk_Sector *curr;
   Disk_Sector *newitem;
@@ -242,6 +242,8 @@ int diskstore_addsector(const unsigned char modulation, const unsigned char phys
   newitem->logical_sector=logical_sector;
   newitem->logical_size=logical_size;
   newitem->idcrc=idcrc;
+  newitem->id_pos=id_pos;
+  newitem->data_pos=data_pos;
 
   newitem->modulation=modulation;
 
