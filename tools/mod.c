@@ -10,6 +10,7 @@ int mod_debug=0;
 long mod_hist[MOD_HISTOGRAMSIZE];
 int mod_peak[MOD_PEAKSIZE];
 int mod_peaks;
+char mod_density=MOD_DENSITYAUTO;
 
 void mod_buildhistogram(const unsigned char *sampledata, const unsigned long samplesize)
 {
@@ -129,6 +130,62 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
   return mod_peaks;
 }
 
+int mod_haspeak(const float ms)
+{
+  int i;
+  float peakms;
+
+  for (i=0; i<mod_peaks; i++)
+  {
+    peakms=mod_samplestoms(mod_peak[i]);
+
+    // Look within 10% of nominal
+    if ((ms>=(peakms*0.90)) && (ms<=(peakms*1.1)))
+      return 1;
+  }
+
+  return 0;
+}
+
+void mod_checkdensity()
+{
+  // MFM ED
+  // 01=1ms, 001=1.5ms, 0001=2ms
+  if ((mod_haspeak(1)+mod_haspeak(1.5)+mod_haspeak(2))==3)
+  {
+    mod_density|=MOD_DENSITYMFMED;
+
+    return;
+  }
+
+  // MFM HD
+  // 01=2ms, 001=3ms, 0001=4ms
+  if ((mod_haspeak(2)+mod_haspeak(3)+mod_haspeak(4))==3)
+  {
+    mod_density|=MOD_DENSITYMFMHD;
+
+    return;
+  }
+
+  // MFM DD
+  // 01=4ms, 001=6ms, 0001=8ms
+  if ((mod_haspeak(4)+mod_haspeak(6)+mod_haspeak(8))==3)
+  {
+    mod_density|=MOD_DENSITYMFMDD;
+
+    return;
+  }
+
+  // FM SD
+  // 1=4ms, 01=8ms
+  if ((mod_haspeak(4)+mod_haspeak(8))==2)
+  {
+    mod_density|=MOD_DENSITYFMSD;
+
+    return;
+  }
+}
+
 unsigned char mod_getclock(const unsigned int datacells)
 {
   unsigned char clock;
@@ -165,10 +222,19 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
 {
   mod_findpeaks(sampledata, samplesize);
 
-  fm_process(sampledata, samplesize, FM_BITCELL, attempt);
+  mod_checkdensity();
 
-  //mfm_process(sampledata, samplesize, MFM_BITCELLDD, attempt);
-  //mfm_process(sampledata, samplesize, MFM_BITCELLHD, attempt);
+  if ((mod_density==MOD_DENSITYAUTO) || ((mod_density&MOD_DENSITYFMSD)!=0))
+    fm_process(sampledata, samplesize, FM_BITCELL, attempt);
+
+  if ((mod_density==MOD_DENSITYAUTO) || ((mod_density&MOD_DENSITYMFMDD)!=0))
+    mfm_process(sampledata, samplesize, MFM_BITCELLDD, attempt);
+
+  if ((mod_density==MOD_DENSITYAUTO) || ((mod_density&MOD_DENSITYMFMHD)!=0))
+    mfm_process(sampledata, samplesize, MFM_BITCELLHD, attempt);
+
+  if ((mod_density==MOD_DENSITYAUTO) || ((mod_density&MOD_DENSITYMFMED)!=0))
+    mfm_process(sampledata, samplesize, MFM_BITCELLED, attempt);
 }
 
 // Initialise modulation

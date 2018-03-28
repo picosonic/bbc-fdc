@@ -782,6 +782,14 @@ int main(int argc,char **argv)
     printf("FM sectors found %d\n", fmsectors);
     printf("MFM sectors found %d\n", mfmsectors);
 
+    printf("Detected density : ");
+    if ((mod_density&MOD_DENSITYFMSD)!=0) printf("SD ");
+    if ((mod_density&MOD_DENSITYMFMDD)!=0) printf("DD ");
+    if ((mod_density&MOD_DENSITYMFMHD)!=0) printf("HD ");
+    if ((mod_density&MOD_DENSITYMFMED)!=0) printf("ED ");
+    if (mod_density==MOD_DENSITYAUTO) printf("Unknown density ");
+    printf("\n");
+
     if ((diskstore_minsectorsize!=-1) && (diskstore_maxsectorsize!=-1))
       printf("Sector sizes range from %d to %d bytes\n", diskstore_minsectorsize, diskstore_maxsectorsize);
 

@@ -4,8 +4,15 @@
 #define MOD_HISTOGRAMSIZE 512
 #define MOD_PEAKSIZE 5
 
+#define MOD_DENSITYAUTO 0
+#define MOD_DENSITYFMSD 1
+#define MOD_DENSITYMFMDD 2
+#define MOD_DENSITYMFMHD 4
+#define MOD_DENSITYMFMED 8
+
 extern int mod_peak[MOD_PEAKSIZE];
 extern int mod_peaks;
+extern char mod_density;
 
 unsigned char mod_getclock(const unsigned int datacells);
 unsigned char mod_getdata(const unsigned int datacells);
