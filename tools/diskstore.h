@@ -60,7 +60,7 @@ extern Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, 
 
 // Processing of sectors
 extern unsigned char diskstore_countsectors(const unsigned char physical_track, const unsigned char physical_head);
-extern unsigned char diskstore_countsectormod(const unsigned char modulation);
+extern unsigned int diskstore_countsectormod(const unsigned char modulation);
 extern void diskstore_sortsectors();
 
 // Dump the contents of the disk storage for debug purposes

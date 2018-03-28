@@ -762,8 +762,8 @@ int main(int argc,char **argv)
   // Dump a list of valid sectors
   if ((debug) || (summary))
   {
-    int fmsectors=diskstore_countsectormod(MODFM);
-    int mfmsectors=diskstore_countsectormod(MODMFM);
+    unsigned int fmsectors=diskstore_countsectormod(MODFM);
+    unsigned int mfmsectors=diskstore_countsectormod(MODMFM);
 
     diskstore_dumpsectorlist();
 

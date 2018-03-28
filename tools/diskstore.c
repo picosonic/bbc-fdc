@@ -126,10 +126,10 @@ unsigned char diskstore_countsectors(const unsigned char physical_track, const u
 }
 
 // Count how many sectors were found with given modulation
-unsigned char diskstore_countsectormod(const unsigned char modulation)
+unsigned int diskstore_countsectormod(const unsigned char modulation)
 {
   Disk_Sector *curr;
-  int n;
+  unsigned int n;
 
   curr=Disk_SectorsRoot;
   n=0;
