@@ -1,10 +1,12 @@
 #ifndef _MFM_H_
 #define _MFM_H_
 
-// Microseconds in a bitcell window for double-density MFM
-#define MFM_BITCELLDD 2
-// Microseconds in a bitcell window for high-density MFM
-#define MFM_BITCELLHD 1
+// Microseconds in a bitcell window for double density MFM
+#define MFM_BITCELLDD 4
+// Microseconds in a bitcell window for high density MFM
+#define MFM_BITCELLHD 2
+// Microseconds in a bitcell window for extra-high density MFM
+#define MFM_BITCELLED 1
 
 // MFM Block types
 #define MFM_BLOCKNULL 0x00
