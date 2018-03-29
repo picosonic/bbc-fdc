@@ -24,13 +24,14 @@ unsigned int fm_idblockcrc, fm_datablockcrc, fm_bitstreamcrc;
 unsigned char fm_bitstream[FM_BLOCKSIZE];
 unsigned int fm_bitlen=0;
 
-// Processing position within the sample buffer
-unsigned long fm_datapos=0;
+// FM timings
+float fm_defaultwindow;
+float fm_bucket1, fm_bucket01;
 
 int fm_debug=0;
 
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
-void fm_addbit(const unsigned char bit)
+void fm_addbit(const unsigned char bit, const unsigned long datapos)
 {
   unsigned char clock, data;
   unsigned char dataCRC; // EDC
@@ -61,7 +62,7 @@ void fm_addbit(const unsigned char bit)
         {
           case 0xf77a: // clock=d7 data=fc
             if (fm_debug)
-              fprintf(stderr, "\n[%lx] Index Address Mark\n", fm_datapos);
+              fprintf(stderr, "\n[%lx] Index Address Mark\n", datapos);
             fm_blocktype=data;
             fm_bitlen=0;
             fm_state=FM_SYNC;
@@ -75,12 +76,12 @@ void fm_addbit(const unsigned char bit)
 
           case 0xf57e: // clock=c7 data=fe
             if (fm_debug)
-              fprintf(stderr, "\n[%lx] ID Address Mark\n", fm_datapos);
+              fprintf(stderr, "\n[%lx] ID Address Mark\n", datapos);
             fm_blocktype=data;
             fm_blocksize=6+1;
             fm_bitlen=0;
             fm_bitstream[fm_bitlen++]=data;
-            fm_idpos=fm_datapos;
+            fm_idpos=datapos;
             fm_state=FM_ADDR;
 
             // Clear IDAM cache incase previous was good and this one is bad
@@ -92,7 +93,7 @@ void fm_addbit(const unsigned char bit)
 
           case 0xf56f: // clock=c7 data=fb
             if (fm_debug)
-              fprintf(stderr, "\n[%lx] Data Address Mark, distance from ID %lx\n", fm_datapos, fm_datapos-fm_idpos);
+              fprintf(stderr, "\n[%lx] Data Address Mark, distance from ID %lx\n", datapos, datapos-fm_idpos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((fm_idamtrack!=-1) && (fm_idamhead!=-1) && (fm_idamsector!=-1) && (fm_idamlength!=-1))
@@ -100,7 +101,7 @@ void fm_addbit(const unsigned char bit)
               fm_blocktype=data;
               fm_bitlen=0;
               fm_bitstream[fm_bitlen++]=data;
-              fm_blockpos=fm_datapos;
+              fm_blockpos=datapos;
               fm_state=FM_DATA;
             }
             else
@@ -113,7 +114,7 @@ void fm_addbit(const unsigned char bit)
 
           case 0xf56a: // clock=c7 data=f8
             if (fm_debug)
-              fprintf(stderr, "\n[%lx] Deleted Data Address Mark, distance from ID %lx\n", fm_datapos, fm_datapos-fm_idpos);
+              fprintf(stderr, "\n[%lx] Deleted Data Address Mark, distance from ID %lx\n", datapos, datapos-fm_idpos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((fm_idamtrack!=-1) && (fm_idamhead!=-1) && (fm_idamsector!=-1) && (fm_idamlength!=-1))
@@ -121,7 +122,7 @@ void fm_addbit(const unsigned char bit)
               fm_blocktype=data;
               fm_bitlen=0;
               fm_bitstream[fm_bitlen++]=data;
-              fm_blockpos=fm_datapos;
+              fm_blockpos=datapos;
               fm_state=FM_DATA;
             }
             else
@@ -237,7 +238,7 @@ void fm_addbit(const unsigned char bit)
           if (dataCRC==GOODDATA)
           {
             if (fm_debug)
-              fprintf(stderr, " OK [%lx]\n", fm_datapos);
+              fprintf(stderr, " OK [%lx]\n", datapos);
 
             if (diskstore_addsector(MODFM, hw_currenttrack, hw_currenthead, fm_idamtrack, fm_idamhead, fm_idamsector, fm_idamlength, fm_idpos, fm_idblockcrc, fm_blockpos, fm_blocktype, fm_blocksize-3, &fm_bitstream[1], fm_datablockcrc)==1)
             {
@@ -281,34 +282,68 @@ void fm_addbit(const unsigned char bit)
   }
 }
 
-// Process a sample buffer looking for FM data
-void fm_process(const unsigned char *sampledata, const unsigned long samplesize, const long bitcell, const int attempt)
+void fm_addsample(const unsigned long samples, const unsigned long datapos)
 {
-  int j,k, pos;
-  char level,bi=0;
-  unsigned char c, clock, data;
-  int count;
-  unsigned long avg[50];
-  int bitwidth=0;
-  float defaultwindow;
-  int bucket1, bucket01;
+  // Does number of samples fit within "1" bucket ..
+  if (samples<=fm_bucket1)
+  {
+    fm_addbit(1, datapos);
+  }
+  else // .. does number of samples fit within "01" bucket
+  if (samples<=fm_bucket01)
+  {
+   fm_addbit(0, datapos);
+   fm_addbit(1, datapos);
+  }
+  else
+  {
+    // TODO This shouldn't happen in single-density FM encoding
+   fm_addbit(0, datapos);
+   fm_addbit(0, datapos);
+   fm_addbit(1, datapos);
+  }
+}
+
+// Initialise the FM parser
+void fm_init(const int debug, const char density)
+{
+  char bitcell=FM_BITCELL;
+
+  fm_debug=debug;
+
+  if ((density&MOD_DENSITYFMSD)==0)
+  {
+    // TODO cope with different densities of FM
+  }
 
   // Determine number of samples between "1" pulses (default window)
-  defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)bitcell;
+  fm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)bitcell;
 
   // From default window, determine bucket sizes for assigning bits "1" or "01"
-  bucket1=defaultwindow+(defaultwindow/2);
-  bucket01=(defaultwindow*2)+(defaultwindow/2);
+  fm_bucket1=fm_defaultwindow+(fm_defaultwindow/2);
+  fm_bucket01=(fm_defaultwindow*2)+(fm_defaultwindow/2);
 
   // Set up FM parser
   fm_state=FM_SYNC;
-  level=(sampledata[0]&0x80)>>7;
-  bi=level;
-  count=0;
   fm_datacells=0;
-  fm_blocksize=0;
-  fm_blocktype=FM_BLOCKNULL;
+  fm_bits=0;
+
   fm_idpos=0;
+  fm_blockpos=0;
+
+  fm_blocktype=FM_BLOCKNULL;
+  fm_blocksize=0;
+
+  fm_idblockcrc=0;
+  fm_datablockcrc=0;
+  fm_bitstreamcrc=0;
+
+  fm_bitlen=0;
+
+  // Initialise previous data cache
+  fm_p1=0;
+  fm_p2=0;
+  fm_p3=0;
 
   // Initialise last found sector IDAM to invalid
   fm_idamtrack=-1;
@@ -321,95 +356,4 @@ void fm_process(const unsigned char *sampledata, const unsigned long samplesize,
   fm_lasthead=-1;
   fm_lastsector=-1;
   fm_lastlength=-1;
-
-  // Process each byte of the raw flux data
-  for (fm_datapos=0; fm_datapos<samplesize; fm_datapos++)
-  {
-    // Extract byte from buffer
-    c=sampledata[fm_datapos];
-
-    // Process each bit of the extracted byte
-    for (j=0; j<BITSPERBYTE; j++)
-    {
-      // Determine next level
-      bi=((c&0x80)>>7);
-
-      // Increment samples counter
-      count++;
-
-      // Look for level changes
-      if (bi!=level)
-      {
-        // Flip level cache
-        level=1-level;
-
-        // Look for rising edge
-        if (level==1)
-        {
-          // Does number of samples fit within "1" bucket ..
-          if (count<bucket1)
-          {
-            fm_addbit(1);
-          }
-          else // .. does number of samples fit within "01" bucket
-          if (count<bucket01)
-          {
-            fm_addbit(0);
-            fm_addbit(1);
-          }
-          else
-          {
-            // TODO This shouldn't happen in single-density FM encoding
-            fm_addbit(0);
-            fm_addbit(0);
-            fm_addbit(1);
-          }
-
-          // Reset samples counter 
-          count=0;
-        }
-      }
-
-      // Move on to next sample level (bit)
-      c=c<<1;
-    }
-  }
-}
-
-// Initialise the FM parser
-void fm_init(const int debug)
-{
-  fm_debug=debug;
-
-  fm_state=FM_SYNC;
-  fm_datacells=0;
-  fm_bits=0;
-
-  fm_idpos=0;
-  fm_blockpos=0;
-
-  fm_idamtrack=-1;
-  fm_idamhead=-1;
-  fm_idamsector=-1;
-  fm_idamlength=-1;
-
-  fm_lasttrack=-1;
-  fm_lasthead=-1;
-  fm_lastsector=-1;
-  fm_lastlength=-1;
-
-  fm_blocktype=FM_BLOCKNULL;
-  fm_blocksize=0;
-
-  fm_idblockcrc=0;
-  fm_datablockcrc=0;
-  fm_bitstreamcrc=0;
-
-  fm_bitlen=0;
-
-  fm_datapos=0;
-
-  fm_p1=0;
-  fm_p2=0;
-  fm_p3=0;
 }

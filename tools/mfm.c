@@ -23,13 +23,14 @@ unsigned int mfm_idblockcrc, mfm_datablockcrc, mfm_bitstreamcrc;
 unsigned char mfm_bitstream[MFM_BLOCKSIZE];
 unsigned int mfm_bitlen=0;
 
-// Processing position within the sample buffer
-unsigned long mfm_datapos=0;
+// FM timings
+float mfm_defaultwindow;
+float mfm_bucket01, mfm_bucket001, mfm_bucket0001;
 
 int mfm_debug=0;
 
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
-void mfm_addbit(const unsigned char bit)
+void mfm_addbit(const unsigned char bit, const unsigned long datapos)
 {
   unsigned char clock, data;
   unsigned char dataCRC; // EDC
@@ -54,10 +55,18 @@ void mfm_addbit(const unsigned char bit)
     switch (mfm_state)
     {
       case MFM_SYNC:
-        if (mfm_datacells==0x4489) // possibly also 0x5224 ?
+        if (mfm_datacells==0x5224)
         {
           if (mfm_debug)
-            fprintf(stderr, "[%lx] ==MFM SYNC==\n", mfm_datapos);
+            fprintf(stderr, "[%lx] ==MFM IAM SYNC 5224==\n", datapos);
+
+          mfm_bits=16; // Keep looking for sync (preventing overflow)
+        }
+        else
+        if (mfm_datacells==0x4489)
+        {
+          if (mfm_debug)
+            fprintf(stderr, "[%lx] ==MFM IDAM/DAM SYNC 4489==\n", datapos);
 
           mfm_bits=0;
           mfm_bitlen=0; // Clear output buffer
@@ -69,14 +78,13 @@ void mfm_addbit(const unsigned char bit)
         break;
 
       case MFM_MARK:
-        switch (mfm_datacells)
+        switch (data)
         {
-          case 0x5554: // fe
+          case MFM_BLOCKADDR: // fe - IDAM
             if (mfm_debug)
-              fprintf(stderr, "[%lx] ID Address Mark\n", mfm_datapos);
+              fprintf(stderr, "[%lx] ID Address Mark\n", datapos);
 
             mfm_bits=0;
-            mfm_datacells=0;
             mfm_blocktype=data;
 
             mfm_bitlen=0;
@@ -96,15 +104,14 @@ void mfm_addbit(const unsigned char bit)
             mfm_state=MFM_ADDR;
             break;
 
-          case 0x5545: // fb
+          case MFM_BLOCKDATA: // fb - DAM
             if (mfm_debug)
-              fprintf(stderr, "[%lx] Data Address Mark\n", mfm_datapos);
+              fprintf(stderr, "[%lx] Data Address Mark\n", datapos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((mfm_idamtrack!=-1) && (mfm_idamhead!=-1) && (mfm_idamsector!=-1) && (mfm_idamlength!=-1))
             {
               mfm_bits=0;
-              mfm_datacells=0;
               mfm_blocktype=data;
 
               mfm_bitlen=0;
@@ -123,15 +130,14 @@ void mfm_addbit(const unsigned char bit)
             }
             break;
 
-          case 0x554a: // f8
+          case MFM_BLOCKDELDATA: // f8 - DDAM
             if (mfm_debug)
-              fprintf(stderr, "[%lx] Deleted Data Address Mark\n", mfm_datapos);
+              fprintf(stderr, "[%lx] Deleted Data Address Mark\n", datapos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((mfm_idamtrack!=-1) && (mfm_idamhead!=-1) && (mfm_idamsector!=-1) && (mfm_idamlength!=-1))
             {
               mfm_bits=0;
-              mfm_datacells=0;
               mfm_blocktype=data;
 
               mfm_bitlen=0;
@@ -151,9 +157,9 @@ void mfm_addbit(const unsigned char bit)
             break;
 
           default:
-            mfm_bits=16; // Keep looking for MFM address mark (preventing overflow)
             break;
         }
+        mfm_bits=0;
         break;
 
       case MFM_ADDR:
@@ -272,103 +278,74 @@ void mfm_addbit(const unsigned char bit)
   }
 }
 
-void mfm_process(const unsigned char *sampledata, const unsigned long samplesize, const long bitcell, const int attempt)
+void mfm_addsample(const unsigned long samples, const unsigned long datapos)
 {
-  int j;
-  char level,bi=0;
-  unsigned char c, clock, data;
-  int count;
-  float defaultwindow;
-
-  mfm_state=MFM_SYNC;
-
-  defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)bitcell;
-
-  level=(sampledata[0]&0x80)>>7;
-  bi=level;
-  count=0;
-  mfm_datacells=0;
-
-  // Initialise last sector IDAM to invalid
-  mfm_idamtrack=-1;
-  mfm_idamhead=-1;
-  mfm_idamsector=-1;
-  mfm_idamlength=-1;
-
-  // Initialise last known good IDAM to invalid
-  mfm_lasttrack=-1;
-  mfm_lasthead=-1;
-  mfm_lastsector=-1;
-  mfm_lastlength=-1;
-
-  mfm_blocksize=0;
-  mfm_blocktype=MFM_BLOCKNULL;
-  mfm_idpos=0;
-
-  for (mfm_datapos=0; mfm_datapos<samplesize; mfm_datapos++)
+  // Does number of samples fit within "01" bucket ..
+  if (samples<=mfm_bucket01)
   {
-    c=sampledata[mfm_datapos];
-
-    for (j=0; j<BITSPERBYTE; j++)
-    {
-      bi=((c&0x80)>>7);
-
-      count++;
-
-      if (bi!=level)
-      {
-        level=1-level;
-
-        // Look for rising edge
-        if (level==1)
-        {
-          if ((count>34) && (count<54))
-          {
-            mfm_addbit(0);
-            mfm_addbit(1);
-          }
-          else
-          if ((count>56) && (count<76))
-          {
-            mfm_addbit(0);
-            mfm_addbit(0);
-            mfm_addbit(1);
-          }
-          else
-          if ((count>80) && (count<96))
-          {
-            mfm_addbit(0);
-            mfm_addbit(0);
-            mfm_addbit(0);
-            mfm_addbit(1);
-          }
-
-          count=0;
-        }
-      }
-
-      c=c<<1;
-    }
+    mfm_addbit(0, datapos);
+    mfm_addbit(1, datapos);
+  }
+  else // .. does number of samples fit within "001" bucket ..
+  if (samples<=mfm_bucket001)
+  {
+    mfm_addbit(0, datapos);
+    mfm_addbit(0, datapos);
+    mfm_addbit(1, datapos);
+  }
+  else // .. does number of samples fit within "0001" bucket ..
+  if (samples<=mfm_bucket0001)
+  {
+    mfm_addbit(0, datapos);
+    mfm_addbit(0, datapos);
+    mfm_addbit(0, datapos);
+    mfm_addbit(1, datapos);
+  }
+  else
+  {
+    // TODO This shouldn't happen in MFM encoding
+    mfm_addbit(0, datapos);
+    mfm_addbit(0, datapos);
+    mfm_addbit(0, datapos);
+    mfm_addbit(0, datapos);
+    mfm_addbit(1, datapos);
   }
 }
 
-void mfm_init(const int debug)
+void mfm_init(const int debug, const char density)
 {
+  char bitcell=MFM_BITCELLDD;
+  int diff;
+
   mfm_debug=debug;
 
+  if ((density&MOD_DENSITYMFMED)!=0)
+    bitcell=MFM_BITCELLED;
+
+  if ((density&MOD_DENSITYMFMHD)!=0)
+    bitcell=MFM_BITCELLHD;
+
+  // Determine number of samples between "1" pulses (default window)
+  mfm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)bitcell;
+
+  // From default window, determine ideal sample times for assigning bits "01", "001" or "0001"
+  mfm_bucket01=mfm_defaultwindow;
+  mfm_bucket001=(mfm_defaultwindow/2)*3;
+  mfm_bucket0001=(mfm_defaultwindow/2)*4;
+
+  // Increase bucket sizes to halfway between peaks
+  diff=mfm_bucket001-mfm_bucket01;
+  mfm_bucket01+=(diff/2);
+  mfm_bucket001+=(diff/2);
+  mfm_bucket0001+=(diff/2);
+
+  // Set up MFM parser
   mfm_state=MFM_SYNC;
   mfm_datacells=0;
   mfm_bits=0;
 
-  mfm_idamtrack=-1;
-  mfm_idamhead=-1;
-  mfm_idamsector=-1;
-  mfm_idamlength=-1;
-
-  mfm_lasttrack=-1;
-  mfm_lasthead=-1;
-  mfm_lastsector=-1;
-  mfm_lastlength=-1;
+  mfm_idpos=0;
+  mfm_blockpos=0;
 
   mfm_blocktype=MFM_BLOCKNULL;
   mfm_blocksize=0;
@@ -379,9 +356,20 @@ void mfm_init(const int debug)
 
   mfm_bitlen=0;
 
-  mfm_datapos=0;
-
+  // Initialise previous data cache
   mfm_p1=0;
   mfm_p2=0;
   mfm_p3=0;
+
+  // Initialise last found sector IDAM to invalid
+  mfm_idamtrack=-1;
+  mfm_idamhead=-1;
+  mfm_idamsector=-1;
+  mfm_idamlength=-1;
+
+  // Initialise last known good sector IDAM to invalid
+  mfm_lasttrack=-1;
+  mfm_lasthead=-1;
+  mfm_lastsector=-1;
+  mfm_lastlength=-1;
 }

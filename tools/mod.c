@@ -220,21 +220,57 @@ unsigned char mod_getdata(const unsigned int datacells)
 
 void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt)
 {
-  mod_findpeaks(sampledata, samplesize);
+  unsigned long datapos, count;
+  unsigned char c, j;
+  char level,bi=0;
 
+  mod_findpeaks(sampledata, samplesize);
   mod_checkdensity();
 
-  if ((mod_density==MOD_DENSITYAUTO) || ((mod_density&MOD_DENSITYFMSD)!=0))
-    fm_process(sampledata, samplesize, FM_BITCELL, attempt);
+  fm_init(mod_debug, mod_density);
+  mfm_init(mod_debug, mod_density);
 
-  if ((mod_density==MOD_DENSITYAUTO) || ((mod_density&MOD_DENSITYMFMDD)!=0))
-    mfm_process(sampledata, samplesize, MFM_BITCELLDD, attempt);
+  // Set up the sampler
+  level=(sampledata[0]&0x80)>>7;
+  bi=level;
+  count=0;
 
-  if ((mod_density==MOD_DENSITYAUTO) || ((mod_density&MOD_DENSITYMFMHD)!=0))
-    mfm_process(sampledata, samplesize, MFM_BITCELLHD, attempt);
+  // Process each byte of the raw flux data
+  for (datapos=0; datapos<samplesize; datapos++)
+  {
+    // Extract byte from buffer
+    c=sampledata[datapos];
 
-  if ((mod_density==MOD_DENSITYAUTO) || ((mod_density&MOD_DENSITYMFMED)!=0))
-    mfm_process(sampledata, samplesize, MFM_BITCELLED, attempt);
+    // Process each bit of the extracted byte
+    for (j=0; j<BITSPERBYTE; j++)
+    {
+      // Determine next level
+      bi=((c&0x80)>>7);
+
+      // Increment samples counter
+      count++;
+
+      // Look for level changes
+      if (bi!=level)
+      {
+        // Flip level cache
+        level=1-level;
+
+        // Look for rising edge
+        if (level==1)
+        {
+          fm_addsample(count, datapos);
+          mfm_addsample(count, datapos);
+
+          // Reset samples counter 
+          count=0;
+        }
+      }
+
+      // Move on to next sample level (bit)
+      c=c<<1;
+    }
+  }
 }
 
 // Initialise modulation
@@ -243,7 +279,4 @@ void mod_init(const int debug)
   mod_debug=debug;
 
   mod_peaks=0;
-
-  fm_init(debug);
-  mfm_init(debug);
 }

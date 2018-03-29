@@ -22,9 +22,8 @@
 extern int fm_idamtrack, fm_idamhead, fm_idamsector, fm_idamlength; 
 extern int fm_lasttrack, fm_lasthead, fm_lastsector, fm_lastlength;
 
+extern void fm_addsample(const unsigned long samples, const unsigned long datapos);
 
-extern void fm_process(const unsigned char *sampledata, const unsigned long samplesize, const long bitcell, const int attempt);
-
-extern void fm_init(const int debug);
+extern void fm_init(const int debug, const char density);
 
 #endif
