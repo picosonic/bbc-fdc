@@ -81,8 +81,10 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
         switch (data)
         {
           case MFM_BLOCKADDR: // fe - IDAM
+          case M2FM_BLOCKADDR: // 0e - Intel M2FM IDAM
+          case M2FM_HPBLOCKADDR: // 70 - HP M2FM IDAM
             if (mfm_debug)
-              fprintf(stderr, "[%lx] ID Address Mark\n", datapos);
+              fprintf(stderr, "[%lx] ID Address Mark %.2x\n", datapos, data);
 
             mfm_bits=0;
             mfm_blocktype=data;
@@ -105,8 +107,12 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
             break;
 
           case MFM_BLOCKDATA: // fb - DAM
+          case MFM_ALTBLOCKDATA: // fa - Alternative DAM
+          case MFM_RX02BLOCKDATA: // fd - RX02 M2FM DAM
+          case M2FM_BLOCKDATA: // 0b - Intel M2FM DAM
+          case M2FM_HPBLOCKDATA: // 50 - HP M2FM DAM
             if (mfm_debug)
-              fprintf(stderr, "[%lx] Data Address Mark\n", datapos);
+              fprintf(stderr, "[%lx] Data Address Mark %.2x\n", datapos, data);
 
             // Don't process if don't have a valid preceding IDAM
             if ((mfm_idamtrack!=-1) && (mfm_idamhead!=-1) && (mfm_idamsector!=-1) && (mfm_idamlength!=-1))
@@ -131,8 +137,10 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
             break;
 
           case MFM_BLOCKDELDATA: // f8 - DDAM
+          case MFM_ALTBLOCKDELDATA: // f9 - Alternative DDAM
+          case M2FM_BLOCKDELDATA: // 08 - Intel M2FM DDAM
             if (mfm_debug)
-              fprintf(stderr, "[%lx] Deleted Data Address Mark\n", datapos);
+              fprintf(stderr, "[%lx] Deleted Data Address Mark %.2x\n", datapos, data);
 
             // Don't process if don't have a valid preceding IDAM
             if ((mfm_idamtrack!=-1) && (mfm_idamhead!=-1) && (mfm_idamsector!=-1) && (mfm_idamlength!=-1))

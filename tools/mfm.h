@@ -14,6 +14,22 @@
 #define MFM_BLOCKADDR 0xfe
 #define MFM_BLOCKDATA 0xfb
 #define MFM_BLOCKDELDATA 0xf8
+// Alternate MFM Block types
+#define MFM_ALTBLOCKDELDATA 0xf9
+#define MFM_ALTBLOCKDATA 0xfa
+#define MFM_RX02BLOCKDATA 0xfd
+
+// Intel M2FM Block types
+#define M2FM_BLOCKINDEX 0x0c
+#define M2FM_BLOCKADDR 0x0e
+#define M2FM_BLOCKDATA 0x0b
+#define M2FM_BLOCKDELDATA 0x08
+
+// HP M2FM Block types
+#define M2FM_HPBLOCKADDR 0x70
+#define M2FM_HPBLOCKBADTRACK 0xf0
+#define M2FM_HPBLOCKDATA 0x50
+#define M2FM_HPBLOCKECC 0xd0
 
 // Maximum supported sector size
 #define MFM_BLOCKSIZE (16384+5)
