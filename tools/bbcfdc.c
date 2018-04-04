@@ -42,6 +42,7 @@
 
 int debug=0;
 int summary=0;
+int catalogue=0;
 int sides=AUTODETECT;
 unsigned int disktracks, drivetracks;
 int capturetype=DISKNONE; // Default to no output
@@ -131,11 +132,15 @@ int main(int argc,char **argv)
     if (strcmp(argv[argn], "-v")==0)
     {
       debug=1;
+      catalogue=1;
     }
     else
     if (strcmp(argv[argn], "-c")==0)
     {
-      capturetype=DISKCAT;
+      catalogue=1;
+
+      if (capturetype==DISKNONE)
+        capturetype=DISKCAT;
     }
     else
     if (strcmp(argv[argn], "-sort")==0)
@@ -579,7 +584,7 @@ int main(int argc,char **argv)
       if (capturetype!=DISKRAW)
       {
         // Check if catalogue has been done
-        if (info==0)
+        if ((info==0) && (catalogue==1))
         {
           if (dfs_validcatalogue(hw_currenthead))
           {
