@@ -8,6 +8,7 @@
 #include "hardware.h"
 #include "diskstore.h"
 #include "dfi.h"
+#include "adfs.h"
 #include "dfs.h"
 #include "fsd.h"
 #include "rfi.h"
@@ -42,8 +43,7 @@
 int debug=0;
 int summary=0;
 int sides=AUTODETECT;
-int disktracks;
-int drivetracks;
+unsigned int disktracks, drivetracks;
 int capturetype=DISKNONE; // Default to no output
 int outputtype=IMAGENONE; // Default to no image
 
@@ -589,12 +589,70 @@ int main(int argc,char **argv)
           cat2=diskstore_findhybridsector(0, hw_currenthead, 1);
 
           // If they were found and they appear to be DFS catalogue then do a catalogue
-          if ((cat1!=NULL) && (cat2!=NULL) && (dfs_validcatalogue(cat1, cat2)))
+          if ((cat1!=NULL) && (cat2!=NULL))
           {
-            printf("\nSide : %d\n", hw_currenthead);
-            dfs_showinfo(diskstore_findhybridsector(0, hw_currenthead, 0), diskstore_findhybridsector(0, hw_currenthead, 1));
-            info++;
-            printf("\n");
+            if (dfs_validcatalogue(cat1, cat2))
+            {
+              printf("\nDetected DFS, side : %d\n", hw_currenthead);
+              dfs_showinfo(diskstore_findhybridsector(0, hw_currenthead, 0), diskstore_findhybridsector(0, hw_currenthead, 1));
+              info++;
+              printf("\n");
+            }
+            else
+            if ((i==0) && (side==0))
+            {
+              int adfs_format;
+
+              adfs_format=adfs_validate(cat1, cat2);
+
+              if (adfs_format!=ADFS_UNKNOWN)
+              {
+                printf("\nDetected ADFS-");
+                switch (adfs_format)
+                {
+                  case ADFS_S:
+                    printf("S");
+                    break;
+
+                  case ADFS_M:
+                    printf("M");
+                    break;
+
+                  case ADFS_L:
+                    printf("L");
+                    break;
+
+                  case ADFS_D:
+                    printf("D");
+                    break;
+
+                  case ADFS_E:
+                    printf("E");
+                    break;
+
+                  case ADFS_F:
+                    printf("F");
+                    break;
+
+                  case ADFS_EPLUS:
+                    printf("E+");
+                    break;
+
+                  case ADFS_FPLUS:
+                    printf("F+");
+                    break;
+
+                  case ADFS_G:
+                    printf("G");
+                    break;
+
+                  default:
+                    break;
+                }
+                printf("\n");
+                info++;
+              }
+            }
           }
         }
 
@@ -651,7 +709,7 @@ int main(int argc,char **argv)
 
       title[0]=0;
 
-      // Search for catalogue sectors
+      // Search for side 0 catalogue sectors
       cat1=diskstore_findhybridsector(0, 0, 0);
       cat2=diskstore_findhybridsector(0, 0, 1);
 
@@ -718,7 +776,7 @@ int main(int argc,char **argv)
           for (imgside=0; imgside<sides; imgside++)
           {
             // Write sectors for this side
-            for (j=diskstore_minsectorid; j<=diskstore_maxsectorid; j++)
+            for (j=(unsigned int)diskstore_minsectorid; j<=(unsigned int)diskstore_maxsectorid; j++)
             {
               sec=diskstore_findhybridsector(i, imgside, j);
 
