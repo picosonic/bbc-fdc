@@ -323,7 +323,7 @@ void mfm_addsample(const unsigned long samples, const unsigned long datapos)
 void mfm_init(const int debug, const char density)
 {
   char bitcell=MFM_BITCELLDD;
-  int diff;
+  float diff;
 
   mfm_debug=debug;
 

@@ -12,6 +12,16 @@ int mod_peak[MOD_PEAKSIZE];
 int mod_peaks;
 char mod_density=MOD_DENSITYAUTO;
 
+float mod_samplestoms(const long samples)
+{
+  return ((float)1/(((float)hw_samplerate)/(float)MICROSECONDSINSECOND))*(float)samples;
+}
+
+long mod_mstosamples(const float ms)
+{
+  return (ms/((float)1/(((float)hw_samplerate)/(float)MICROSECONDSINSECOND)));
+}
+
 void mod_buildhistogram(const unsigned char *sampledata, const unsigned long samplesize)
 {
   int j;
@@ -58,11 +68,6 @@ void mod_buildhistogram(const unsigned char *sampledata, const unsigned long sam
       c=c<<1;
     }
   }
-}
-
-float mod_samplestoms(const long samples)
-{
-  return ((float)1/(float)hw_samplerate)*(float)MICROSECONDSINSECOND*(float)samples;
 }
 
 int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesize)

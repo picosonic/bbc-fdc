@@ -82,17 +82,17 @@ int hw_init(const int spiclockdivider)
       break;
 
     case HW_SPIDIV16:
-      // 15.625MHz on RPI1/2, 25MHz on RPI3
+      // 15.625MHz on RPI1/2, 25MHz on RPI3 - ** WORKS **
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_16);
       break;
 
     case HW_SPIDIV8:
-      // 31.25MHz on RPI1/2, 50MHz on RPI3
+      // 31.25MHz on RPI1/2, 50MHz on RPI3 - ** LESS RELIABLE **
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_8);
       break;
 
     case HW_SPIDIV4:
-      // 62.5MHz on RPI1/2, 100MHz on RPI3 - ** UNRELIABLE **
+      // 62.5MHz on RPI1/2, 100MHz on RPI3 - ** UNRELIABLE, GIVES SPURIOUS VALUES  **
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_4);
       break;
 

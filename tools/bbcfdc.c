@@ -184,15 +184,9 @@ int main(int argc,char **argv)
       {
         switch (retval)
         {
-          case 4:
-          case 8:
           case 16:
           case 32:
           case 64:
-          case 128:
-          case 256:
-          case 512:
-          case 1024:
             rate=retval;
             printf("Setting SPI divider to %d\n", rate);
             break;
