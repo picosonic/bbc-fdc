@@ -84,9 +84,15 @@ unsigned long dfs_getstartsector(Disk_Sector *sector1, const int entry)
 }
 
 // Return the disk title
-void dfs_gettitle(Disk_Sector *sector0, Disk_Sector *sector1, char *title, const int titlelen)
+void dfs_gettitle(const int head, char *title, const int titlelen)
 {
   int i, j;
+  Disk_Sector *sector0;
+  Disk_Sector *sector1;
+
+  // Search for sectors
+  sector0=diskstore_findhybridsector(0, head, 0);
+  sector1=diskstore_findhybridsector(0, head, 1);
 
   // Blank out title
   title[0]=0;
@@ -118,7 +124,7 @@ void dfs_gettitle(Disk_Sector *sector0, Disk_Sector *sector1, char *title, const
   }
 }
 
-void dfs_showinfo(Disk_Sector *sector0, Disk_Sector *sector1)
+void dfs_showinfo(const int head)
 {
   int i;
   int numfiles;
@@ -126,6 +132,12 @@ void dfs_showinfo(Disk_Sector *sector0, Disk_Sector *sector1)
   unsigned char bootoption;
   size_t tracks, totalusage, totalsectors, totalsize, sectorusage;
   char filename[10];
+  Disk_Sector *sector0;
+  Disk_Sector *sector1;
+
+  // Search for sectors
+  sector0=diskstore_findhybridsector(0, head, 0);
+  sector1=diskstore_findhybridsector(0, head, 1);
 
   // Check we have both DFS catalogue sectors
   if ((sector0==NULL) || (sector1==NULL))
@@ -206,8 +218,15 @@ void dfs_showinfo(Disk_Sector *sector0, Disk_Sector *sector1)
 }
 
 // Test for valid DFS catalogue, checks from http://beebwiki.mdfs.net/Acorn_DFS_disc_format
-int dfs_validcatalogue(Disk_Sector *sector0, Disk_Sector *sector1)
+int dfs_validcatalogue(const int head)
 {
+  Disk_Sector *sector0;
+  Disk_Sector *sector1;
+
+  // Search for sectors
+  sector0=diskstore_findhybridsector(0, head, 0);
+  sector1=diskstore_findhybridsector(0, head, 1);
+
   // Check we have both DFS catalogue sectors
   if ((sector0==NULL) || (sector1==NULL))
     return 0;

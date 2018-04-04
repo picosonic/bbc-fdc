@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 
@@ -100,10 +101,206 @@ unsigned char map_zone_valid_byte(void const * const map, const unsigned char lo
   return (unsigned char) ((sum_vector0^sum_vector1^sum_vector2^sum_vector3) & 0xff);
 }
 
-int adfs_validate(Disk_Sector *sector0, Disk_Sector *sector1)
+void adfs_gettitle(const int adfs_format, char *title, const int titlelen)
+{
+  int map, dir;
+  unsigned int adfs_sectorsize;
+  Disk_Sector *sector0;
+  Disk_Sector *sector1;
+  int i, j;
+
+  // Blank out title
+  title[0]=0;
+
+  switch (adfs_format)
+  {
+    case ADFS_S:
+    case ADFS_M:
+    case ADFS_L:
+      map=ADFS_OLDMAP;
+      dir=ADFS_OLDDIR;
+      adfs_sectorsize=ADFS_8BITSECTORSIZE;
+      break;
+
+    case ADFS_D:
+      map=ADFS_OLDMAP;
+      dir=ADFS_NEWDIR;
+      adfs_sectorsize=ADFS_16BITSECTORSIZE;
+      break;
+
+    case ADFS_E:
+    case ADFS_F:
+      map=ADFS_NEWMAP;
+      dir=ADFS_NEWDIR;
+      adfs_sectorsize=ADFS_16BITSECTORSIZE;
+      break;
+
+    case ADFS_UNKNOWN:
+    default:
+      return;
+  }
+
+  // Search for sectors
+  sector0=diskstore_findhybridsector(0, 0, 0);
+  sector1=diskstore_findhybridsector(0, 0, 1);
+
+  // Check we have both sectors
+  if ((sector0==NULL) || (sector1==NULL))
+    return;
+
+  // Check we have data for both sectors
+  if ((sector0->data==NULL) || (sector1->data==NULL))
+    return;
+
+  if (map==ADFS_OLDMAP)
+  {
+    unsigned char oldmapbuff[512];
+
+    // Check there is enough space in return string
+    if (titlelen<11) return;
+
+    // Populate old map
+    memcpy(oldmapbuff, sector0->data, sizeof(oldmapbuff));
+    if (sector1->datasize==ADFS_8BITSECTORSIZE)
+      memcpy(&oldmapbuff[256], sector1->data, sector1->datasize);
+
+    j=0;
+
+    for (i=0; i<5; i++)
+    {
+      int c;
+
+      c=oldmapbuff[247+i];
+      if (c==0x00) break;
+      title[j++]=c & 0x7f;
+      title[j]=0;
+
+      c=oldmapbuff[ADFS_8BITSECTORSIZE+246+i];
+      if (c==0x00) break;
+      title[j++]=c & 0x7f;
+      title[j]=0;
+    }
+  }
+}
+
+void adfs_showinfo(const int adfs_format)
+{
+  int map, dir;
+  unsigned int adfs_sectorsize;
+  Disk_Sector *sector0;
+  Disk_Sector *sector1;
+
+  switch (adfs_format)
+  {
+    case ADFS_S:
+    case ADFS_M:
+    case ADFS_L:
+      map=ADFS_OLDMAP;
+      dir=ADFS_OLDDIR;
+      adfs_sectorsize=ADFS_8BITSECTORSIZE;
+      break;
+
+    case ADFS_D:
+      map=ADFS_OLDMAP;
+      dir=ADFS_NEWDIR;
+      adfs_sectorsize=ADFS_16BITSECTORSIZE;
+      break;
+
+    case ADFS_E:
+    case ADFS_F:
+      map=ADFS_NEWMAP;
+      dir=ADFS_NEWDIR;
+      adfs_sectorsize=ADFS_16BITSECTORSIZE;
+      break;
+
+    case ADFS_UNKNOWN:
+    default:
+      return;
+  }
+
+  if (map==ADFS_OLDMAP)
+  {
+    unsigned char oldmapbuff[512];
+    unsigned long discid;
+    int i;
+
+    // Search for sectors
+    sector0=diskstore_findhybridsector(0, 0, 0);
+    sector1=diskstore_findhybridsector(0, 0, 1);
+
+    // Check we have both sectors
+    if ((sector0==NULL) || (sector1==NULL))
+      return;
+
+    // Check we have data for both sectors
+    if ((sector0->data==NULL) || (sector1->data==NULL))
+      return;
+
+    memcpy(oldmapbuff, sector0->data, sizeof(oldmapbuff));
+    if (sector1->datasize==ADFS_8BITSECTORSIZE)
+      memcpy(&oldmapbuff[256], sector1->data, sector1->datasize);
+
+    printf("FreeStart: ");
+    for (i=0; i<ADFS_OLDMAPLEN; i++)
+    {
+      unsigned long c=adfs_readval(&oldmapbuff[i*3], 3);
+
+      printf("%.3lx ", c);
+    }
+    printf("\n");
+
+    printf("Disc name: \"");
+    for (i=0; i<5; i++)
+    {
+      int c=oldmapbuff[247+i];
+      if (c==0x00) break;
+      printf("%c", (c>=' ')&(c<='~')?c:'.');
+      c=oldmapbuff[256+246+i];
+      if (c==0x00) break;
+      printf("%c", (c>=' ')&(c<='~')?c:'.');
+    }
+    printf("\"\n");
+
+    printf("Sectors on disc: %ld\n", adfs_readval(&oldmapbuff[252], 3));
+    printf("Check0: %.2x\n", oldmapbuff[255]);
+    printf("FreeLen: ");
+    for (i=0; i<ADFS_OLDMAPLEN; i++)
+    {
+      unsigned long c=adfs_readval(&oldmapbuff[256+(i*3)], 3);
+
+      printf("%.3lx ", c);
+    }
+    printf("\n");
+
+    discid=adfs_readval(&oldmapbuff[507], 2);
+    printf("Disc ID: %.4lx (%ld)\n", discid, discid);
+    printf("Boot option: %.2x ", oldmapbuff[509]);
+    switch (oldmapbuff[509])
+    {
+      case 0: printf("No action\n"); break;
+      case 1: printf("*Load boot file\n"); break;
+      case 2: printf("*Run boot file\n"); break;
+      case 3: printf("*Exec boot file\n"); break;
+      default: printf("Unknown\n"); break;
+    }
+    printf("FreeEnd: %.2x\n", oldmapbuff[510]);
+    printf("Check1: %.2x\n", oldmapbuff[511]);
+
+// TODO
+
+  }
+}
+
+int adfs_validate()
 {
   int format;
   unsigned char sniff[1024];
+  Disk_Sector *sector0;
+  Disk_Sector *sector1;
+
+  // Search for sectors
+  sector0=diskstore_findhybridsector(0, 0, 0);
+  sector1=diskstore_findhybridsector(0, 0, 1);
 
   format=ADFS_UNKNOWN;
 
@@ -185,7 +382,7 @@ int adfs_validate(Disk_Sector *sector0, Disk_Sector *sector1)
     /////////////////////////////////////////////////////////////
     // Test for new map
     /////////////////////////////////////////////////////////////
-    if (format==ADFS_UNKNOWN)
+    if ((format==ADFS_UNKNOWN) && ((sector0->datasize==ADFS_16BITSECTORSIZE) && (sector1->datasize==ADFS_16BITSECTORSIZE)))
     {
       unsigned char zonecheck;
       unsigned long sectorsize;
@@ -207,6 +404,10 @@ int adfs_validate(Disk_Sector *sector0, Disk_Sector *sector1)
         }
         else
         {
+          // Check for ADFSF with a boot block, and hence discrecord at position 0xc00 + 0x1c0
+          if (adfs_checksum(&sniff[0], ADFS_16BITSECTORSIZE)==sniff[ADFS_16BITSECTORSIZE-1])
+          {
+          }
         }
       }
     }

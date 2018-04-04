@@ -581,77 +581,68 @@ int main(int argc,char **argv)
         // Check if catalogue has been done
         if (info==0)
         {
-          Disk_Sector *cat1;
-          Disk_Sector *cat2;
-
-          // Search for catalogue sectors
-          cat1=diskstore_findhybridsector(0, hw_currenthead, 0);
-          cat2=diskstore_findhybridsector(0, hw_currenthead, 1);
-
-          // If they were found and they appear to be DFS catalogue then do a catalogue
-          if ((cat1!=NULL) && (cat2!=NULL))
+          if (dfs_validcatalogue(hw_currenthead))
           {
-            if (dfs_validcatalogue(cat1, cat2))
+            printf("\nDetected DFS, side : %d\n", hw_currenthead);
+            dfs_showinfo(hw_currenthead);
+            info++;
+            printf("\n");
+          }
+          else
+          if ((i==0) && (side==0))
+          {
+            int adfs_format;
+
+            adfs_format=adfs_validate();
+
+            if (adfs_format!=ADFS_UNKNOWN)
             {
-              printf("\nDetected DFS, side : %d\n", hw_currenthead);
-              dfs_showinfo(diskstore_findhybridsector(0, hw_currenthead, 0), diskstore_findhybridsector(0, hw_currenthead, 1));
+              printf("\nDetected ADFS-");
+              switch (adfs_format)
+              {
+                case ADFS_S:
+                  printf("S");
+                  break;
+
+                case ADFS_M:
+                  printf("M");
+                  break;
+
+                case ADFS_L:
+                  printf("L");
+                  break;
+
+                case ADFS_D:
+                  printf("D");
+                  break;
+
+                case ADFS_E:
+                  printf("E");
+                  break;
+
+                case ADFS_F:
+                  printf("F");
+                  break;
+
+                case ADFS_EPLUS:
+                  printf("E+");
+                  break;
+
+                case ADFS_FPLUS:
+                  printf("F+");
+                  break;
+
+                case ADFS_G:
+                  printf("G");
+                  break;
+
+                default:
+                  break;
+              }
+              printf("\n");
+              adfs_showinfo(adfs_format);
               info++;
               printf("\n");
-            }
-            else
-            if ((i==0) && (side==0))
-            {
-              int adfs_format;
-
-              adfs_format=adfs_validate(cat1, cat2);
-
-              if (adfs_format!=ADFS_UNKNOWN)
-              {
-                printf("\nDetected ADFS-");
-                switch (adfs_format)
-                {
-                  case ADFS_S:
-                    printf("S");
-                    break;
-
-                  case ADFS_M:
-                    printf("M");
-                    break;
-
-                  case ADFS_L:
-                    printf("L");
-                    break;
-
-                  case ADFS_D:
-                    printf("D");
-                    break;
-
-                  case ADFS_E:
-                    printf("E");
-                    break;
-
-                  case ADFS_F:
-                    printf("F");
-                    break;
-
-                  case ADFS_EPLUS:
-                    printf("E+");
-                    break;
-
-                  case ADFS_FPLUS:
-                    printf("F+");
-                    break;
-
-                  case ADFS_G:
-                    printf("G");
-                    break;
-
-                  default:
-                    break;
-                }
-                printf("\n");
-                info++;
-              }
             }
           }
         }
@@ -704,18 +695,23 @@ int main(int argc,char **argv)
     if (outputtype==IMAGEFSD)
     {
       char title[100];
-      Disk_Sector *cat1;
-      Disk_Sector *cat2;
 
       title[0]=0;
 
-      // Search for side 0 catalogue sectors
-      cat1=diskstore_findhybridsector(0, 0, 0);
-      cat2=diskstore_findhybridsector(0, 0, 1);
-
       // If they were found and they appear to be DFS catalogue then extract title
-      if ((cat1!=NULL) && (cat2!=NULL) && (dfs_validcatalogue(cat1, cat2)))
-        dfs_gettitle(cat1, cat2, title, sizeof(title));
+      if (dfs_validcatalogue(0))
+      {
+        dfs_gettitle(0, title, sizeof(title));
+      }
+      else
+      {
+        int adfs_format;
+
+        adfs_format=adfs_validate();
+
+        if (adfs_format!=ADFS_UNKNOWN)
+          adfs_gettitle(adfs_format, title, sizeof(title));
+      }
 
       // If no title or blank title, then use default
       if (title[0]==0)

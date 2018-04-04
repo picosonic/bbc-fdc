@@ -101,6 +101,8 @@ of an object, all bits except 0, 1 and 3 are ignored. If the object is a directo
 #define ADFS_NEWDIR_ENTRIES 77
 #define ADFS_DIR_ENTRYSIZE 26
 
-extern int adfs_validate(Disk_Sector *sector0, Disk_Sector *sector1);
+extern void adfs_gettitle(const int adfs_format, char *title, const int titlelen);
+extern void adfs_showinfo(const int adfs_format);
+extern int adfs_validate();
 
 #endif
