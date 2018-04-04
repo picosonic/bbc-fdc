@@ -5,11 +5,24 @@ bbcfdc
 bbcfdc-nopi
 checkfsd
 
-# Disk images
+# Raw images
 *.raw
+*.rfi
+*.dfi
+
+# BBC Micro DFS images
 *.ssd
 *.dsd
+
+# ADFS images
 *.adf
+*.ads
+*.adm
+*.adl
+
+# C64 images
 *.d64
+
+# Generic images
 *.img
 *.fsd
