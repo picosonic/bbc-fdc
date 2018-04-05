@@ -11,6 +11,8 @@
 
 #include "diskstore.h"
 #include "adfs.h"
+#include "hardware.h"
+#include "mod.h"
 
 // Reverse log2
 unsigned long rev_log2(const unsigned long x)
@@ -160,28 +162,34 @@ void adfs_gettitle(const int adfs_format, char *title, const int titlelen)
 
   if (map==ADFS_OLDMAP)
   {
-    unsigned char oldmapbuff[512];
+    unsigned char oldmapbuff[ADFS_8BITSECTORSIZE*2];
+    struct adfs_oldmap *oldmap;
 
     // Check there is enough space in return string
     if (titlelen<11) return;
 
     // Populate old map
-    memcpy(oldmapbuff, sector0->data, sizeof(oldmapbuff));
+    bzero(oldmapbuff, sizeof(oldmapbuff));
     if (sector1->datasize==ADFS_8BITSECTORSIZE)
+    {
+      memcpy(oldmapbuff, sector0->data, ADFS_8BITSECTORSIZE);
       memcpy(&oldmapbuff[ADFS_8BITSECTORSIZE], sector1->data, sector1->datasize);
+    }
+    else
+      memcpy(oldmapbuff, sector0->data, sizeof(oldmapbuff));
+
+    oldmap=(struct adfs_oldmap *)&oldmapbuff[0];
 
     j=0;
 
     for (i=0; i<5; i++)
     {
-      int c;
-
-      c=oldmapbuff[247+i];
+      int c=oldmap->oldname0[i];
       if (c==0x00) break;
       title[j++]=c & 0x7f;
       title[j]=0;
 
-      c=oldmapbuff[ADFS_8BITSECTORSIZE+246+i];
+      c=oldmap->oldname1[i];
       if (c==0x00) break;
       title[j++]=c & 0x7f;
       title[j]=0;
@@ -189,7 +197,7 @@ void adfs_gettitle(const int adfs_format, char *title, const int titlelen)
   }
 }
 
-void adfs_readdir(const char *folder, const int maptype, const int dirtype, const int offset, const unsigned int adfs_sectorsize)
+void adfs_readdir(const int level, const char *folder, const int maptype, const int dirtype, const long offset, const unsigned int adfs_sectorsize, const unsigned char sectorspertrack)
 {
   struct adfs_dirheader dh;
   int i;
@@ -200,33 +208,83 @@ void adfs_readdir(const char *folder, const int maptype, const int dirtype, cons
   Disk_Sector *dsector;
   int secpos;
 
+  unsigned long diskoffs;
   int c, h, r; // Cylinder, head, record
-
-  printf("['%s' @%x MAP:%d DIR:%d]\n", folder, offset, maptype, dirtype);
 
   // Only support old maps for now
   if (maptype!=ADFS_OLDMAP)
     return;
 
-  // TODO Work out CHR values from offset/sectorsize
+//  printf("['%s' @0x%lx MAP:%d DIR:%d SECSIZE:%d SEC/TRACK:%d]\n", folder, offset, maptype, dirtype, adfs_sectorsize, sectorspertrack);
 
-  // TODO Find sector matching CHR
-  if (offset==0x200)
-    dsector=diskstore_findhybridsector(0, 0, 2);
+  // Work out CHR values from absolute offset, using sectors/track
+  secpos=0;
+  diskoffs=offset; c=0; h=0; r=0;
+  while (diskoffs>=ADFS_8BITSECTORSIZE)
+  {
+    secpos+=ADFS_8BITSECTORSIZE;
+    diskoffs-=ADFS_8BITSECTORSIZE;
 
-  if (offset==0x400)
-    dsector=diskstore_findhybridsector(0, 0, 1);
+    if (secpos>=adfs_sectorsize)
+    {
+      secpos=0;
+      r++;
+
+      if (r==sectorspertrack)
+      {
+        r=0;
+        h++;
+      }
+
+      if (h==2)
+      {
+        h=0;
+        c++;
+      }
+    }
+  }
+
+//printf("C:%d H:%d R:%d\n", c, h, r);
+
+  // Find sector matching CHR
+  dsector=diskstore_findhybridsector(c, h, r);
+
+  if ((dsector==NULL) || (dsector->data==NULL))
+  {
+    unsigned char *samplebuffer;
+    unsigned long samplebuffsize;
+
+    // The required sector is probably not loaded
+    samplebuffsize=((hw_samplerate/HW_ROTATIONSPERSEC)/BITSPERBYTE)*3;
+    samplebuffer=malloc(samplebuffsize);
+
+    if (samplebuffer!=NULL)
+    {
+      hw_seektotrack(c);
+      hw_sideselect(h);
+      hw_sleep(1);
+      hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
+      mod_process(samplebuffer, samplebuffsize, 99);
+
+      free(samplebuffer);
+      samplebuffer=NULL;
+    }
+
+    // Look again for missing sector
+    dsector=diskstore_findhybridsector(c, h, r);
+  }
 
   if ((dsector==NULL) || (dsector->data==NULL))
     return;
 
-  // TODO Read directory entry from sector
+  // Read directory entry from sector
 
   secpos=0;
   memcpy(&dh, dsector->data, sizeof(dh));
   secpos+=sizeof(dh);
 
-  // TODO Iterate through directory
+  // Iterate through directory
+/*
   printf("StartMasSeq: %.2x\n", dh.startmasseq);
   printf("StartName: \"");
   for (i=0; i<4; i++)
@@ -235,6 +293,7 @@ void adfs_readdir(const char *folder, const int maptype, const int dirtype, cons
     printf("%c", (c>=' ')&(c<='~')?c:'.');
   }
   printf("\"\n");
+*/
 
   if (dirtype==ADFS_OLDDIR)
     entries=ADFS_OLDDIR_ENTRIES;
@@ -259,8 +318,9 @@ void adfs_readdir(const char *folder, const int maptype, const int dirtype, cons
       filename[0]=0;
       filetype=0;
       hasfiletype=0;
-      printf("\nName: %s", folder);
-      if (folder[0]!=0) printf("/");
+      for (i=0; i<level; i++)
+         printf("  ");
+
       for (i=0; i<10; i++)
       {
         int c=(de.dirobname[i]&0x7f);
@@ -270,7 +330,8 @@ void adfs_readdir(const char *folder, const int maptype, const int dirtype, cons
         filename[strlen(filename)+1]=0;
         filename[strlen(filename)]=c;
       }
-      printf("\n");
+      for (i=i; i<10; i++)
+        printf(" ");
 
       // Extract object attributes
       if (dirtype==ADFS_NEWDIR)
@@ -290,76 +351,11 @@ void adfs_readdir(const char *folder, const int maptype, const int dirtype, cons
         if (de.dirobname[6]&0x80) attrib|=ADFS_PUBLIC_WRITE;
       }
 
-      // Check for object having a filetype+timestamp
-      if ((de.dirload&0xfff00000) == 0xfff00000)
-        hasfiletype=1;
-
-      printf("Length: %ld\n", (unsigned long)de.dirlen);
-
-      indirectaddr=((de.dirinddiscadd[2]<<16) | (de.dirinddiscadd[1]<<8) | de.dirinddiscadd[0]);
-
-      if (maptype==ADFS_OLDMAP)
-      {
-        printf("Indirect disc offset address: %.6lx\n", (unsigned long)indirectaddr);
-      }
-      else
-      {
-      //  printf("Indirect disc address: Fragment %x (Sector %x) Offset %x\n", (indirectaddr&0x7fff00)>>8, fragstart[(indirectaddr&0x7fff00)>>8], indirectaddr&0xff);
-      }
-
-      if (hasfiletype==0)
-      {
-        printf("Load address: %.8lx\n", (unsigned long)de.dirload);
-        printf("Exec address: %.8lx\n", (unsigned long)de.direxec);
-      }
-      else
-      {
-        // Get the epoch
-        if (dirtype==ADFS_NEWDIR)
-        {
-          unsigned int hightime=(de.dirload&0xff);
-          unsigned int lowtime=de.direxec;
-          unsigned long long csec=(((unsigned long long)hightime<<32) | lowtime);
-
-          filetype=((0x000fff00 & de.dirload)>>8);
-
-          printf("File type: %.3x\n", filetype);
-          if ((csec/100)>=ADFS_RISCUNIXTSDIFF)
-          {
-            struct tm *tim;
-
-            csec=(csec/100)-ADFS_RISCUNIXTSDIFF;
-
-            tv.tv_sec=csec;
-            tv.tv_usec=0;
-
-            tim = localtime(&tv.tv_sec);
-
-            printf("TS: %.2d:%.2d:%.2d %.2d/%.2d/%d\n", tim->tm_hour, tim->tm_min, tim->tm_sec, tim->tm_mday, tim->tm_mon+1, tim->tm_year+1900);
-          }
-        }
-      }
-
-      // TODO Recurse into directories
-      if (0!=(attrib&ADFS_DIRECTORY))
-      {
-        char newfolder[ADFS_MAXPATHLEN];
-
-        sprintf(newfolder, "%s/%s", folder, filename);
-
-/*
-        if (maptype==ADFS_OLDMAP)
-          readdir(newfolder, maptype, dirtype, indirectaddr*adfs_sectorsize, adfs_sectorsize);
-        else
-          readdir(newfolder, maptype, dirtype, fragstart[(indirectaddr&0x7fff00)>>8]*1024, adfs_sectorsize);
-*/
-      }
-
       // Attributes
-      printf("Attributes: %.2x ", attrib);
+      printf(" ");
 
       if ((0!=(attrib&ADFS_OWNER_READ)) ||
-         (0!=(attrib&ADFS_EXECUTABLE)))
+          (0!=(attrib&ADFS_EXECUTABLE)))
         printf("R");
       else
         printf("-");
@@ -389,10 +385,75 @@ void adfs_readdir(const char *folder, const int maptype, const int dirtype, cons
       else
         printf("w");
 
+      // Check for object having a filetype+timestamp
+      if ((de.dirload&0xfff00000) == 0xfff00000)
+        hasfiletype=1;
+
+      printf(" %10ld", (unsigned long)de.dirlen);
+
+      indirectaddr=((de.dirinddiscadd[2]<<16) | (de.dirinddiscadd[1]<<8) | de.dirinddiscadd[0]);
+
+      if (maptype==ADFS_OLDMAP)
+      {
+        printf(" %.6lx", (unsigned long)indirectaddr);
+      }
+      else
+      {
+      //  printf("Indirect disc address: Fragment %x (Sector %x) Offset %x\n", (indirectaddr&0x7fff00)>>8, fragstart[(indirectaddr&0x7fff00)>>8], indirectaddr&0xff);
+      }
+
+      if (hasfiletype==0)
+      {
+        printf(" %.8lx", (unsigned long)de.dirload);
+        printf(" %.8lx", (unsigned long)de.direxec);
+      }
+      else
+      {
+        // Get the epoch
+        if (dirtype==ADFS_NEWDIR)
+        {
+          unsigned int hightime=(de.dirload&0xff);
+          unsigned int lowtime=de.direxec;
+          unsigned long long csec=(((unsigned long long)hightime<<32) | lowtime);
+
+          filetype=((0x000fff00 & de.dirload)>>8);
+
+          printf(" %.3x", filetype);
+          if ((csec/100)>=ADFS_RISCUNIXTSDIFF)
+          {
+            struct tm *tim;
+
+            csec=(csec/100)-ADFS_RISCUNIXTSDIFF;
+
+            tv.tv_sec=csec;
+            tv.tv_usec=0;
+
+            tim = localtime(&tv.tv_sec);
+
+            printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", tim->tm_hour, tim->tm_min, tim->tm_sec, tim->tm_mday, tim->tm_mon+1, tim->tm_year+1900);
+          }
+        }
+      }
+
       printf("\n");
 
-      if (dirtype==ADFS_OLDDIR)
-        printf("OldDirObSeq: %.2x\n", de.olddirobseq);
+      // Recurse into directories
+      if (0!=(attrib&ADFS_DIRECTORY))
+      {
+        char newfolder[ADFS_MAXPATHLEN];
+
+        sprintf(newfolder, "%s/%s", folder, filename);
+
+        if (maptype==ADFS_OLDMAP)
+          adfs_readdir(level+1, newfolder, maptype, dirtype, indirectaddr*ADFS_8BITSECTORSIZE, adfs_sectorsize, sectorspertrack);
+/*
+        else
+          adfs_readdir(level+1, newfolder, maptype, dirtype, fragstart[(indirectaddr&0x7fff00)>>8]*1024, adfs_sectorsize, sectorspertrack);
+*/
+      }
+
+//      if (dirtype==ADFS_OLDDIR)
+//        printf("OldDirObSeq: %.2x\n", de.olddirobseq);
     }
     else
     {
@@ -400,12 +461,22 @@ void adfs_readdir(const char *folder, const int maptype, const int dirtype, cons
       break;
     }
   }
+
+  // TODO skip over unused entries
+  while ((entry+1)<entries)
+  {
+    // TODO
+    entry++;
+  }
+
+  // TODO Process DirTail
 }
 
 void adfs_showinfo(const int adfs_format)
 {
   int map, dir;
   unsigned int adfs_sectorsize;
+  unsigned char sectorspertrack;
   Disk_Sector *sector0;
   Disk_Sector *sector1;
 
@@ -417,19 +488,28 @@ void adfs_showinfo(const int adfs_format)
       map=ADFS_OLDMAP;
       dir=ADFS_OLDDIR;
       adfs_sectorsize=ADFS_8BITSECTORSIZE;
+      sectorspertrack=16;
       break;
 
     case ADFS_D:
       map=ADFS_OLDMAP;
       dir=ADFS_NEWDIR;
       adfs_sectorsize=ADFS_16BITSECTORSIZE;
+      sectorspertrack=5;
       break;
 
     case ADFS_E:
+      map=ADFS_NEWMAP;
+      dir=ADFS_NEWDIR;
+      adfs_sectorsize=ADFS_16BITSECTORSIZE;
+      sectorspertrack=5;
+      break;
+
     case ADFS_F:
       map=ADFS_NEWMAP;
       dir=ADFS_NEWDIR;
       adfs_sectorsize=ADFS_16BITSECTORSIZE;
+      sectorspertrack=10;
       break;
 
     case ADFS_UNKNOWN:
@@ -513,12 +593,14 @@ void adfs_showinfo(const int adfs_format)
     printf("FreeEnd: %.2x\n", oldmap->freeend);
     printf("Check1: %.2x\n", oldmap->check1);
 
+    printf("\n");
+
     // Do a directory listing, using root at start of 1st sector after 512 bytes of old map
     //   as per RiscOS PRM 2-200
     if (dir==ADFS_NEWDIR)
-      adfs_readdir("", map, dir, ADFS_16BITSECTORSIZE, adfs_sectorsize);
+      adfs_readdir(0, "", map, dir, ADFS_16BITSECTORSIZE, adfs_sectorsize, sectorspertrack);
     else
-      adfs_readdir("", map, dir, ADFS_8BITSECTORSIZE*2, adfs_sectorsize);
+      adfs_readdir(0, "", map, dir, ADFS_8BITSECTORSIZE*2, adfs_sectorsize, sectorspertrack);
   }
 }
 
@@ -637,6 +719,7 @@ int adfs_validate()
         }
         else
         {
+printf("UNKNOWN ADFS sectorsize %ld sectorspertrack %ld\n", sectorsize, sectorspertrack);
           // Check for ADFSF with a boot block, and hence discrecord at position 0xc00 + 0x1c0
           if (adfs_checksum(&sniff[0], ADFS_16BITSECTORSIZE)==sniff[ADFS_16BITSECTORSIZE-1])
           {

@@ -41,7 +41,7 @@ nopi.o: nopi.c hardware.h jsmn.h rfi.h
 
 ##########################
 
-adfs.o: adfs.c adfs.h diskstore.h
+adfs.o: adfs.c adfs.h diskstore.h hardware.h mod.h
 	$(CC) $(BUILDFLAGS) -c -o adfs.o adfs.c
 
 crc.o: crc.c crc.h
