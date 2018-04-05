@@ -312,7 +312,87 @@ void adfs_readdir(const char *folder, const int maptype, const int dirtype, cons
         printf("Load address: %.8lx\n", (unsigned long)de.dirload);
         printf("Exec address: %.8lx\n", (unsigned long)de.direxec);
       }
+      else
+      {
+        // Get the epoch
+        if (dirtype==ADFS_NEWDIR)
+        {
+          unsigned int hightime=(de.dirload&0xff);
+          unsigned int lowtime=de.direxec;
+          unsigned long long csec=(((unsigned long long)hightime<<32) | lowtime);
 
+          filetype=((0x000fff00 & de.dirload)>>8);
+
+          printf("File type: %.3x\n", filetype);
+          if ((csec/100)>=ADFS_RISCUNIXTSDIFF)
+          {
+            struct tm *tim;
+
+            csec=(csec/100)-ADFS_RISCUNIXTSDIFF;
+
+            tv.tv_sec=csec;
+            tv.tv_usec=0;
+
+            tim = localtime(&tv.tv_sec);
+
+            printf("TS: %.2d:%.2d:%.2d %.2d/%.2d/%d\n", tim->tm_hour, tim->tm_min, tim->tm_sec, tim->tm_mday, tim->tm_mon+1, tim->tm_year+1900);
+          }
+        }
+      }
+
+      // TODO Recurse into directories
+      if (0!=(attrib&ADFS_DIRECTORY))
+      {
+        char newfolder[ADFS_MAXPATHLEN];
+
+        sprintf(newfolder, "%s/%s", folder, filename);
+
+/*
+        if (maptype==ADFS_OLDMAP)
+          readdir(newfolder, maptype, dirtype, indirectaddr*adfs_sectorsize, adfs_sectorsize);
+        else
+          readdir(newfolder, maptype, dirtype, fragstart[(indirectaddr&0x7fff00)>>8]*1024, adfs_sectorsize);
+*/
+      }
+
+      // Attributes
+      printf("Attributes: %.2x ", attrib);
+
+      if ((0!=(attrib&ADFS_OWNER_READ)) ||
+         (0!=(attrib&ADFS_EXECUTABLE)))
+        printf("R");
+      else
+        printf("-");
+
+      if (0==(attrib&ADFS_OWNER_WRITE))
+        printf("-");
+      else
+        printf("W");
+
+      if (0==(attrib&ADFS_LOCKED))
+        printf("-");
+      else
+        printf("L");
+
+      if (0==(attrib&ADFS_DIRECTORY))
+        printf("F");
+      else
+        printf("D");
+
+      if (0==(attrib&ADFS_PUBLIC_READ))
+        printf("-");
+      else
+        printf("r");
+
+      if (0==(attrib&ADFS_PUBLIC_WRITE))
+        printf("-");
+      else
+        printf("w");
+
+      printf("\n");
+
+      if (dirtype==ADFS_OLDDIR)
+        printf("OldDirObSeq: %.2x\n", de.olddirobseq);
     }
     else
     {
@@ -359,7 +439,7 @@ void adfs_showinfo(const int adfs_format)
 
   if (map==ADFS_OLDMAP)
   {
-    unsigned char oldmapbuff[512];
+    unsigned char oldmapbuff[ADFS_8BITSECTORSIZE*2];
     struct adfs_oldmap *oldmap;
     unsigned long discid;
     int i;
@@ -376,9 +456,14 @@ void adfs_showinfo(const int adfs_format)
     if ((sector0->data==NULL) || (sector1->data==NULL))
       return;
 
-    memcpy(oldmapbuff, sector0->data, sizeof(oldmapbuff));
+    bzero(oldmapbuff, sizeof(oldmapbuff));
     if (sector1->datasize==ADFS_8BITSECTORSIZE)
+    {
+      memcpy(oldmapbuff, sector0->data, ADFS_8BITSECTORSIZE);
       memcpy(&oldmapbuff[ADFS_8BITSECTORSIZE], sector1->data, sector1->datasize);
+    }
+    else
+      memcpy(oldmapbuff, sector0->data, sizeof(oldmapbuff));
 
     oldmap=(struct adfs_oldmap *)&oldmapbuff[0];
 
@@ -428,7 +513,8 @@ void adfs_showinfo(const int adfs_format)
     printf("FreeEnd: %.2x\n", oldmap->freeend);
     printf("Check1: %.2x\n", oldmap->check1);
 
-    // Do a directory listing, using root at 1st sector after 512 bytes of old map
+    // Do a directory listing, using root at start of 1st sector after 512 bytes of old map
+    //   as per RiscOS PRM 2-200
     if (dir==ADFS_NEWDIR)
       adfs_readdir("", map, dir, ADFS_16BITSECTORSIZE, adfs_sectorsize);
     else
