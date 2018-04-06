@@ -122,6 +122,10 @@ of an object, all bits except 0, 1 and 3 are ignored. If the object is a directo
 
 #define ADFS_DIR_ENTRYSIZE 26
 
+// Boot block, from RiscOS PRM 2-213
+#define ADFS_BOOTBLOCKOFFSET 0xc00
+#define ADFS_BOOTDROFFSET 0x1c0
+
 #pragma pack(1)
 
 // RiscOS PRM 2-200

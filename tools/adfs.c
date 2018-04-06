@@ -206,7 +206,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   unsigned char attrib;
   int hasfiletype;
   Disk_Sector *dsector;
-  int secpos;
+  unsigned int secpos;
 
   unsigned long diskoffs;
   int c, h, r; // Cylinder, head, record
@@ -313,25 +313,30 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
       memcpy(&de, &dsector->data[secpos], sizeof(de));
       secpos+=sizeof(de);
 
+      // Check for last entry, as per RiscOS PRM 2-211
       if (de.dirobname[0]==0) break;
 
+      // Initialise this file entry
       filename[0]=0;
       filetype=0;
       hasfiletype=0;
+
+      // Print spaces depending on directory depth
       for (i=0; i<level; i++)
          printf("  ");
 
+      // Extract filename
       for (i=0; i<10; i++)
       {
         int c=(de.dirobname[i]&0x7f);
         if ((c==0) || (c==0x0d) || (c==0x0a)) break;
-        printf("%c", (c>=' ')&(c<='~')?c:'.');
 
         filename[strlen(filename)+1]=0;
         filename[strlen(filename)]=c;
       }
-      for (i=i; i<10; i++)
-        printf(" ");
+
+      // Print filename padded to 10 characters
+      printf("%s%*s", filename, 10-strlen(filename), "");
 
       // Extract object attributes
       if (dirtype==ADFS_NEWDIR)
@@ -342,6 +347,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
       {
         attrib=0;
 
+        // Map old to new dir attributes
         if (de.dirobname[0]&0x80) attrib|=ADFS_OWNER_READ;
         if (de.dirobname[1]&0x80) attrib|=ADFS_OWNER_WRITE;
         if (de.dirobname[2]&0x80) attrib|=ADFS_LOCKED;
@@ -608,6 +614,69 @@ void adfs_showinfo(const int adfs_format)
   }
 }
 
+void adfs_dumpdiscrecord(struct adfs_discrecord *dr)
+{
+  int i;
+
+  printf("\nADFS Disc Record\n");
+
+  printf("Sector size in bytes : %ld\n", rev_log2(dr->log2secsize));
+  printf("Sectors/track : %d\n", dr->secspertrack);
+  printf("Heads: %d (%s)\n", dr->heads, dr->heads==1?"sequenced":dr->heads==2?"interleaved":"Unknown");
+
+  printf("Density: %d ", dr->density);
+  switch (dr->density)
+  {
+    case 0: printf("Hard disk\n"); break;
+    case 1: printf("Single density (125Kbps FM)\n"); break;
+    case 2: printf("Double density (250Kbps FM)\n"); break;
+    case 3: printf("Double+ density (300Kbps FM)\n"); break;
+    case 4: printf("Quad density (500Kbps FM)\n"); break;
+    case 8: printf("Octal density (1000Kbps FM)\n"); break;
+    default:
+      printf("Unknown\n");
+      break;
+  }
+
+  printf("ID field length of a map fragment in bits: %d\n", dr->idlen);
+  if ((dr->idlen<(dr->log2secsize+3)) || (dr->idlen>19))
+    printf("Invalid idlen size\n");
+
+  printf("Bytes/map bit: 0x%.2x (%ld)\n", dr->log2bpmb, rev_log2(dr->log2bpmb));
+  printf("Track to track skew: %d\n", dr->skew);
+  printf("Boot option: %d ", dr->bootoption);
+  switch (dr->bootoption)
+  {
+    case 0: printf("No action\n"); break;
+    case 1: printf("*Load boot file\n"); break;
+    case 2: printf("*Run boot file\n"); break;
+    case 3: printf("*Exec boot file\n"); break;
+    default: printf("Unknown\n"); break;
+  }
+
+  printf("Lowest sector: %d\n", dr->lowsector&0x3f);
+  printf("Treat sides as %s\n", (dr->lowsector&0x40)==0?"interleaved":"sequence");
+  printf("Disc is %d track\n", (dr->lowsector&0x80)==0?80:40);
+
+  printf("Zones in map: %d\n", dr->nzones);
+  printf("Non-allocation bits between zones: 0x%.4x\n", dr->zone_spare);
+  printf("Root directory address: 0x%.8x\n", dr->root);
+  printf("Disc size in bytes: %ld\n", (unsigned long)dr->disc_size);
+
+  printf("Disc cycle ID: 0x%.4x\n", dr->disc_id);
+  printf("Disc name: \"");
+  for (i=0; i<10; i++)
+  {
+    int c=dr->disc_name[i];
+    printf("%c", (c>=' ')&(c<='~')?c:'.');
+  }
+  printf("\"\n");
+
+  printf("Disc filetype: 0x%.8x\n", dr->disc_type);
+
+  printf("\n");
+}
+
 int adfs_validate()
 {
   int format;
@@ -704,30 +773,46 @@ int adfs_validate()
     if ((format==ADFS_UNKNOWN) && ((sector0->datasize==ADFS_16BITSECTORSIZE) && (sector1->datasize==ADFS_16BITSECTORSIZE)))
     {
       unsigned char zonecheck;
-      unsigned long sectorsize;
-      unsigned long sectorspertrack;
 
       // Validate NewMap ZoneCheck for zone 0
       zonecheck=map_zone_valid_byte(&sniff, sniff[4], 0);
 
       if (zonecheck==sniff[0])
       {
-        sectorsize=rev_log2(sniff[4]);
-        sectorspertrack=sniff[5];
+        struct adfs_discrecord *dr;
+
+        dr=(struct adfs_discrecord *)&sniff[4];
+        adfs_dumpdiscrecord(dr);
 
         // TODO validate CrossCheck
 
-        if ((sectorsize==ADFS_16BITSECTORSIZE) && (sectorspertrack==5))
-        {
+        if ((rev_log2(dr->log2secsize)==ADFS_16BITSECTORSIZE) && (dr->secspertrack==5))
           format=ADFS_E;
-        }
-        else
-        {
-printf("ADFS zonechecked sectorsize %ld sectorspertrack %ld\n", sectorsize, sectorspertrack);
+      }
 
-          // Check for ADFSF with a boot block, and hence discrecord at position 0xc00 + 0x1c0
-          if (adfs_checksum(&sniff[0], ADFS_16BITSECTORSIZE)==sniff[ADFS_16BITSECTORSIZE-1])
+      // Check for ADFS with a boot block, and hence discrecord at position 0xc00 + 0x1c0
+      //   as per RiscOS PRM 2-213
+      if (format==ADFS_UNKNOWN)
+      {
+        // On a floppy disk with 1024 byte sectors (which all new map are), 0xc00 is at C0 H0 S3
+        sector0=diskstore_findhybridsector(0, 0, 3);
+
+        if ((sector0!=NULL) && (sector0->data!=NULL))
+        {
+          memcpy(sniff, sector0->data, sector0->datasize);
+
+          if (adfs_checksum(&sniff[0], (ADFS_8BITSECTORSIZE*2))==sniff[(ADFS_8BITSECTORSIZE*2)-1])
           {
+            struct adfs_discrecord *dr;
+
+            dr=(struct adfs_discrecord *)&sniff[ADFS_BOOTDROFFSET];
+            adfs_dumpdiscrecord(dr);
+
+            if ((rev_log2(dr->log2secsize)==ADFS_16BITSECTORSIZE) && (dr->secspertrack==10))
+              format=ADFS_F;
+
+            if ((rev_log2(dr->log2secsize)==ADFS_16BITSECTORSIZE) && (dr->secspertrack==20))
+              format=ADFS_G;
           }
         }
       }
