@@ -67,7 +67,7 @@ unsigned char adfs_checksum(const unsigned char *buff, const int sectorsize)
   return (sum&255);
 }
 
-// New map zone check
+// New map zone check, from RiscOS PRM 2-206/207
 unsigned char map_zone_valid_byte(void const * const map, const unsigned char log2_sector_size, unsigned int zone)
 {
   unsigned char const * const map_base = map;
@@ -602,6 +602,10 @@ void adfs_showinfo(const int adfs_format)
     else
       adfs_readdir(0, "", map, dir, ADFS_8BITSECTORSIZE*2, adfs_sectorsize, sectorspertrack);
   }
+  else
+  {
+    // New MAP
+  }
 }
 
 int adfs_validate()
@@ -645,10 +649,10 @@ int adfs_validate()
     // Check reserved byte is zero
     if (oldmap->reserved==0)
     {
-      // Validate first checksum
+      // Validate first checksum, RiscOS PRM 2-200/201
       if (adfs_checksum(&sniff[0], ADFS_8BITSECTORSIZE)==oldmap->check0)
       {
-        // Validate second checksum
+        // Validate second checksum, RiscOS PRM 2-200/201
         if (adfs_checksum(&sniff[ADFS_8BITSECTORSIZE], ADFS_8BITSECTORSIZE)==oldmap->check1)
         {
           unsigned long sec;
@@ -719,7 +723,8 @@ int adfs_validate()
         }
         else
         {
-printf("UNKNOWN ADFS sectorsize %ld sectorspertrack %ld\n", sectorsize, sectorspertrack);
+printf("ADFS zonechecked sectorsize %ld sectorspertrack %ld\n", sectorsize, sectorspertrack);
+
           // Check for ADFSF with a boot block, and hence discrecord at position 0xc00 + 0x1c0
           if (adfs_checksum(&sniff[0], ADFS_16BITSECTORSIZE)==sniff[ADFS_16BITSECTORSIZE-1])
           {

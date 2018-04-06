@@ -629,11 +629,11 @@ int main(int argc,char **argv)
                   printf("F");
                   break;
 
-                case ADFS_EPLUS:
+                case ADFS_EX:
                   printf("E+");
                   break;
 
-                case ADFS_FPLUS:
+                case ADFS_FX:
                   printf("F+");
                   break;
 

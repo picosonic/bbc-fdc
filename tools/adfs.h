@@ -20,14 +20,14 @@
 #define ADFS_D 3
 #define ADFS_E 4
 #define ADFS_F 5
-#define ADFS_EPLUS 6
-#define ADFS_FPLUS 7
+#define ADFS_EX 6
+#define ADFS_FX 7
 #define ADFS_G 8
 
 #define ADFS_MAXPATHLEN 256
 
 /*
-From RiscOS PRM, 2-197, with G format from RiscOS sources
+From RiscOS PRM 2-197, with G format from RiscOS sources
 
 Logical layout
 --------------
@@ -69,14 +69,16 @@ From Wikipedia and other sources
 ADFS S/M/L mostly for 8bit. Arthur/RiscOS maintained L format compatibility.
 
 Arthur added D format with 77 entries per directory, up from 47.
+The D format was used by the first Archimedes computers at the time of their launch in 1987.
 D/E have per-file 12-bit "type" attribute where load/exec were stored in L format.
 
 RiscOS added E and F format for double density and high density respectively.
+The F format was introduced with RISC OS 3.
 These introduced "new map" to support fragmentation.
 
-RiscOS 4 added E+ and F+ which allowed for long filenames (255 characters) and more than 77 files (approx 88,000) per directory. The root directory moved. Directories are no longer fixed-size 2048 byte entities, but cannot span more than one disc zone. These use BigMaps.
+RiscOS 4 added E+ and F+ which allowed for long filenames (255 characters, up from 10) and more than 77 files (approx 88,000) per directory. The root directory moved. Directories are no longer fixed-size 2048 byte entities, but cannot span more than one disc zone. These use BigMaps.
 
-There is also a G format which allows 77 directory entries, new map and 3200K capacity using 20 sectors/track at Octal density.
+There is also a G format seen in the RiscOS source code, which allows 77 directory entries, new map and 3200K capacity using 20 sectors/track at Octal density.
 */
 
 /*
@@ -105,21 +107,24 @@ of an object, all bits except 0, 1 and 3 are ignored. If the object is a directo
 #define ADFS_PUBLIC_READ        (1 << 5)
 #define ADFS_PUBLIC_WRITE       (1 << 6)
 
-// Number of entries and entry size within OldMap
+// Number of entries and entry size within OldMap, from RiscOS PRM 2-200
 #define ADFS_OLDMAPLEN 82
 #define ADFS_OLDMAPENTRY 3
 
 // Difference between RiscOS epoch and UNIX epoch, i.e. seconds between 1st Jan 1900 and 1st Jan 1970
 #define ADFS_RISCUNIXTSDIFF 2208988800LL
 
+// Directory types, from RiscOS PRM 2-209
 #define ADFS_OLDDIR_BLOCKSIZE 1280
 #define ADFS_OLDDIR_ENTRIES 47
 #define ADFS_NEWDIR_BLOCKSIZE 2048
 #define ADFS_NEWDIR_ENTRIES 77
+
 #define ADFS_DIR_ENTRYSIZE 26
 
 #pragma pack(1)
 
+// RiscOS PRM 2-200
 struct adfs_oldmap
 {
   uint8_t freestart[ADFS_OLDMAPLEN*ADFS_OLDMAPENTRY]; // Table of freespace start sectors
@@ -136,12 +141,14 @@ struct adfs_oldmap
   uint8_t check1; // Checksum on second 256 bytes
 };
 
+// RiscOS PRM 2-210
 struct adfs_dirheader
 {
   uint8_t startmasseq; // update sequence number to check dir start with dir end
-  uint8_t startname[4]; // 'Hugo' or 'Nick'
+  uint8_t startname[4]; // 'Hugo' or 'Nick', BBC and Master used 'Hugo' for L format
 };
 
+// RiscOS PRM 2-210
 struct adfs_direntry
 {
   uint8_t dirobname[10]; // name of object
@@ -157,6 +164,7 @@ struct adfs_direntry
   };
 };
 
+// RiscOS PRM 2-211
 struct adfs_olddirtail
 {
   uint8_t lastmark; // 0 to indicate end of entries
@@ -169,6 +177,7 @@ struct adfs_olddirtail
   uint8_t checkbyte; // check byte on directory
 };
 
+// RiscOS PRM 2-211
 struct adfs_newdirtail
 {
   uint8_t lastmark; // 0 to indicate end of entries
@@ -179,6 +188,48 @@ struct adfs_newdirtail
   uint8_t endmasseq; // to match with startmasseq (in header), else "broken directory"
   uint8_t endname[4]; // to match with startname (in header)
   uint8_t checkbyte; // check byte on directory
+};
+
+// RiscOS PRM 2-201
+struct adfs_zoneheader
+{
+  uint8_t zonecheck; // check byte for this zone's map block
+  uint16_t freelink; // link to first free fragment in this zone
+  uint8_t crosscheck; // cross check byte for complete map
+};
+
+// RiscOS PRM 2-202
+struct adfs_discrecord
+{
+  uint8_t log2secsize; // log2 of sector size
+  uint8_t secspertrack; // number of sectors per track
+  uint8_t heads; // number of disc heads, if interleaved otherwise -1 (1 for old directories)
+  uint8_t density; // disc density
+  uint8_t idlen; // length of id field of a map fragment (in bits)
+  uint8_t log2bpmb; // log2 of number of bytes per map bits
+  uint8_t skew; // track to track skew for random access file allocation
+  uint8_t bootoption; // boot option (as in *OPT 4,n)
+  uint8_t lowsector; // lowest numbered sector (bits 0..5), and disc description flags (bit 6 = sequenced, bit 7 = disc is 40 track), not stored on disc but populated when in RAM
+  uint8_t nzones; // number of zones in the map
+  uint16_t zone_spare; // number of non-allocation bits between zones
+  uint32_t root; // disc address of root directory
+  uint32_t disc_size; // disc size in bytes
+  uint16_t disc_id; // disc cycle id, changes on each disc update
+  uint8_t disc_name[10]; // disc name (spaced to 10 chars, no terminator)
+  uint32_t disc_type; // filetype given to disk, not stored on disc but populated when in RAM
+
+  // FileCore Disc Large extension (RISCOS 3.60 and later)
+  //   offset 0x24
+  uint32_t disc_size_high; // high word of disc size
+  uint8_t log2sharesize; // log2 sharing granularity (bits 0..3), bits 4..7 must be 0
+  uint8_t big_flag; // identifies large disc (bit 0), bits 1..7 must be 0
+  uint8_t nzones_high; // high byte of nzones
+
+  uint8_t unused43; // reserved, must be zero
+  uint32_t format_version; // version number of disc format
+  uint32_t root_size; // size of root directory
+
+  uint8_t unused52[60 - 52]; // reserved, must be zero
 };
 
 extern void adfs_gettitle(const int adfs_format, char *title, const int titlelen);
