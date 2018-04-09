@@ -25,6 +25,7 @@
 #define ADFS_G 8
 
 #define ADFS_MAXPATHLEN 256
+#define ADFS_MAXFILELEN 10
 
 /*
 From RiscOS PRM 2-197, with G format from RiscOS sources
@@ -148,14 +149,14 @@ struct adfs_oldmap
 // RiscOS PRM 2-210
 struct adfs_dirheader
 {
-  uint8_t startmasseq; // update sequence number to check dir start with dir end
+  uint8_t startmasseq; // update sequence number to check dir start with dir end, in BCD
   uint8_t startname[4]; // 'Hugo' or 'Nick', BBC and Master used 'Hugo' for L format
 };
 
 // RiscOS PRM 2-210
 struct adfs_direntry
 {
-  uint8_t dirobname[10]; // name of object
+  uint8_t dirobname[ADFS_MAXFILELEN]; // name of object
   uint32_t dirload; // load address of object
   uint32_t direxec; // exec address of object
   uint32_t dirlen; // length of object
@@ -172,11 +173,11 @@ struct adfs_direntry
 struct adfs_olddirtail
 {
   uint8_t lastmark; // 0 to indicate end of entries
-  uint8_t name[10]; // directory name
+  uint8_t name[ADFS_MAXFILELEN]; // directory name
   uint8_t parent[3]; // indirect disc address of parent directory
   uint8_t title[19]; // directory title
   uint8_t unused[14]; // reserved, must be zero
-  uint8_t endmasseq; // to match with startmasseq (in header), else "broken directory"
+  uint8_t endmasseq; // to match with startmasseq (in header), else "broken directory", in BCD
   uint8_t endname[4]; // to match with startname (in header)
   uint8_t checkbyte; // check byte on directory
 };
@@ -188,8 +189,8 @@ struct adfs_newdirtail
   uint8_t unused[2]; // reserved, must be zero
   uint8_t parent[3]; // indirect disc address of parent directory
   uint8_t title[19]; // directory title
-  uint8_t name[10]; // directory name
-  uint8_t endmasseq; // to match with startmasseq (in header), else "broken directory"
+  uint8_t name[ADFS_MAXFILELEN]; // directory name
+  uint8_t endmasseq; // to match with startmasseq (in header), else "broken directory", in BCD
   uint8_t endname[4]; // to match with startname (in header)
   uint8_t checkbyte; // check byte on directory
 };
@@ -219,7 +220,7 @@ struct adfs_discrecord
   uint32_t root; // disc address of root directory
   uint32_t disc_size; // disc size in bytes
   uint16_t disc_id; // disc cycle id, changes on each disc update
-  uint8_t disc_name[10]; // disc name (spaced to 10 chars, no terminator)
+  uint8_t disc_name[10]; // disc name (spaced to 10 chars, no terminator, not in boot block)
   uint32_t disc_type; // filetype given to disk, not stored on disc but populated when in RAM
 
   // FileCore Disc Large extension (RISCOS 3.60 and later)
@@ -227,8 +228,9 @@ struct adfs_discrecord
   uint32_t disc_size_high; // high word of disc size
   uint8_t log2sharesize; // log2 sharing granularity (bits 0..3), bits 4..7 must be 0
   uint8_t big_flag; // identifies large disc (bit 0), bits 1..7 must be 0
-  uint8_t nzones_high; // high byte of nzones
 
+  // These appear to be used by E+,F+ and G formats with BigDir
+  uint8_t nzones_high; // high byte of nzones
   uint8_t unused43; // reserved, must be zero
   uint32_t format_version; // version number of disc format
   uint32_t root_size; // size of root directory

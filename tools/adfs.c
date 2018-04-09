@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <utime.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <stdint.h>
 
 #include "diskstore.h"
@@ -197,7 +196,44 @@ void adfs_gettitle(const int adfs_format, char *title, const int titlelen)
   }
 }
 
-void adfs_readdir(const int level, const char *folder, const int maptype, const int dirtype, const long offset, const unsigned int adfs_sectorsize, const unsigned char sectorspertrack)
+char *adfs_filetype(const unsigned int filetype)
+{
+  switch (filetype)
+  {
+    case 0x695: return "GIF";
+    case 0xa91: return "Zip";
+    case 0xb60: return "PNG";
+    case 0xc85: return "JPEG";
+    case 0xddc: return "Archive";
+    case 0xdec: return "DiscRec";
+    case 0xf89: return "GZip";
+    case 0xfae: return "Resource";
+    case 0xfaf: return "HTML";
+    case 0xfb0: return "Allocate";
+    case 0xfca: return "Squash";
+    case 0xfce: return "Floppy";
+    case 0xfd1: return "BASICTxt";
+    case 0xfd6: return "TaskExec";
+    case 0xfd7: return "TaskObey";
+    case 0xfdb: return "TextCRLF";
+    case 0xfea: return "Desktop";
+    case 0xfeb: return "Obey";
+    case 0xfec: return "Template"; 
+    case 0xfed: return "Palette";
+    case 0xff6: return "Font";
+    case 0xff8: return "Absolute";
+    case 0xff9: return "Sprite";
+    case 0xffa: return "Module";
+    case 0xffb: return "Basic";
+    case 0xffc: return "Utility";
+    case 0xffd: return "Data";
+    case 0xffe: return "Command";
+    case 0xfff: return "Text";
+    default: return "";
+  }
+}
+
+void adfs_readdir(const int level, const char *folder, const int maptype, const int dirtype, const unsigned long offset, const unsigned int adfs_sectorsize, const unsigned char sectorspertrack)
 {
   struct adfs_dirheader dh;
   int i;
@@ -424,20 +460,20 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
 
           filetype=((0x000fff00 & de.dirload)>>8);
 
-          printf(" %.3x", filetype);
           if ((csec/100)>=ADFS_RISCUNIXTSDIFF)
           {
-            struct tm *tim;
+            struct tm tim;
 
             csec=(csec/100)-ADFS_RISCUNIXTSDIFF;
 
             tv.tv_sec=csec;
             tv.tv_usec=0;
 
-            tim = localtime(&tv.tv_sec);
+            localtime_r(&tv.tv_sec, &tim);
 
-            printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", tim->tm_hour, tim->tm_min, tim->tm_sec, tim->tm_mday, tim->tm_mon+1, tim->tm_year+1900);
+            printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", tim.tm_hour, tim.tm_min, tim.tm_sec, tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900);
           }
+          printf(" %.3x %s", filetype, adfs_filetype(filetype));
         }
       }
 
@@ -658,7 +694,7 @@ void adfs_dumpdiscrecord(struct adfs_discrecord *dr)
   printf("Treat sides as %s\n", (dr->lowsector&0x40)==0?"interleaved":"sequence");
   printf("Disc is %d track\n", (dr->lowsector&0x80)==0?80:40);
 
-  printf("Zones in map: %d\n", dr->nzones);
+  printf("Zones in map: %ld\n", (long)((dr->nzones_high<<8) | dr->nzones));
   printf("Non-allocation bits between zones: 0x%.4x\n", dr->zone_spare);
   printf("Root directory address: 0x%.8x\n", dr->root);
   printf("Disc size in bytes: %ld\n", (unsigned long)dr->disc_size);
@@ -673,6 +709,9 @@ void adfs_dumpdiscrecord(struct adfs_discrecord *dr)
   printf("\"\n");
 
   printf("Disc filetype: 0x%.8x\n", dr->disc_type);
+  printf("Share size: 0x%.2x\n", dr->log2sharesize);
+  printf("Big flag: 0x%.2x\n", dr->big_flag);
+  printf("Root size: 0x%.8x\n", dr->root_size);
 
   printf("\n");
 }
@@ -784,7 +823,7 @@ int adfs_validate()
         dr=(struct adfs_discrecord *)&sniff[4];
         adfs_dumpdiscrecord(dr);
 
-        // TODO validate CrossCheck
+        // TODO validate CrossCheck, as per RiscOS PRM 2-206
 
         if ((rev_log2(dr->log2secsize)==ADFS_16BITSECTORSIZE) && (dr->secspertrack==5))
           format=ADFS_E;
