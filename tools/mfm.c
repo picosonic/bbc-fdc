@@ -23,7 +23,7 @@ unsigned int mfm_idblockcrc, mfm_datablockcrc, mfm_bitstreamcrc;
 unsigned char mfm_bitstream[MFM_BLOCKSIZE];
 unsigned int mfm_bitlen=0;
 
-// FM timings
+// MFM timings
 float mfm_defaultwindow;
 float mfm_bucket01, mfm_bucket001, mfm_bucket0001;
 
