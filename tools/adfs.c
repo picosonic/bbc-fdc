@@ -243,6 +243,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   int hasfiletype;
   Disk_Sector *dsector;
   unsigned int secpos;
+  unsigned char split;
 
   unsigned long diskoffs;
   int c, h, r; // Cylinder, head, record
@@ -269,7 +270,14 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
       if (r==sectorspertrack)
       {
         r=0;
-        h++;
+        if (dirtype==ADFS_OLDDIR)
+        {
+          c++;
+
+          // TODO check for end of disk reached - wrap around to track 0, head 1
+        }
+        else
+          h++;
       }
 
       if (h==2)
@@ -336,6 +344,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   else
     entries=ADFS_NEWDIR_ENTRIES;
 
+  split=0;
   for (entry=0; entry<entries; entry++)
   {
     struct adfs_direntry de;
@@ -344,10 +353,15 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
     struct timeval tv;
     uint32_t indirectaddr;
 
-    if ((secpos+sizeof(de))<dsector->datasize)
+    if ((secpos+sizeof(de))<=dsector->datasize)
     {
-      memcpy(&de, &dsector->data[secpos], sizeof(de));
-      secpos+=sizeof(de);
+      if (split==0)
+      {
+        memcpy(&de, &dsector->data[secpos], sizeof(de));
+        secpos+=sizeof(de);
+      }
+      else
+        split=0;
 
       // Check for last entry, as per RiscOS PRM 2-211
       if (de.dirobname[0]==0) break;
@@ -427,7 +441,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
       else
         printf("w");
 
-      // Check for object having a filetype+timestamp
+      // Check for object having a filetype+timestamp, as per RiscOS PRM 2-16
       if ((de.dirload&0xfff00000) == 0xfff00000)
         hasfiletype=1;
 
@@ -446,12 +460,13 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
 
       if (hasfiletype==0)
       {
+        // Note : exec address should be >= load address and < (load address + file length), RiscOS PRM 2-16
         printf(" %.8lx", (unsigned long)de.dirload);
         printf(" %.8lx", (unsigned long)de.direxec);
       }
       else
       {
-        // Get the epoch
+        // Get the epoch, as per RiscOS PRM 2-16
         if (dirtype==ADFS_NEWDIR)
         {
           unsigned int hightime=(de.dirload&0xff);
@@ -497,10 +512,46 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
 //      if (dirtype==ADFS_OLDDIR)
 //        printf("OldDirObSeq: %.2x\n", de.olddirobseq);
     }
-    else
+
+    // Check for overflow into next sector
+    if ((secpos+sizeof(de))>dsector->datasize)
     {
-      printf("**Sector data breached at entry %d/%d**\n", entry, entries);
-      break;
+      int remaining;
+
+      r++;
+
+      if (r==sectorspertrack)
+      {
+        r=0;
+        if (dirtype==ADFS_OLDDIR)
+        {
+          c++;
+
+          // TODO check for end of disk reached - wrap around to track 0, head 1
+        }
+        else
+          h++;
+      }
+
+      if (h==2)
+      {
+        h=0;
+        c++;
+      }
+
+      // Copy remaining data
+      remaining=dsector->datasize-secpos;
+      memcpy(&de, &dsector->data[secpos], remaining);
+
+      dsector=diskstore_findhybridsector(c, h, r);
+
+      if ((dsector==NULL) || (dsector->data==NULL))
+        break;
+
+      // Next sector found, so copy remainder of data
+      memcpy((&de)+remaining, &dsector->data[0], sizeof(de)-remaining);
+      secpos=sizeof(de)-remaining;
+      split=1;
     }
   }
 
@@ -840,6 +891,7 @@ int adfs_validate()
         {
           memcpy(sniff, sector0->data, sector0->datasize);
 
+          // Validate boot block checksum, RiscOS PRM 2-215
           if (adfs_checksum(&sniff[0], (ADFS_8BITSECTORSIZE*2))==sniff[(ADFS_8BITSECTORSIZE*2)-1])
           {
             struct adfs_discrecord *dr;
