@@ -877,7 +877,10 @@ int adfs_validate()
         // TODO validate CrossCheck, as per RiscOS PRM 2-206
 
         if ((rev_log2(dr->log2secsize)==ADFS_16BITSECTORSIZE) && (dr->secspertrack==5))
+        {
           format=ADFS_E;
+          if (dr->root_size!=0) format++;
+        }
       }
 
       // Check for ADFS with a boot block, and hence discrecord at position 0xc00 + 0x1c0
@@ -900,7 +903,10 @@ int adfs_validate()
             adfs_dumpdiscrecord(dr);
 
             if ((rev_log2(dr->log2secsize)==ADFS_16BITSECTORSIZE) && (dr->secspertrack==10))
+            {
               format=ADFS_F;
+              if (dr->root_size!=0) format++;
+            }
 
             if ((rev_log2(dr->log2secsize)==ADFS_16BITSECTORSIZE) && (dr->secspertrack==20))
               format=ADFS_G;
