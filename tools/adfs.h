@@ -11,6 +11,7 @@
 
 #define ADFS_OLDDIR 0
 #define ADFS_NEWDIR 1
+#define ADFS_BIGDIR 2
 
 // ADFS formats
 #define ADFS_UNKNOWN -1
@@ -112,6 +113,9 @@ of an object, all bits except 0, 1 and 3 are ignored. If the object is a directo
 #define ADFS_OLDMAPLEN 82
 #define ADFS_OLDMAPENTRY 3
 
+// Maximum number of NewMap fragments
+#define ADFS_MAXFRAG 0x7fff
+
 // Difference between RiscOS epoch and UNIX epoch, i.e. seconds between 1st Jan 1900 and 1st Jan 1970
 #define ADFS_RISCUNIXTSDIFF 2208988800LL
 
@@ -208,7 +212,7 @@ struct adfs_discrecord
 {
   uint8_t log2secsize; // log2 of sector size
   uint8_t secspertrack; // number of sectors per track
-  uint8_t heads; // number of disc heads, if interleaved otherwise -1 (1 for old directories)
+  uint8_t heads; // number of disc heads, if interleaved otherwise heads-1 (1 for old directories)
   uint8_t density; // disc density
   uint8_t idlen; // length of id field of a map fragment (in bits)
   uint8_t log2bpmb; // log2 of number of bytes per map bits
@@ -229,7 +233,7 @@ struct adfs_discrecord
   uint8_t log2sharesize; // log2 sharing granularity (bits 0..3), bits 4..7 must be 0
   uint8_t big_flag; // identifies large disc (bit 0), bits 1..7 must be 0
 
-  // These appear to be used by E+,F+ and G formats with BigDir
+  // These appear to be used by E+, F+ and G formats with BigDir
   uint8_t nzones_high; // high byte of nzones
   uint8_t unused43; // reserved, must be zero
   uint32_t format_version; // version number of disc format

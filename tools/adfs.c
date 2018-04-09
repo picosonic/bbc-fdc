@@ -211,7 +211,8 @@ char *adfs_filetype(const unsigned int filetype)
     case 0xfaf: return "HTML";
     case 0xfb0: return "Allocate";
     case 0xfca: return "Squash";
-    case 0xfce: return "Floppy";
+    case 0xfcd: return "HardDisc";
+    case 0xfce: return "FloppyDisc";
     case 0xfd1: return "BASICTxt";
     case 0xfd6: return "TaskExec";
     case 0xfd7: return "TaskObey";
