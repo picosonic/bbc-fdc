@@ -10,6 +10,7 @@
 #include "dfi.h"
 #include "adfs.h"
 #include "dfs.h"
+#include "dos.h"
 #include "fsd.h"
 #include "rfi.h"
 #include "mod.h"
@@ -648,6 +649,17 @@ int main(int argc,char **argv)
               adfs_showinfo(adfs_format);
               info++;
               printf("\n");
+            }
+            else
+            {
+              if (dos_validate())
+              {
+                printf("\nDetected DOS\n\n");
+                dos_showinfo();
+                info++;
+              }
+              else
+                printf("\nUnknown disk format\n\n");
             }
           }
         }
