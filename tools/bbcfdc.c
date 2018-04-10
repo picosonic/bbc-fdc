@@ -561,7 +561,7 @@ int main(int argc,char **argv)
 #endif
 
           // Don't retry unless imaging DFS disks
-          if ((capturetype!=IMAGESSD) && (capturetype!=IMAGEDSD))
+          if ((capturetype==DISKIMG) && ((outputtype!=IMAGEDSD) && (outputtype!=IMAGESSD)))
             break;
 
           // Determine if we have successfully read the whole track
