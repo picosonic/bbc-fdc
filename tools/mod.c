@@ -88,8 +88,8 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
   if (mod_debug)
     fprintf(stderr, "Maximum peak at %ld samples, %.3fms\n", localmaxima, mod_samplestoms(localmaxima));
 
-  // Set threshold at 10% of maximum
-  threshold=mod_hist[localmaxima]/10;
+  // Set noise threshold at 5% of maximum
+  threshold=mod_hist[localmaxima]/20;
 
   // Decimate histogram to remove values below threshold
   for (j=0; j<MOD_HISTOGRAMSIZE; j++)
