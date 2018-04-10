@@ -10,6 +10,20 @@
 #define DOS_NOP 0x90
 #define DOS_EOSM 0x55aa
 
+// Detectable FAT types
+#define DOS_UNKNOWN 0
+#define DOS_FAT12 12
+#define DOS_FAT16 16
+#define DOS_FAT32 32
+
+// Sector offsets
+#define DOS_OFFSETBPB 0x0b
+#define DOS_OFFSETEBPB 0x24
+#define DOS_OFFSETFAT32EBPB 0x24
+
+// Directory entries
+#define DOS_DIRENTRYLEN 32
+
 #pragma pack(1)
 
 // From Revolutionary guide to assembly language, Wrox Press, ISBN 1-874416-12-5
@@ -55,7 +69,17 @@ struct dos_fat32extendedbiosparams
   uint32_t sectorsperfat;
   uint16_t drivedescription;
   uint16_t version;
-  // TODO
+  uint16_t rootcluster;
+  uint16_t logicalfsinfosector;
+  uint16_t logicalfirstfat32bootsector;
+  uint8_t reserved29[12];
+
+  uint8_t cf24; // FAT12/16 - BIOS physical disk number
+  uint8_t cf25; // FAT12/16 - Current head
+  uint8_t cf26; // FAT12/16 - Disk signature
+  uint32_t cf27; // FAT12/16 - Volume ID
+  uint8_t cf2b[11]; // FAT12/16 - Volume label
+  uint8_t cf36[8]; // FAT12/16 - File system ID
 };
 
 extern void dos_showinfo();

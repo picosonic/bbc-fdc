@@ -7,12 +7,65 @@
 #include "diskstore.h"
 #include "dos.h"
 
+int dos_fatformat(Disk_Sector *sector1)
+{
+  struct dos_biosparams *biosparams;
+  unsigned long rootdirsectors, datasectors, fatsectors, clusters;
+
+  if (sector1==NULL)
+    return DOS_UNKNOWN;
+
+  if (sector1->data==NULL)
+    return DOS_UNKNOWN;
+
+  // Check sector is 512 bytes in length
+  if (sector1->datasize!=DOS_SECTORSIZE)
+    return DOS_UNKNOWN;
+
+  biosparams=(struct dos_biosparams *)&sector1->data[DOS_OFFSETBPB];
+
+  rootdirsectors=((biosparams->rootentries*DOS_DIRENTRYLEN)+(biosparams->bytespersector-1))/biosparams->bytespersector;
+
+  if (biosparams->smallsectors!=0)
+    datasectors=biosparams->smallsectors;
+  else
+    datasectors=biosparams->largesectors;
+
+  // Check for FAT32
+  if (biosparams->sectorsperfat!=0)
+  {
+    // Either FAT12 or FAT16
+    fatsectors=biosparams->sectorsperfat;
+  }
+  else
+  {
+    struct dos_fat32extendedbiosparams *fat32ebpb;
+
+    // FAT32
+    fat32ebpb=(struct dos_fat32extendedbiosparams *)&sector1->data[DOS_OFFSETFAT32EBPB];
+    fatsectors=fat32ebpb->sectorsperfat;
+  }
+
+  datasectors-=(biosparams->reservedsectors+(biosparams->fatcopies*fatsectors)+rootdirsectors);
+
+  clusters=datasectors/biosparams->sectorspercluster;
+
+  if (biosparams->sectorsperfat!=0)
+  {
+    if (clusters<4085)
+      return DOS_FAT12;
+    else
+      return DOS_FAT16;
+  }
+  else
+    return DOS_FAT32; // clusters >=65525
+}
+
 void dos_showinfo()
 {
   Disk_Sector *sector1;
   struct dos_biosparams *biosparams;
   struct dos_extendedbiosparams *exbiosparams;
-  unsigned long rootdirsectors, datasectors, fatsectors, clusters;
   int i;
 
   // Search for sector
@@ -35,8 +88,8 @@ void dos_showinfo()
   printf("'\n");
 
   // BIOS parameter block
-  biosparams=(struct dos_biosparams *)&sector1->data[0x0b];
-  exbiosparams=(struct dos_extendedbiosparams *)&sector1->data[0x24];
+  biosparams=(struct dos_biosparams *)&sector1->data[DOS_OFFSETBPB];
+  exbiosparams=(struct dos_extendedbiosparams *)&sector1->data[DOS_OFFSETEBPB];
 
   printf("Bytes/Sector: %d\n", biosparams->bytespersector);
   printf("Sectors/Cluster: %d\n", biosparams->sectorspercluster);
@@ -115,41 +168,24 @@ void dos_showinfo()
   }
   printf("'\n");
 
-  rootdirsectors=((biosparams->rootentries*32)+(biosparams->bytespersector-1))/biosparams->bytespersector;
-
-  if (biosparams->smallsectors!=0)
-    datasectors=biosparams->smallsectors;
-  else
-    datasectors=biosparams->largesectors;
-
-  // Check for FAT32
-  if (biosparams->sectorsperfat!=0)
+  switch (dos_fatformat(sector1))
   {
-    // Either FAT12 or FAT16
-    fatsectors=biosparams->sectorsperfat;
+    case DOS_FAT12:
+      printf("FAT12\n");
+      break;
+
+    case DOS_FAT16:
+      printf("FAT16\n");
+      break;
+
+    case DOS_FAT32:
+      printf("FAT32\n");
+      break;
+
+    default:
+      printf("Unknown FAT type\n");
+      break;
   }
-  else
-  {
-    struct dos_fat32extendedbiosparams *fat32ebpb;
-
-    // FAT32
-    fat32ebpb=(struct dos_fat32extendedbiosparams *)&sector1->data[0x24];
-    fatsectors=fat32ebpb->sectorsperfat;
-  }
-
-  datasectors-=(biosparams->reservedsectors+(biosparams->fatcopies*fatsectors)+rootdirsectors);
-
-  clusters=datasectors/biosparams->sectorspercluster;
-
-  if (biosparams->sectorsperfat!=0)
-  {
-    if (clusters<4085)
-      printf("Likely FAT12\n");
-    else
-      printf("Likely FAT16\n");
-  }
-  else
-    printf("Likely FAT32\n"); // clusters >=65525
 
   printf("\n");
 }
@@ -164,37 +200,37 @@ int dos_validate()
   sector1=diskstore_findhybridsector(0, 0, 1);
 
   if (sector1==NULL)
-    return 0;
+    return DOS_UNKNOWN;
 
   if (sector1->data==NULL)
-    return 0;
+    return DOS_UNKNOWN;
 
   // Check sector is 512 bytes in length
   if (sector1->datasize!=DOS_SECTORSIZE)
-    return 0;
+    return DOS_UNKNOWN;
 
   // Check for jump instruction
   if (!(((sector1->data[0]==DOS_SHORTJMP) && (sector1->data[2]==DOS_NOP)) ||
       (sector1->data[0]==DOS_NEARJMP) ||
       (sector1->data[0]==DOS_UNDOCDIRECTJMP)))
-    return 0;
+    return DOS_UNKNOWN;
 
   // Check for end of sector marker
   tmpval=sector1->data[DOS_SECTORSIZE-2];
-  tmpval=(tmpval<<8)+sector1->data[DOS_SECTORSIZE-1];
+  tmpval=(tmpval<<8)|sector1->data[DOS_SECTORSIZE-1];
   if (tmpval!=DOS_EOSM)
-    return 0;
+    return DOS_UNKNOWN;
 
   // Check some values in BPB
-  biosparams=(struct dos_biosparams *)&sector1->data[0x0b];
+  biosparams=(struct dos_biosparams *)&sector1->data[DOS_OFFSETBPB];
 
   // Sector size should be right
   if (biosparams->bytespersector!=DOS_SECTORSIZE)
-    return 0;
+    return DOS_UNKNOWN;
 
   // Should be either 1 or 2 FAT copies
   if ((biosparams->fatcopies<1) || (biosparams->fatcopies>2))
-    return 0;
+    return DOS_UNKNOWN;
 
   // Sectors per cluster should be within valid range
   switch (biosparams->sectorspercluster)
@@ -209,16 +245,16 @@ int dos_validate()
       break;
 
     default:
-      return 0;
+      return DOS_UNKNOWN;
   }
 
   // Should be at least 1 reserved sector
   if (biosparams->reservedsectors==0)
-    return 0;
+    return DOS_UNKNOWN;
 
   // Should be multiple of 16 entries in root folder
   if (((biosparams->rootentries/16)*16)!=biosparams->rootentries)
-    return 0;
+    return DOS_UNKNOWN;
 
-  return 1;
+  return dos_fatformat(sector1);
 }

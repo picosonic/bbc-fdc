@@ -652,7 +652,7 @@ int main(int argc,char **argv)
             }
             else
             {
-              if (dos_validate())
+              if (dos_validate()!=DOS_UNKNOWN)
               {
                 printf("\nDetected DOS\n\n");
                 dos_showinfo();
