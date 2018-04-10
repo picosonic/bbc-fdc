@@ -63,7 +63,7 @@ struct dos_extendedbiosparams
   uint8_t systemid[8]; // System ID, depends on format, not available if signature is 0x28
 };
 
-// FAT32 EBPB
+// FAT32 EBPB - not used on floppy disks
 struct dos_fat32extendedbiosparams
 {
   uint32_t sectorsperfat;
@@ -80,6 +80,30 @@ struct dos_fat32extendedbiosparams
   uint32_t cf27; // FAT12/16 - Volume ID
   uint8_t cf2b[11]; // FAT12/16 - Volume label
   uint8_t cf36[8]; // FAT12/16 - File system ID
+};
+
+// FAT directory entry
+struct dos_direntry
+{
+  uint8_t shortname[8]; // Short filename padded with spaces
+  uint8_t shortextension[3]; // Short extension padded with spaces
+  uint8_t fileattribs; // File attributes bitfield
+  uint8_t userattribs; // User attributes
+  uint8_t createtimems; // Create time fine resolution (10ms units)
+  uint16_t createtime; // Create time, rounded down to the nearest 2 seconds
+  uint16_t createdate; // Create date (01/01/1980 .. 31/12/2107)
+  uint16_t accessdate; // Last access date, range as above
+
+  union
+  {
+    uint16_t startclusterhi; // FAT32 - high word of start cluster
+    uint16_t accessrights; // FAT12/FAT16 - extended access rights
+  };
+
+  uint16_t modifytime; // Last modified time, rounded down to the nearest 2 seconds
+  uint16_t modifydate; // Last modified date, range as above
+  uint16_t startcluster; // Start of file cluster in FAT12/FAT16
+  uint32_t filesize; // File size in bytes, volume label/directories are 0
 };
 
 extern void dos_showinfo();

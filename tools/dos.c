@@ -184,9 +184,16 @@ void dos_showinfo()
       break;
 
     default:
-      printf("Unknown FAT type\n");
-      break;
+      printf("Unknown FAT type\n\n");
+      return;
   }
+
+  // Show disk offsets
+  for (i=0; i<biosparams->fatcopies; i++)
+    printf("FAT%d @ 0x%x\n", i+1, (biosparams->reservedsectors+(biosparams->sectorsperfat*i))*biosparams->bytespersector);
+
+  printf("Root directory @ 0x%x\n", (biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies))*biosparams->bytespersector);
+  printf("Data region @ 0x%x .. 0x%x\n", (biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies)+((biosparams->rootentries*DOS_DIRENTRYLEN)/biosparams->bytespersector))*biosparams->bytespersector, biosparams->smallsectors*biosparams->bytespersector);
 
   printf("\n");
 }
