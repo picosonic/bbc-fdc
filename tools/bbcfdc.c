@@ -560,6 +560,10 @@ int main(int argc,char **argv)
           break;
 #endif
 
+          // Don't retry unless imaging DFS disks
+          if ((capturetype!=IMAGESSD) && (capturetype!=IMAGEDSD))
+            break;
+
           // Determine if we have successfully read the whole track
           if ((diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 0)!=NULL) &&
               (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 1)!=NULL) &&

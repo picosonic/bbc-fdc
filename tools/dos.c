@@ -7,6 +7,7 @@
 #include "diskstore.h"
 #include "dos.h"
 
+// Determine FAT type, all DOS floppies should be FAT12 (since they are less than 16Mb capacity)
 int dos_fatformat(Disk_Sector *sector1)
 {
   struct dos_biosparams *biosparams;
