@@ -6,6 +6,7 @@
 #define BADDATA 1
 #define GOODDATA 2
 
+// Modulation types
 #define MODFM 0
 #define MODMFM 1
 
