@@ -56,7 +56,7 @@ dfs.o: dfs.c dfs.h diskstore.h
 dos.o: dos.c dos.h diskstore.h
 	$(CC) $(BUILDFLAGS) -c -o dos.o dos.c
 
-diskstore.o: diskstore.c
+diskstore.o: diskstore.c diskstore.h hardware.h mod.h
 	$(CC) $(BUILDFLAGS) -c -o diskstore.o diskstore.c
 
 fm.o: fm.c crc.h diskstore.h dfs.h fm.h hardware.h mod.h

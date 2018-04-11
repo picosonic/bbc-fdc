@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include "diskstore.h"
+#include "hardware.h"
+#include "mod.h"
 
 Disk_Sector *Disk_SectorsRoot;
 
@@ -15,6 +18,13 @@ int diskstore_minsectorsize=-1;
 int diskstore_maxsectorsize=-1;
 int diskstore_minsectorid=-1;
 int diskstore_maxsectorid=-1;
+
+// For absolute disk access
+int diskstore_abstrack=-1;
+int diskstore_abshead=-1;
+int diskstore_abssector=-1;
+int diskstore_abssecoffs=-1;
+unsigned long diskstore_absoffset=0;
 
 // Find sector in store to make sure there is no exact match when adding
 Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
@@ -357,6 +367,158 @@ void diskstore_dumpsectorlist()
   fprintf(stderr, "Total extracted sectors: %d\n", totalsectors);
 }
 
+// Absolute seek
+void diskstore_absoluteseek(const unsigned long offset, const int interlacing, const int maxtracks)
+{
+  unsigned long diskoffs;
+
+  // Validate track range
+  if ((diskstore_maxtrack==-1) || (diskstore_mintrack==-1))
+    return;
+
+  // Validate head range
+  if ((diskstore_maxhead==-1) || (diskstore_minhead==-1) || (diskstore_maxhead>1))
+    return;
+
+  // Validate sector size
+  if ((diskstore_maxsectorsize==-1) || (diskstore_minsectorsize==-1) || (diskstore_minsectorsize!=diskstore_maxsectorsize))
+    return;
+
+  // Initialise to start of disk
+  diskstore_abstrack=diskstore_mintrack;
+  diskstore_abshead=diskstore_minhead;
+  diskstore_abssector=diskstore_minsectorid;
+  diskstore_abssecoffs=0;
+
+  diskoffs=offset;
+
+  // Convert absolute offset to C/H/S/sector offset
+  while (diskoffs>=diskstore_minsectorsize)
+  {
+    diskstore_abssecoffs+=diskstore_minsectorsize;
+    diskoffs-=diskstore_minsectorsize;
+
+    // Check for pointer going to next sector
+    if (diskstore_abssecoffs>=diskstore_minsectorsize)
+    {
+      diskstore_abssecoffs-=diskstore_minsectorsize;
+      diskstore_abssector++;
+
+      // Check for pointer going to next track or head
+      if (diskstore_abssector>diskstore_maxsectorid)
+      {
+        diskstore_abssector=diskstore_minsectorid;
+
+        switch (interlacing)
+        {
+          case SEQUENCED: // All of head 0, then all of head 1 (if head 1 exists)
+            diskstore_abstrack++;
+
+            if (diskstore_abstrack>maxtracks)
+            {
+              diskstore_abstrack=diskstore_mintrack;
+              diskstore_abshead++;
+            }
+            break;
+
+          case INTERLACED: // For each track, head 0 then head 1 (most common for double sided)
+            diskstore_abshead++;
+
+            if (diskstore_abshead>diskstore_maxhead)
+            {
+              diskstore_abshead=diskstore_minhead;
+              diskstore_abstrack++;
+            }
+            break;
+
+          default:
+            break;
+        }
+      }
+    }
+
+    // Check for seeking past end of disk, to wrap around back to start
+    if ((diskstore_abshead>diskstore_maxhead) || (diskstore_abstrack>maxtracks))
+    {
+//printf("DS wrap around\n");
+      diskstore_abstrack=diskstore_mintrack;
+      diskstore_abshead=diskstore_minhead;
+      diskstore_abssector=diskstore_minsectorid;
+    }
+  }
+
+  // Store new offsets
+  diskstore_abssecoffs=diskoffs;
+  diskstore_absoffset=offset;
+}
+
+// Absolute read
+unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, const int interlacing, const int maxtracks)
+{
+  Disk_Sector *curr;
+  unsigned long numread=0; // Total bytes returned so far
+  unsigned long toread=0; // Number of bytes to read from current sector
+
+  // Start by blanking out the response buffer
+  bzero(buffer, bufflen);
+
+  // Continue reading until requested length satisfied
+  while (numread<bufflen)
+  {
+    // Determine how much to read from this sector
+    toread=diskstore_minsectorsize-diskstore_abssecoffs;
+    if ((numread+toread)>bufflen)
+      toread=bufflen-numread;
+
+    // Find this sector
+    curr=diskstore_findhybridsector(diskstore_abstrack, diskstore_abshead, diskstore_abssector);
+
+    // If sector not found in the store, maybe it hasn't been read yet
+    if ((curr==NULL) || (curr->data==NULL))
+    {
+      unsigned char *samplebuffer;
+      unsigned long samplebuffsize;
+
+      samplebuffsize=((hw_samplerate/HW_ROTATIONSPERSEC)/BITSPERBYTE)*3;
+      samplebuffer=malloc(samplebuffsize);
+
+      if (samplebuffer!=NULL)
+      {
+        hw_seektotrack(diskstore_abstrack);
+        hw_sideselect(diskstore_abshead);
+        hw_sleep(1);
+        hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
+        mod_process(samplebuffer, samplebuffsize, 99);
+
+        free(samplebuffer);
+        samplebuffer=NULL;
+      }
+
+      // Look again
+      curr=diskstore_findhybridsector(diskstore_abstrack, diskstore_abshead, diskstore_abssector);
+    }
+
+    if ((curr!=NULL) && (curr->data!=NULL))
+    {
+      // Prevent reads beyond current sector memory
+      if ((diskstore_abssecoffs+toread)>curr->datasize)
+        toread=curr->datasize-diskstore_abssecoffs;
+
+      memcpy(&buffer[numread], &curr->data[diskstore_abssecoffs], toread);
+    }
+
+    numread+=toread;
+
+    // Move absolute position forward
+    diskstore_absoffset+=toread;
+
+    // Seek to next sector
+    diskstore_absoluteseek(diskstore_absoffset, interlacing, maxtracks);
+  }
+
+  return numread;
+}
+
 void diskstore_init()
 {
   Disk_SectorsRoot=NULL;
@@ -369,6 +531,12 @@ void diskstore_init()
   diskstore_maxsectorsize=-1;
   diskstore_minsectorid=-1;
   diskstore_maxsectorid=-1;
+
+  diskstore_abstrack=-1;
+  diskstore_abshead=-1;
+  diskstore_abssector=-1;
+  diskstore_abssecoffs=-1;
+  diskstore_absoffset=0;
 
   atexit(diskstore_clearallsectors);
 }

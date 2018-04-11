@@ -10,6 +10,10 @@
 #define MODFM 0
 #define MODMFM 1
 
+// Head interlacing types
+#define SEQUENCED 0
+#define INTERLACED 1
+
 typedef struct DiskSector
 {
   // Physical position of sector on disk
@@ -66,5 +70,10 @@ extern void diskstore_sortsectors();
 
 // Dump the contents of the disk storage for debug purposes
 extern void diskstore_dumpsectorlist();
+
+// Absolute data access
+extern unsigned long diskstore_absoffset;
+extern void diskstore_absoluteseek(const unsigned long offset, const int interlacing, const int maxtracks);
+extern unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, const int interlacing, const int maxtracks);
 
 #endif
