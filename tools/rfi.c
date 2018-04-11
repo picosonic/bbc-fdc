@@ -82,7 +82,11 @@ int rfi_readheader(FILE *rfifile)
 
         tokens=malloc(numtokens*sizeof(jsmntok_t));
 
-        if (tokens==0) return 0;
+        if (tokens==0)
+        {
+          free(rfi_headerstring);
+          return 0;
+        }
 
         jsmn_init(&parser);
         numtokens=jsmn_parse(&parser, rfi_headerstring, rfi_headerlen, tokens, numtokens);
@@ -142,9 +146,12 @@ int rfi_readheader(FILE *rfifile)
         }
 
         free(tokens);
+        free(rfi_headerstring);
 
         return 1;
       }
+
+      free(rfi_headerstring);
     }
   }
 
