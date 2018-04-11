@@ -15,8 +15,6 @@ int hw_stepping = HW_NORMALSTEPPING;
 // Initialise GPIO and SPI
 int hw_init(const int spiclockdivider)
 {
-  int i;
-
   if (!bcm2835_init()) return 0;
 
   bcm2835_gpio_fsel(DS0_OUT, GPIO_OUT);
