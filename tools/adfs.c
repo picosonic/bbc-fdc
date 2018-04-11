@@ -10,8 +10,6 @@
 
 #include "diskstore.h"
 #include "adfs.h"
-#include "hardware.h"
-#include "mod.h"
 
 // Reverse log2
 unsigned long rev_log2(const unsigned long x)
@@ -242,91 +240,15 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   int entries;
   unsigned char attrib;
   int hasfiletype;
-  Disk_Sector *dsector;
-  unsigned int secpos;
-  unsigned char split;
-
-  unsigned long diskoffs;
-  int c, h, r; // Cylinder, head, record
 
   // Only support old maps for now
   if (maptype!=ADFS_OLDMAP)
     return;
 
+  diskstore_absoluteseek(offset, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
+  diskstore_absoluteread((char *)&dh, sizeof(dh), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
+
 //  printf("['%s' @0x%lx MAP:%d DIR:%d SECSIZE:%d SEC/TRACK:%d]\n", folder, offset, maptype, dirtype, adfs_sectorsize, sectorspertrack);
-
-  // Work out CHR values from absolute offset, using sectors/track
-  secpos=0;
-  diskoffs=offset; c=0; h=0; r=0;
-  while (diskoffs>=ADFS_8BITSECTORSIZE)
-  {
-    secpos+=ADFS_8BITSECTORSIZE;
-    diskoffs-=ADFS_8BITSECTORSIZE;
-
-    if (secpos>=adfs_sectorsize)
-    {
-      secpos=0;
-      r++;
-
-      if (r==sectorspertrack)
-      {
-        r=0;
-        if (dirtype==ADFS_OLDDIR)
-        {
-          c++;
-
-          // TODO check for end of disk reached - wrap around to track 0, head 1
-        }
-        else
-          h++;
-      }
-
-      if (h==2)
-      {
-        h=0;
-        c++;
-      }
-    }
-  }
-
-//printf("C:%d H:%d R:%d\n", c, h, r);
-
-  // Find sector matching CHR
-  dsector=diskstore_findhybridsector(c, h, r);
-
-  if ((dsector==NULL) || (dsector->data==NULL))
-  {
-    unsigned char *samplebuffer;
-    unsigned long samplebuffsize;
-
-    // The required sector is probably not loaded
-    samplebuffsize=((hw_samplerate/HW_ROTATIONSPERSEC)/BITSPERBYTE)*3;
-    samplebuffer=malloc(samplebuffsize);
-
-    if (samplebuffer!=NULL)
-    {
-      hw_seektotrack(c);
-      hw_sideselect(h);
-      hw_sleep(1);
-      hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
-      mod_process(samplebuffer, samplebuffsize, 99);
-
-      free(samplebuffer);
-      samplebuffer=NULL;
-    }
-
-    // Look again for missing sector
-    dsector=diskstore_findhybridsector(c, h, r);
-  }
-
-  if ((dsector==NULL) || (dsector->data==NULL))
-    return;
-
-  // Read directory entry from sector
-
-  secpos=0;
-  memcpy(&dh, dsector->data, sizeof(dh));
-  secpos+=sizeof(dh);
 
   // Iterate through directory
 /*
@@ -345,7 +267,6 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   else
     entries=ADFS_NEWDIR_ENTRIES;
 
-  split=0;
   for (entry=0; entry<entries; entry++)
   {
     struct adfs_direntry de;
@@ -354,206 +275,167 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
     struct timeval tv;
     uint32_t indirectaddr;
 
-    if ((secpos+sizeof(de))<=dsector->datasize)
+    diskstore_absoluteread((char *)&de, sizeof(de), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
+
+    // Check for last entry, as per RiscOS PRM 2-211
+    if (de.dirobname[0]==0) break;
+
+    // Initialise this file entry
+    filename[0]=0;
+    filetype=0;
+    hasfiletype=0;
+
+    // Print spaces depending on directory depth
+    for (i=0; i<level; i++)
+       printf("  ");
+
+    // Extract filename
+    for (i=0; i<10; i++)
     {
-      if (split==0)
-      {
-        memcpy(&de, &dsector->data[secpos], sizeof(de));
-        secpos+=sizeof(de);
-      }
-      else
-        split=0;
+      int c=(de.dirobname[i]&0x7f);
+      if ((c==0) || (c==0x0d) || (c==0x0a)) break;
 
-      // Check for last entry, as per RiscOS PRM 2-211
-      if (de.dirobname[0]==0) break;
+      filename[strlen(filename)+1]=0;
+      filename[strlen(filename)]=c;
+    }
 
-      // Initialise this file entry
-      filename[0]=0;
-      filetype=0;
-      hasfiletype=0;
+    // Print filename padded to 10 characters
+    printf("%s%*s", filename, 10-strlen(filename), "");
 
-      // Print spaces depending on directory depth
-      for (i=0; i<level; i++)
-         printf("  ");
+    // Extract object attributes
+    if (dirtype==ADFS_NEWDIR)
+    {
+      attrib=de.newdiratts;
+    }
+    else
+    {
+      attrib=0;
 
-      // Extract filename
-      for (i=0; i<10; i++)
-      {
-        int c=(de.dirobname[i]&0x7f);
-        if ((c==0) || (c==0x0d) || (c==0x0a)) break;
+      // Map old to new dir attributes
+      if (de.dirobname[0]&0x80) attrib|=ADFS_OWNER_READ;
+      if (de.dirobname[1]&0x80) attrib|=ADFS_OWNER_WRITE;
+      if (de.dirobname[2]&0x80) attrib|=ADFS_LOCKED;
+      if (de.dirobname[3]&0x80) attrib|=ADFS_DIRECTORY;
+      if (de.dirobname[4]&0x80) attrib|=ADFS_EXECUTABLE;
+      if (de.dirobname[5]&0x80) attrib|=ADFS_PUBLIC_READ;
+      if (de.dirobname[6]&0x80) attrib|=ADFS_PUBLIC_WRITE;
+    }
 
-        filename[strlen(filename)+1]=0;
-        filename[strlen(filename)]=c;
-      }
+    // Attributes
+    printf(" ");
 
-      // Print filename padded to 10 characters
-      printf("%s%*s", filename, 10-strlen(filename), "");
+    if ((0!=(attrib&ADFS_OWNER_READ)) ||
+        (0!=(attrib&ADFS_EXECUTABLE)))
+      printf("R");
+    else
+      printf("-");
 
-      // Extract object attributes
+    if (0==(attrib&ADFS_OWNER_WRITE))
+      printf("-");
+    else
+      printf("W");
+
+    if (0==(attrib&ADFS_LOCKED))
+      printf("-");
+    else
+      printf("L");
+
+    if (0==(attrib&ADFS_DIRECTORY))
+      printf("F");
+    else
+      printf("D");
+
+    if (0==(attrib&ADFS_PUBLIC_READ))
+      printf("-");
+    else
+      printf("r");
+
+    if (0==(attrib&ADFS_PUBLIC_WRITE))
+      printf("-");
+    else
+      printf("w");
+
+    // Check for object having a filetype+timestamp, as per RiscOS PRM 2-16
+    if ((de.dirload&0xfff00000) == 0xfff00000)
+      hasfiletype=1;
+
+    printf(" %10ld", (unsigned long)de.dirlen);
+
+    indirectaddr=((de.dirinddiscadd[2]<<16) | (de.dirinddiscadd[1]<<8) | de.dirinddiscadd[0]);
+
+    if (maptype==ADFS_OLDMAP)
+    {
+      printf(" %.6lx", (unsigned long)indirectaddr);
+    }
+    else
+    {
+    //  printf("Indirect disc address: Fragment %x (Sector %x) Offset %x\n", (indirectaddr&0x7fff00)>>8, fragstart[(indirectaddr&0x7fff00)>>8], indirectaddr&0xff);
+    }
+
+    if (hasfiletype==0)
+    {
+      // Note : exec address should be >= load address and < (load address + file length), RiscOS PRM 2-16
+      printf(" %.8lx", (unsigned long)de.dirload);
+      printf(" %.8lx", (unsigned long)de.direxec);
+    }
+    else
+    {
+      // Get the epoch, as per RiscOS PRM 2-16
       if (dirtype==ADFS_NEWDIR)
       {
-        attrib=de.newdiratts;
+        unsigned int hightime=(de.dirload&0xff);
+        unsigned int lowtime=de.direxec;
+        unsigned long long csec=(((unsigned long long)hightime<<32) | lowtime);
+
+        filetype=((0x000fff00 & de.dirload)>>8);
+
+        if ((csec/100)>=ADFS_RISCUNIXTSDIFF)
+        {
+          struct tm tim;
+
+          csec=(csec/100)-ADFS_RISCUNIXTSDIFF;
+
+          tv.tv_sec=csec;
+          tv.tv_usec=0;
+
+          localtime_r(&tv.tv_sec, &tim);
+
+          printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", tim.tm_hour, tim.tm_min, tim.tm_sec, tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900);
+        }
+        printf(" %.3x %s", filetype, adfs_filetype(filetype));
       }
-      else
-      {
-        attrib=0;
+    }
 
-        // Map old to new dir attributes
-        if (de.dirobname[0]&0x80) attrib|=ADFS_OWNER_READ;
-        if (de.dirobname[1]&0x80) attrib|=ADFS_OWNER_WRITE;
-        if (de.dirobname[2]&0x80) attrib|=ADFS_LOCKED;
-        if (de.dirobname[3]&0x80) attrib|=ADFS_DIRECTORY;
-        if (de.dirobname[4]&0x80) attrib|=ADFS_EXECUTABLE;
-        if (de.dirobname[5]&0x80) attrib|=ADFS_PUBLIC_READ;
-        if (de.dirobname[6]&0x80) attrib|=ADFS_PUBLIC_WRITE;
-      }
+    printf("\n");
 
-      // Attributes
-      printf(" ");
+    // Recurse into directories
+    if (0!=(attrib&ADFS_DIRECTORY))
+    {
+      unsigned long curdiskoffs;
+      char newfolder[ADFS_MAXPATHLEN];
 
-      if ((0!=(attrib&ADFS_OWNER_READ)) ||
-          (0!=(attrib&ADFS_EXECUTABLE)))
-        printf("R");
-      else
-        printf("-");
-
-      if (0==(attrib&ADFS_OWNER_WRITE))
-        printf("-");
-      else
-        printf("W");
-
-      if (0==(attrib&ADFS_LOCKED))
-        printf("-");
-      else
-        printf("L");
-
-      if (0==(attrib&ADFS_DIRECTORY))
-        printf("F");
-      else
-        printf("D");
-
-      if (0==(attrib&ADFS_PUBLIC_READ))
-        printf("-");
-      else
-        printf("r");
-
-      if (0==(attrib&ADFS_PUBLIC_WRITE))
-        printf("-");
-      else
-        printf("w");
-
-      // Check for object having a filetype+timestamp, as per RiscOS PRM 2-16
-      if ((de.dirload&0xfff00000) == 0xfff00000)
-        hasfiletype=1;
-
-      printf(" %10ld", (unsigned long)de.dirlen);
-
-      indirectaddr=((de.dirinddiscadd[2]<<16) | (de.dirinddiscadd[1]<<8) | de.dirinddiscadd[0]);
+      sprintf(newfolder, "%s/%s", folder, filename);
 
       if (maptype==ADFS_OLDMAP)
       {
-        printf(" %.6lx", (unsigned long)indirectaddr);
+        curdiskoffs=diskstore_absoffset;
+
+        adfs_readdir(level+1, newfolder, maptype, dirtype, indirectaddr*ADFS_8BITSECTORSIZE, adfs_sectorsize, sectorspertrack);
+
+        diskstore_absoluteseek(curdiskoffs, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
       }
       else
       {
-      //  printf("Indirect disc address: Fragment %x (Sector %x) Offset %x\n", (indirectaddr&0x7fff00)>>8, fragstart[(indirectaddr&0x7fff00)>>8], indirectaddr&0xff);
+        curdiskoffs=diskstore_absoffset;
+
+        //adfs_readdir(level+1, newfolder, maptype, dirtype, fragstart[(indirectaddr&0x7fff00)>>8]*1024, adfs_sectorsize, sectorspertrack);
+        diskstore_absoluteseek(curdiskoffs, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
       }
-
-      if (hasfiletype==0)
-      {
-        // Note : exec address should be >= load address and < (load address + file length), RiscOS PRM 2-16
-        printf(" %.8lx", (unsigned long)de.dirload);
-        printf(" %.8lx", (unsigned long)de.direxec);
-      }
-      else
-      {
-        // Get the epoch, as per RiscOS PRM 2-16
-        if (dirtype==ADFS_NEWDIR)
-        {
-          unsigned int hightime=(de.dirload&0xff);
-          unsigned int lowtime=de.direxec;
-          unsigned long long csec=(((unsigned long long)hightime<<32) | lowtime);
-
-          filetype=((0x000fff00 & de.dirload)>>8);
-
-          if ((csec/100)>=ADFS_RISCUNIXTSDIFF)
-          {
-            struct tm tim;
-
-            csec=(csec/100)-ADFS_RISCUNIXTSDIFF;
-
-            tv.tv_sec=csec;
-            tv.tv_usec=0;
-
-            localtime_r(&tv.tv_sec, &tim);
-
-            printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", tim.tm_hour, tim.tm_min, tim.tm_sec, tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900);
-          }
-          printf(" %.3x %s", filetype, adfs_filetype(filetype));
-        }
-      }
-
-      printf("\n");
-
-      // Recurse into directories
-      if (0!=(attrib&ADFS_DIRECTORY))
-      {
-        char newfolder[ADFS_MAXPATHLEN];
-
-        sprintf(newfolder, "%s/%s", folder, filename);
-
-        if (maptype==ADFS_OLDMAP)
-          adfs_readdir(level+1, newfolder, maptype, dirtype, indirectaddr*ADFS_8BITSECTORSIZE, adfs_sectorsize, sectorspertrack);
-/*
-        else
-          adfs_readdir(level+1, newfolder, maptype, dirtype, fragstart[(indirectaddr&0x7fff00)>>8]*1024, adfs_sectorsize, sectorspertrack);
-*/
-      }
-
-//      if (dirtype==ADFS_OLDDIR)
-//        printf("OldDirObSeq: %.2x\n", de.olddirobseq);
     }
 
-    // Check for overflow into next sector
-    if ((secpos+sizeof(de))>dsector->datasize)
-    {
-      int remaining;
+//    if (dirtype==ADFS_OLDDIR)
+//      printf("OldDirObSeq: %.2x\n", de.olddirobseq);
 
-      r++;
-
-      if (r==sectorspertrack)
-      {
-        r=0;
-        if (dirtype==ADFS_OLDDIR)
-        {
-          c++;
-
-          // TODO check for end of disk reached - wrap around to track 0, head 1
-        }
-        else
-          h++;
-      }
-
-      if (h==2)
-      {
-        h=0;
-        c++;
-      }
-
-      // Copy remaining data
-      remaining=dsector->datasize-secpos;
-      memcpy(&de, &dsector->data[secpos], remaining);
-
-      dsector=diskstore_findhybridsector(c, h, r);
-
-      if ((dsector==NULL) || (dsector->data==NULL))
-        break;
-
-      // Next sector found, so copy remainder of data
-      memcpy((&de)+remaining, &dsector->data[0], sizeof(de)-remaining);
-      secpos=sizeof(de)-remaining;
-      split=1;
-    }
   }
 
   // TODO skip over unused entries
