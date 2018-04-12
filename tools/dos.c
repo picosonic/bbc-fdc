@@ -62,6 +62,66 @@ int dos_fatformat(Disk_Sector *sector1)
     return DOS_FAT32; // clusters >=65525
 }
 
+void dos_readdir(const unsigned long offset, const unsigned int entries)
+{
+  struct dos_direntry de;
+  int i, j;
+
+  diskstore_absoluteseek(offset, INTERLEAVED, 80);
+
+  for (i=0; i<entries; i++)
+  {
+    diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, 80);
+
+    // Check for end of directory
+    if (de.shortname[0]==0)
+      break;
+
+    for (j=0; j<8; j++)
+      printf("%c", de.shortname[j]);
+    printf(".");
+    for (j=0; j<3; j++)
+      printf("%c", de.shortextension[j]);
+
+    printf(" %.2x ", de.fileattribs);
+    if (0!=(de.fileattribs&DOS_ATTRIB_READONLY))
+      printf("R");
+    else
+      printf("W");
+
+    if (0!=(de.fileattribs&DOS_ATTRIB_HIDDEN))
+      printf("H");
+    else
+      printf("-");
+
+    if (0!=(de.fileattribs&DOS_ATTRIB_SYSTEM))
+      printf("S");
+    else
+      printf("-");
+
+    if (0!=(de.fileattribs&DOS_ATTRIB_VOLUMELABEL))
+      printf("V");
+    else
+      printf("-");
+
+    if (0!=(de.fileattribs&DOS_ATTRIB_DIRECTORY))
+      printf("D");
+    else
+      printf("F");
+
+    if (0!=(de.fileattribs&DOS_ATTRIB_ARCHIVE))
+      printf("A");
+    else
+      printf("-");
+
+    printf(" %.2x", de.userattribs);
+
+    printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", (de.modifytime&0xf800)>>11, (de.modifytime&0x7e0)>>5, (de.modifytime&0x1f)*2, de.modifydate&0x1f, (de.modifydate&0x1e0)>>5, ((de.modifydate&0xfe00)>>9)+1980);
+    printf(" @ 0x%.4x", de.startcluster);
+    printf(" %d bytes\n", de.filesize);
+  }
+}
+
 void dos_showinfo()
 {
   Disk_Sector *sector1;
@@ -197,6 +257,10 @@ void dos_showinfo()
   printf("Root directory @ 0x%lx\n", rootdir);
 
   printf("Data region @ 0x%x .. 0x%x\n", (biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies)+((biosparams->rootentries*DOS_DIRENTRYLEN)/biosparams->bytespersector))*biosparams->bytespersector, biosparams->smallsectors*biosparams->bytespersector);
+
+  printf("\n");
+
+  dos_readdir(rootdir, biosparams->rootentries);
 
   printf("\n");
 }
