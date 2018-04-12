@@ -62,10 +62,18 @@ int dos_fatformat(Disk_Sector *sector1)
     return DOS_FAT32; // clusters >=65525
 }
 
-void dos_readdir(const unsigned long offset, const unsigned int entries)
+// Absolute disk offset from cluster id
+unsigned long dos_clustertoabsolute(const unsigned long clusterid, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion)
+{
+  return (dataregion+(((clusterid-2)*sectorspercluster)*bytespersector));
+}
+
+void dos_readdir(const int level, const unsigned long offset, const unsigned int entries, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion, const unsigned long parent)
 {
   struct dos_direntry de;
   int i, j;
+  char shortname[8+1+3+1];
+  unsigned char shortlen;
 
   diskstore_absoluteseek(offset, INTERLEAVED, 80);
 
@@ -77,11 +85,29 @@ void dos_readdir(const unsigned long offset, const unsigned int entries)
     if (de.shortname[0]==0)
       break;
 
+    for (j=0; j<level; j++)
+      printf("  ");
+
+    shortlen=0;
     for (j=0; j<8; j++)
-      printf("%c", de.shortname[j]);
-    printf(".");
-    for (j=0; j<3; j++)
-      printf("%c", de.shortextension[j]);
+      shortname[shortlen++]=de.shortname[j];
+
+    while ((shortlen>0) && (shortname[shortlen-1]==' '))
+      shortlen--;
+
+    if (de.shortextension[0]!=' ')
+    {
+      shortname[shortlen++]='.';
+      for (j=0; j<3; j++)
+        shortname[shortlen++]=de.shortextension[j];
+    }
+
+    while ((shortlen>0) && (shortname[shortlen-1]==' '))
+      shortlen--;
+
+    shortname[shortlen]=0;
+
+    printf("%s%*s", shortname, 12-strlen(shortname), "");
 
     printf(" %.2x ", de.fileattribs);
     if (0!=(de.fileattribs&DOS_ATTRIB_READONLY))
@@ -117,9 +143,70 @@ void dos_readdir(const unsigned long offset, const unsigned int entries)
     printf(" %.2x", de.userattribs);
 
     printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", (de.modifytime&0xf800)>>11, (de.modifytime&0x7e0)>>5, (de.modifytime&0x1f)*2, de.modifydate&0x1f, (de.modifydate&0x1e0)>>5, ((de.modifydate&0xfe00)>>9)+1980);
-    printf(" @ 0x%.4x", de.startcluster);
+    printf(" @ 0x%.4x -> %lx", de.startcluster, dos_clustertoabsolute(de.startcluster, sectorspercluster, bytespersector, dataregion));
     printf(" %d bytes\n", de.filesize);
+
+    if (0!=(de.fileattribs&DOS_ATTRIB_DIRECTORY))
+    {
+      unsigned long subdir=dos_clustertoabsolute(de.startcluster, sectorspercluster, bytespersector, dataregion);
+
+      // Don't recurse into "." and ".."
+      if ((subdir!=parent) && (subdir!=offset))
+      {
+        unsigned long curdiskoffs=diskstore_absoffset;
+        dos_readdir(level+1, subdir, entries, sectorspercluster, bytespersector, dataregion, offset);
+
+        diskstore_absoluteseek(curdiskoffs, INTERLEAVED, 80);
+      }
+    }
   }
+}
+
+void dos_readfat(const unsigned long offset, const unsigned long length, const unsigned char fatformat)
+{
+  char *wholefat;
+  unsigned long i;
+  unsigned long cluster;
+  unsigned long clusterid;
+
+  wholefat=malloc(length);
+  if (wholefat==NULL) return;
+
+  diskstore_absoluteseek(offset, INTERLEAVED, 80);
+  diskstore_absoluteread(wholefat, length, INTERLEAVED, 80);
+
+  clusterid=0;
+
+  if (fatformat==DOS_FAT16)
+  {
+    for (i=0; i<length; i+=2)
+    {
+      cluster=(wholefat[i]<<8)|wholefat[i+1];
+//      printf("[%lx]=%.4lx ", clusterid++, cluster);
+    }
+  }
+  else
+  {
+    for (i=0; (i+3)<length; i+=3)
+    {
+      cluster=((unsigned char)wholefat[i]|(((unsigned char)wholefat[i+1]&0x0f)<<8))&0xfff;
+//      printf("[%lx]=%.3lx ", clusterid, cluster);
+//      if (cluster>=0xff8)
+//        printf("\n");
+
+      clusterid++;
+
+      cluster=(((((unsigned char)wholefat[i+1]&0xf0)>>4)|((unsigned char)wholefat[i+2]<<4)))&0xfff;
+//      printf("[%lx]=%.3lx ", clusterid, cluster);
+//      if (cluster>=0xff8)
+//        printf("\n");
+
+      clusterid++;
+    }
+  }
+//  printf("\n");
+
+  free(wholefat);
 }
 
 void dos_showinfo()
@@ -128,6 +215,8 @@ void dos_showinfo()
   struct dos_biosparams *biosparams;
   struct dos_extendedbiosparams *exbiosparams;
   unsigned long rootdir;
+  unsigned long dataregion;
+  unsigned char fatformat;
   int i;
 
   // Search for sector
@@ -230,7 +319,8 @@ void dos_showinfo()
   }
   printf("'\n");
 
-  switch (dos_fatformat(sector1))
+  fatformat=dos_fatformat(sector1);
+  switch (fatformat)
   {
     case DOS_FAT12:
       printf("FAT12\n");
@@ -253,14 +343,17 @@ void dos_showinfo()
   for (i=0; i<biosparams->fatcopies; i++)
     printf("FAT%d @ 0x%x\n", i+1, (biosparams->reservedsectors+(biosparams->sectorsperfat*i))*biosparams->bytespersector);
 
+  dos_readfat(biosparams->reservedsectors*biosparams->bytespersector, biosparams->sectorsperfat*biosparams->bytespersector, fatformat);
+
   rootdir=(biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies))*biosparams->bytespersector;
   printf("Root directory @ 0x%lx\n", rootdir);
 
-  printf("Data region @ 0x%x .. 0x%x\n", (biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies)+((biosparams->rootentries*DOS_DIRENTRYLEN)/biosparams->bytespersector))*biosparams->bytespersector, biosparams->smallsectors*biosparams->bytespersector);
+  dataregion=(biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies)+((biosparams->rootentries*DOS_DIRENTRYLEN)/biosparams->bytespersector))*biosparams->bytespersector, biosparams->smallsectors*biosparams->bytespersector;
+  printf("Data region @ 0x%lx .. 0x%lx\n", dataregion, (biosparams->smallsectors*biosparams->bytespersector)-dataregion);
 
   printf("\n");
 
-  dos_readdir(rootdir, biosparams->rootentries);
+  dos_readdir(0, rootdir, biosparams->rootentries, biosparams->sectorspercluster, biosparams->bytespersector, dataregion, 0);
 
   printf("\n");
 }

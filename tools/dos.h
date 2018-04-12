@@ -113,6 +113,7 @@ struct dos_direntry
 #define DOS_ATTRIB_VOLUMELABEL 0x08
 #define DOS_ATTRIB_DIRECTORY 0x10
 #define DOS_ATTRIB_ARCHIVE 0x20
+#define DOS_ATTRIB_DEVICE 0x40
 
 extern void dos_showinfo();
 extern int dos_validate();
