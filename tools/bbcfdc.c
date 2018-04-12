@@ -650,7 +650,7 @@ int main(int argc,char **argv)
                   break;
               }
               printf("\n");
-              adfs_showinfo(adfs_format);
+              adfs_showinfo(adfs_format, disktracks);
               info++;
               printf("\n");
             }
@@ -659,7 +659,7 @@ int main(int argc,char **argv)
               if (dos_validate()!=DOS_UNKNOWN)
               {
                 printf("\nDetected DOS\n\n");
-                dos_showinfo();
+                dos_showinfo(disktracks);
                 info++;
               }
               else

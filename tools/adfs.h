@@ -34,6 +34,8 @@ From RiscOS PRM 2-197, with G format from RiscOS sources
 Logical layout
 --------------
 Format Map Zones Dir Boot
+S      Old --    Old No
+M      Old --    Old No
 L      Old --    Old No
 D      Old --    New No
 E      New  1    New No
@@ -243,7 +245,7 @@ struct adfs_discrecord
 };
 
 extern void adfs_gettitle(const int adfs_format, char *title, const int titlelen);
-extern void adfs_showinfo(const int adfs_format);
+extern void adfs_showinfo(const int adfs_format, const unsigned int disktracks);
 extern int adfs_validate();
 
 #endif

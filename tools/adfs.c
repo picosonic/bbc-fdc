@@ -448,7 +448,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   // TODO Process DirTail
 }
 
-void adfs_showinfo(const int adfs_format)
+void adfs_showinfo(const int adfs_format, unsigned int disktracks)
 {
   int map, dir;
   unsigned int adfs_sectorsize;

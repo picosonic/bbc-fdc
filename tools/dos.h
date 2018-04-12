@@ -115,7 +115,7 @@ struct dos_direntry
 #define DOS_ATTRIB_ARCHIVE 0x20
 #define DOS_ATTRIB_DEVICE 0x40
 
-extern void dos_showinfo();
+extern void dos_showinfo(const unsigned int disktracks);
 extern int dos_validate();
 
 #endif

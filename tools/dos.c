@@ -68,18 +68,18 @@ unsigned long dos_clustertoabsolute(const unsigned long clusterid, const unsigne
   return (dataregion+(((clusterid-2)*sectorspercluster)*bytespersector));
 }
 
-void dos_readdir(const int level, const unsigned long offset, const unsigned int entries, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion, const unsigned long parent)
+void dos_readdir(const int level, const unsigned long offset, const unsigned int entries, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion, const unsigned long parent, unsigned int disktracks)
 {
   struct dos_direntry de;
   int i, j;
   char shortname[8+1+3+1];
   unsigned char shortlen;
 
-  diskstore_absoluteseek(offset, INTERLEAVED, 80);
+  diskstore_absoluteseek(offset, INTERLEAVED, disktracks);
 
   for (i=0; i<entries; i++)
   {
-    diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, 80);
+    diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, disktracks);
 
     // Check for end of directory
     if (de.shortname[0]==0)
@@ -154,15 +154,15 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
       if ((subdir!=parent) && (subdir!=offset))
       {
         unsigned long curdiskoffs=diskstore_absoffset;
-        dos_readdir(level+1, subdir, entries, sectorspercluster, bytespersector, dataregion, offset);
+        dos_readdir(level+1, subdir, entries, sectorspercluster, bytespersector, dataregion, offset, disktracks);
 
-        diskstore_absoluteseek(curdiskoffs, INTERLEAVED, 80);
+        diskstore_absoluteseek(curdiskoffs, INTERLEAVED, disktracks);
       }
     }
   }
 }
 
-void dos_readfat(const unsigned long offset, const unsigned long length, const unsigned char fatformat)
+void dos_readfat(const unsigned long offset, const unsigned long length, const unsigned char fatformat, const unsigned int disktracks)
 {
   char *wholefat;
   unsigned long i;
@@ -172,8 +172,8 @@ void dos_readfat(const unsigned long offset, const unsigned long length, const u
   wholefat=malloc(length);
   if (wholefat==NULL) return;
 
-  diskstore_absoluteseek(offset, INTERLEAVED, 80);
-  diskstore_absoluteread(wholefat, length, INTERLEAVED, 80);
+  diskstore_absoluteseek(offset, INTERLEAVED, disktracks);
+  diskstore_absoluteread(wholefat, length, INTERLEAVED, disktracks);
 
   clusterid=0;
 
@@ -209,7 +209,7 @@ void dos_readfat(const unsigned long offset, const unsigned long length, const u
   free(wholefat);
 }
 
-void dos_showinfo()
+void dos_showinfo(unsigned int disktracks)
 {
   Disk_Sector *sector1;
   struct dos_biosparams *biosparams;
@@ -343,7 +343,7 @@ void dos_showinfo()
   for (i=0; i<biosparams->fatcopies; i++)
     printf("FAT%d @ 0x%x\n", i+1, (biosparams->reservedsectors+(biosparams->sectorsperfat*i))*biosparams->bytespersector);
 
-  dos_readfat(biosparams->reservedsectors*biosparams->bytespersector, biosparams->sectorsperfat*biosparams->bytespersector, fatformat);
+  dos_readfat(biosparams->reservedsectors*biosparams->bytespersector, biosparams->sectorsperfat*biosparams->bytespersector, fatformat, disktracks);
 
   rootdir=(biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies))*biosparams->bytespersector;
   printf("Root directory @ 0x%lx\n", rootdir);
@@ -353,7 +353,8 @@ void dos_showinfo()
 
   printf("\n");
 
-  dos_readdir(0, rootdir, biosparams->rootentries, biosparams->sectorspercluster, biosparams->bytespersector, dataregion, 0);
+  // Do recursive directory listing
+  dos_readdir(0, rootdir, biosparams->rootentries, biosparams->sectorspercluster, biosparams->bytespersector, dataregion, 0, disktracks);
 
   printf("\n");
 }
