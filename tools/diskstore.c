@@ -421,7 +421,7 @@ void diskstore_absoluteseek(const unsigned long offset, const int interlacing, c
             }
             break;
 
-          case INTERLACED: // For each track, head 0 then head 1 (most common for double sided)
+          case INTERLEAVED: // For each track, head 0 then head 1 (most common for double sided)
             diskstore_abshead++;
 
             if (diskstore_abshead>diskstore_maxhead)

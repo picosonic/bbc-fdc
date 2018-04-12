@@ -245,8 +245,8 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   if (maptype!=ADFS_OLDMAP)
     return;
 
-  diskstore_absoluteseek(offset, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
-  diskstore_absoluteread((char *)&dh, sizeof(dh), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
+  diskstore_absoluteseek(offset, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
+  diskstore_absoluteread((char *)&dh, sizeof(dh), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
 
 //  printf("['%s' @0x%lx MAP:%d DIR:%d SECSIZE:%d SEC/TRACK:%d]\n", folder, offset, maptype, dirtype, adfs_sectorsize, sectorspertrack);
 
@@ -275,7 +275,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
     struct timeval tv;
     uint32_t indirectaddr;
 
-    diskstore_absoluteread((char *)&de, sizeof(de), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
+    diskstore_absoluteread((char *)&de, sizeof(de), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
 
     // Check for last entry, as per RiscOS PRM 2-211
     if (de.dirobname[0]==0) break;
@@ -422,14 +422,14 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
 
         adfs_readdir(level+1, newfolder, maptype, dirtype, indirectaddr*ADFS_8BITSECTORSIZE, adfs_sectorsize, sectorspertrack);
 
-        diskstore_absoluteseek(curdiskoffs, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
+        diskstore_absoluteseek(curdiskoffs, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
       }
       else
       {
         curdiskoffs=diskstore_absoffset;
 
         //adfs_readdir(level+1, newfolder, maptype, dirtype, fragstart[(indirectaddr&0x7fff00)>>8]*1024, adfs_sectorsize, sectorspertrack);
-        diskstore_absoluteseek(curdiskoffs, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLACED, 80);
+        diskstore_absoluteseek(curdiskoffs, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
       }
     }
 

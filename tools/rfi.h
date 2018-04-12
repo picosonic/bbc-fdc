@@ -27,7 +27,7 @@ JSON track metadata .. {track:0,side:0,rate:12500000,rpm:300,enc:"rle",len:48560
 * rpm is optional as it may not be known
 * enc can be "raw", "rle", or possibly gz
 * len refers to encoded data, to allow skipping tracks when seeking
-* when more than one side is used, tracks are interlaced, e.g. track 0 side 0, track 0 side 1, track 1 side 0 e.t.c
+* when more than one side is used, tracks are interleaved, e.g. track 0 side 0, track 0 side 1, track 1 side 0 e.t.c
 
 Track data
 ==========

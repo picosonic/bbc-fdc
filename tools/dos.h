@@ -33,16 +33,16 @@ struct dos_biosparams
   // DOS 2.0 BPB
   uint16_t bytespersector; // The size of a sector in bytes
   uint8_t sectorspercluster; // Number of sectors in a cluster
-  uint16_t reservedsectors; // Number of sectors from partition boot sector to first FAT
+  uint16_t reservedsectors; // Number of sectors before first FAT
   uint8_t fatcopies; // Number of FAT copies, usually 2
   uint16_t rootentries; // Number of filenames in the root folder
   uint16_t smallsectors; // Number of sectors on volume (if < 65535, else 0)
-  uint8_t mediatype; // Code for media type
+  uint8_t mediatype; // Code for media type/descriptor
   uint16_t sectorsperfat; // Number of sectors per FAT
 
   // DOS 3.0 BPB
   uint16_t sectorspertrack; // Number of sectors per track
-  uint16_t heads; // Number of heads
+  uint16_t heads; // Number of surfaces/heads
   uint16_t hiddensectors_lo; // Number of hidden sectors (low word)
 
   // DOS 3.2 BPB
@@ -55,7 +55,7 @@ struct dos_biosparams
 // FAT12/FAT16 EBPB
 struct dos_extendedbiosparams
 {
-  uint8_t physicaldiskid; // BIOS physical disk number, floppies start at 0x00
+  uint8_t physicaldiskid; // BIOS physical disk number, floppies start at 0x00, hdd start at 0x80
   uint8_t currenthead; // Current head (not used by FAT)
   uint8_t signature; // Disk signature, WindowsNT requires this to be 0x28/0x29
   uint32_t volumeserial; // Almost unique serial number created at format, often from month/day combined with seconds/hundreths for high word, and year with hours/minutes for low word
@@ -105,6 +105,14 @@ struct dos_direntry
   uint16_t startcluster; // Start of file cluster in FAT12/FAT16
   uint32_t filesize; // File size in bytes, volume label/directories are 0
 };
+
+// DOS file attributes
+#define DOS_ATTRIB_READONLY 0x01
+#define DOS_ATTRIB_HIDDEN 0x02
+#define DOS_ATTRIB_SYSTEM 0x04
+#define DOS_ATTRIB_VOLUMELABEL 0x08
+#define DOS_ATTRIB_DIRECTORY 0x10
+#define DOS_ATTRIB_ARCHIVE 0x20
 
 extern void dos_showinfo();
 extern int dos_validate();

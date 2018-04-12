@@ -12,7 +12,7 @@
 
 // Head interlacing types
 #define SEQUENCED 0
-#define INTERLACED 1
+#define INTERLEAVED 1
 
 typedef struct DiskSector
 {
