@@ -7,6 +7,8 @@
 #include "diskstore.h"
 #include "dos.h"
 
+int dos_debug=0;
+
 // Determine FAT type, all DOS floppies should be FAT12 (since they are less than 16Mb capacity)
 int dos_fatformat(Disk_Sector *sector1)
 {
@@ -182,7 +184,9 @@ void dos_readfat(const unsigned long offset, const unsigned long length, const u
     for (i=0; i<length; i+=2)
     {
       cluster=(wholefat[i]<<8)|wholefat[i+1];
-//      printf("[%lx]=%.4lx ", clusterid++, cluster);
+
+      if (dos_debug)
+        printf("[%lx]=%.4lx ", clusterid++, cluster);
     }
   }
   else
@@ -190,26 +194,26 @@ void dos_readfat(const unsigned long offset, const unsigned long length, const u
     for (i=0; (i+3)<length; i+=3)
     {
       cluster=((unsigned char)wholefat[i]|(((unsigned char)wholefat[i+1]&0x0f)<<8))&0xfff;
-//      printf("[%lx]=%.3lx ", clusterid, cluster);
-//      if (cluster>=0xff8)
-//        printf("\n");
+      if (dos_debug)
+        printf("[%lx]=%.3lx ", clusterid, cluster);
 
       clusterid++;
 
       cluster=(((((unsigned char)wholefat[i+1]&0xf0)>>4)|((unsigned char)wholefat[i+2]<<4)))&0xfff;
-//      printf("[%lx]=%.3lx ", clusterid, cluster);
-//      if (cluster>=0xff8)
-//        printf("\n");
+      if (dos_debug)
+        printf("[%lx]=%.3lx ", clusterid, cluster);
 
       clusterid++;
     }
   }
-//  printf("\n");
+
+  if (dos_debug)
+    printf("\n");
 
   free(wholefat);
 }
 
-void dos_showinfo(unsigned int disktracks)
+void dos_showinfo(const unsigned int disktracks, const unsigned int debug)
 {
   Disk_Sector *sector1;
   struct dos_biosparams *biosparams;
@@ -218,6 +222,8 @@ void dos_showinfo(unsigned int disktracks)
   unsigned long dataregion;
   unsigned char fatformat;
   int i;
+
+  dos_debug=debug;
 
   // Search for sector
   sector1=diskstore_findhybridsector(0, 0, 1);
@@ -340,16 +346,23 @@ void dos_showinfo(unsigned int disktracks)
   }
 
   // Show disk offsets
-  for (i=0; i<biosparams->fatcopies; i++)
-    printf("FAT%d @ 0x%x\n", i+1, (biosparams->reservedsectors+(biosparams->sectorsperfat*i))*biosparams->bytespersector);
+  if (dos_debug)
+  {
+    for (i=0; i<biosparams->fatcopies; i++)
+      printf("FAT%d @ 0x%x\n", i+1, (biosparams->reservedsectors+(biosparams->sectorsperfat*i))*biosparams->bytespersector);
+  }
 
   dos_readfat(biosparams->reservedsectors*biosparams->bytespersector, biosparams->sectorsperfat*biosparams->bytespersector, fatformat, disktracks);
 
   rootdir=(biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies))*biosparams->bytespersector;
-  printf("Root directory @ 0x%lx\n", rootdir);
+
+  if (dos_debug)
+    printf("Root directory @ 0x%lx\n", rootdir);
 
   dataregion=(biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies)+((biosparams->rootentries*DOS_DIRENTRYLEN)/biosparams->bytespersector))*biosparams->bytespersector, biosparams->smallsectors*biosparams->bytespersector;
-  printf("Data region @ 0x%lx .. 0x%lx\n", dataregion, (biosparams->smallsectors*biosparams->bytespersector)-dataregion);
+
+  if (dos_debug)
+    printf("Data region @ 0x%lx .. 0x%lx\n", dataregion, (biosparams->smallsectors*biosparams->bytespersector)-dataregion);
 
   printf("\n");
 

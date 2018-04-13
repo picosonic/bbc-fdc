@@ -659,7 +659,7 @@ int main(int argc,char **argv)
               if (dos_validate()!=DOS_UNKNOWN)
               {
                 printf("\nDetected DOS\n\n");
-                dos_showinfo(disktracks);
+                dos_showinfo(disktracks, debug);
                 info++;
               }
               else
