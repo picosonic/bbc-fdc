@@ -11,6 +11,8 @@
 #include "diskstore.h"
 #include "adfs.h"
 
+int adfs_debug=0;
+
 // Reverse log2
 unsigned long rev_log2(const unsigned long x)
 {
@@ -235,6 +237,7 @@ char *adfs_filetype(const unsigned int filetype)
 void adfs_readdir(const int level, const char *folder, const int maptype, const int dirtype, const unsigned long offset, const unsigned int adfs_sectorsize, const unsigned char sectorspertrack)
 {
   struct adfs_dirheader dh;
+  struct adfs_direntry de;
   int i;
   int entry;
   int entries;
@@ -248,19 +251,21 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   diskstore_absoluteseek(offset, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
   diskstore_absoluteread((char *)&dh, sizeof(dh), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
 
-//  printf("['%s' @0x%lx MAP:%d DIR:%d SECSIZE:%d SEC/TRACK:%d]\n", folder, offset, maptype, dirtype, adfs_sectorsize, sectorspertrack);
+  if (adfs_debug)
+    printf("['%s' @0x%lx MAP:%d DIR:%d SECSIZE:%d SEC/TRACK:%d]\n", folder, offset, maptype, dirtype, adfs_sectorsize, sectorspertrack);
 
   // Iterate through directory
-/*
-  printf("StartMasSeq: %.2x\n", dh.startmasseq);
-  printf("StartName: \"");
-  for (i=0; i<4; i++)
+  if (adfs_debug)
   {
-    int c=dh.startname[i];
-    printf("%c", (c>=' ')&(c<='~')?c:'.');
+    printf("StartMasSeq: %.2x\n", dh.startmasseq);
+    printf("StartName: \"");
+    for (i=0; i<4; i++)
+    {
+      int c=dh.startname[i];
+      printf("%c", (c>=' ')&(c<='~')?c:'.');
+    }
+    printf("\"\n");
   }
-  printf("\"\n");
-*/
 
   if (dirtype==ADFS_OLDDIR)
     entries=ADFS_OLDDIR_ENTRIES;
@@ -269,7 +274,6 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
 
   for (entry=0; entry<entries; entry++)
   {
-    struct adfs_direntry de;
     unsigned int filetype;
     char filename[ADFS_MAXPATHLEN];
     struct timeval tv;
@@ -433,28 +437,103 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
       }
     }
 
-//    if (dirtype==ADFS_OLDDIR)
-//      printf("OldDirObSeq: %.2x\n", de.olddirobseq);
-
+    if ((adfs_debug) && (dirtype==ADFS_OLDDIR))
+      printf("OldDirObSeq: %.2x\n", de.olddirobseq);
   }
 
-  // TODO skip over unused entries
+  // Skip over unused entries
   while ((entry+1)<entries)
   {
-    // TODO
+    diskstore_absoluteread((char *)&de, sizeof(de), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
     entry++;
   }
 
-  // TODO Process DirTail
+  // Process DirTail
+  if (dirtype==ADFS_NEWDIR)
+  {
+    struct adfs_newdirtail ndt;
+
+    diskstore_absoluteread((char *)&ndt, sizeof(ndt), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
+
+    if (adfs_debug)
+    {
+      printf("NewDirLastMark: %.2x\n", ndt.lastmark);
+      printf("NewDirParent: %.2x %.2x %.2x\n", ndt.parent[2], ndt.parent[1], ndt.parent[0]);
+      printf("NewDirTitle: ");
+      for (i=0; i<19; i++)
+      {
+        int c=(ndt.title[i]&0x7f);
+        if ((c==0) || (c==0x0d) || (c==0x0a)) break;
+        printf("%c", (c>=' ')&(c<='~')?c:'.');
+      }
+      printf("\n");
+      printf("NewDirName: ");
+      for (i=0; i<10; i++)
+      {
+        int c=(ndt.name[i]&0x7f);
+        if ((c==0) || (c==0x0d) || (c==0x0a)) break;
+        printf("%c", (c>=' ')&(c<='~')?c:'.');
+      }
+      printf("\n");
+      printf("EndMasSeq: %.2x\n", ndt.endmasseq);
+      printf("EndName: \"");
+      for (i=0; i<4; i++)
+      {
+        int c=ndt.endname[i];
+        printf("%c", (c>=' ')&(c<='~')?c:'.');
+      }
+      printf("\"\n");
+      printf("DirCheckByte: %.2x\n", ndt.checkbyte);
+    }
+  }
+  else
+  {
+    struct adfs_olddirtail odt;
+
+    diskstore_absoluteread((char *)&odt, sizeof(odt), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
+
+    if (adfs_debug)
+    {
+      printf("OldDirLastMark: %.2x\n", odt.lastmark);
+      printf("OldDirName: ");
+      for (i=0; i<10; i++)
+      {
+        int c=(odt.name[i]&0x7f);
+        if ((c==0) || (c==0x0d) || (c==0x0a)) break;
+        printf("%c", (c>=' ')&(c<='~')?c:'.');
+      }
+      printf("\n");
+      printf("OldDirParent: %.2x %.2x %.2x\n", odt.parent[2], odt.parent[1], odt.parent[0]);
+      printf("OldDirTitle: ");
+      for (i=0; i<19; i++)
+      {
+        int c=(odt.title[i]&0x7f);
+        if ((c==0) || (c==0x0d) || (c==0x0a)) break;
+        printf("%c", (c>=' ')&(c<='~')?c:'.');
+      }
+      printf("\n");
+      printf("EndMasSeq: %.2x\n", odt.endmasseq);
+      printf("EndName: \"");
+      for (i=0; i<4; i++)
+      {
+        int c=odt.endname[i];
+        printf("%c", (c>=' ')&(c<='~')?c:'.');
+      }
+      printf("\"\n");
+      printf("DirCheckByte: %.2x\n", odt.checkbyte);
+    }
+  }
 }
 
-void adfs_showinfo(const int adfs_format, unsigned int disktracks)
+void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const int debug)
 {
   int map, dir;
   unsigned int adfs_sectorsize;
   unsigned char sectorspertrack;
   Disk_Sector *sector0;
   Disk_Sector *sector1;
+
+  adfs_debug=debug;
 
   switch (adfs_format)
   {
@@ -523,14 +602,17 @@ void adfs_showinfo(const int adfs_format, unsigned int disktracks)
 
     oldmap=(struct adfs_oldmap *)&oldmapbuff[0];
 
-    printf("FreeStart: ");
-    for (i=0; i<ADFS_OLDMAPLEN; i++)
+    if (adfs_debug)
     {
-      unsigned long c=adfs_readval(&oldmap->freestart[i*ADFS_OLDMAPENTRY], ADFS_OLDMAPENTRY);
+      printf("FreeStart: ");
+      for (i=0; i<ADFS_OLDMAPLEN; i++)
+     {
+        unsigned long c=adfs_readval(&oldmap->freestart[i*ADFS_OLDMAPENTRY], ADFS_OLDMAPENTRY);
 
-      printf("%.3lx ", c);
+        printf("%.3lx ", c);
+      }
+      printf("\n");
     }
-    printf("\n");
 
     printf("Disc name: \"");
     for (i=0; i<5; i++)
@@ -545,15 +627,19 @@ void adfs_showinfo(const int adfs_format, unsigned int disktracks)
     printf("\"\n");
 
     printf("Disc size in (256 byte) sectors: %ld\n", adfs_readval((unsigned char *)&oldmap->oldsize, ADFS_OLDMAPENTRY));
-    printf("Check0: %.2x\n", oldmap->check0);
-    printf("FreeLen: ");
-    for (i=0; i<ADFS_OLDMAPLEN; i++)
-    {
-      unsigned long c=adfs_readval(&oldmap->freelen[i*ADFS_OLDMAPENTRY], ADFS_OLDMAPENTRY);
 
-      printf("%.3lx ", c);
+    if (adfs_debug)
+    {
+      printf("Check0: %.2x\n", oldmap->check0);
+      printf("FreeLen: ");
+      for (i=0; i<ADFS_OLDMAPLEN; i++)
+      {
+        unsigned long c=adfs_readval(&oldmap->freelen[i*ADFS_OLDMAPENTRY], ADFS_OLDMAPENTRY);
+
+        printf("%.3lx ", c);
+      }
+      printf("\n");
     }
-    printf("\n");
 
     discid=oldmap->oldid;
     printf("Disc ID: %.4lx (%ld)\n", discid, discid);
@@ -566,8 +652,12 @@ void adfs_showinfo(const int adfs_format, unsigned int disktracks)
       case 3: printf("*Exec boot file\n"); break;
       default: printf("Unknown\n"); break;
     }
-    printf("FreeEnd: %.2x\n", oldmap->freeend);
-    printf("Check1: %.2x\n", oldmap->check1);
+
+    if (adfs_debug)
+    {
+      printf("FreeEnd: %.2x\n", oldmap->freeend);
+      printf("Check1: %.2x\n", oldmap->check1);
+    }
 
     printf("\n");
 

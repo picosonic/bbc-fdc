@@ -650,7 +650,7 @@ int main(int argc,char **argv)
                   break;
               }
               printf("\n");
-              adfs_showinfo(adfs_format, disktracks);
+              adfs_showinfo(adfs_format, disktracks, debug);
               info++;
               printf("\n");
             }

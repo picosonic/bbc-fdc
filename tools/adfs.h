@@ -245,7 +245,7 @@ struct adfs_discrecord
 };
 
 extern void adfs_gettitle(const int adfs_format, char *title, const int titlelen);
-extern void adfs_showinfo(const int adfs_format, const unsigned int disktracks);
+extern void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const int debug);
 extern int adfs_validate();
 
 #endif
