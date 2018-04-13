@@ -24,6 +24,15 @@
 // Directory entries
 #define DOS_DIRENTRYLEN 32
 
+// DOS file attributes
+#define DOS_ATTRIB_READONLY 0x01
+#define DOS_ATTRIB_HIDDEN 0x02
+#define DOS_ATTRIB_SYSTEM 0x04
+#define DOS_ATTRIB_VOLUMELABEL 0x08
+#define DOS_ATTRIB_DIRECTORY 0x10
+#define DOS_ATTRIB_ARCHIVE 0x20
+#define DOS_ATTRIB_DEVICE 0x40
+
 #pragma pack(1)
 
 // From Revolutionary guide to assembly language, Wrox Press, ISBN 1-874416-12-5
@@ -106,16 +115,7 @@ struct dos_direntry
   uint32_t filesize; // File size in bytes, volume label/directories are 0
 };
 
-// DOS file attributes
-#define DOS_ATTRIB_READONLY 0x01
-#define DOS_ATTRIB_HIDDEN 0x02
-#define DOS_ATTRIB_SYSTEM 0x04
-#define DOS_ATTRIB_VOLUMELABEL 0x08
-#define DOS_ATTRIB_DIRECTORY 0x10
-#define DOS_ATTRIB_ARCHIVE 0x20
-#define DOS_ATTRIB_DEVICE 0x40
-
-extern void dos_showinfo(const unsigned int disktracks);
+extern void dos_showinfo(const unsigned int disktracks, const unsigned int debug);
 extern int dos_validate();
 
 #endif

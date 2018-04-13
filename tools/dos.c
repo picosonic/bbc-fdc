@@ -352,6 +352,7 @@ void dos_showinfo(const unsigned int disktracks, const unsigned int debug)
       printf("FAT%d @ 0x%x\n", i+1, (biosparams->reservedsectors+(biosparams->sectorsperfat*i))*biosparams->bytespersector);
   }
 
+  // Read first FAT
   dos_readfat(biosparams->reservedsectors*biosparams->bytespersector, biosparams->sectorsperfat*biosparams->bytespersector, fatformat, disktracks);
 
   rootdir=(biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies))*biosparams->bytespersector;
