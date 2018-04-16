@@ -146,7 +146,7 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
   // Find/Read track data into buffer
   if (hw_samplefile!=NULL)
   {
-    // Obsolete .raw files were 8 megabits per track, sampled at 12.5Mhz, either 40 or 80 tracks, with second side (if any) folowing th whole of the first
+    // Obsolete .raw files were 8 megabits per track, sampled at 12.5Mhz, either 40 or 80 tracks, with second side (if any) folowing the whole of the first
     if (strstr(hw_samplefilename, ".raw")!=NULL)
     {
       if (fseek(hw_samplefile, ((HW_MAXTRACKS*hw_currenthead)+hw_currenttrack)*HW_OLDRAWTRACKSIZE, SEEK_SET)==0)

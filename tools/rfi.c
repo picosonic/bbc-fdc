@@ -286,6 +286,10 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
 
     // Read track metadata
     metapos=ftell(rfifile);
+
+    if (metapos==-1)
+      return 0;
+
     fread(metabuffer, sizeof(metabuffer), 1, rfifile);
     fseek(rfifile, metapos, SEEK_SET);
     for (i=0; i<(int)sizeof(metabuffer); i++)
