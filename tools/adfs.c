@@ -525,6 +525,72 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   }
 }
 
+void adfs_dumpdiscrecord(struct adfs_discrecord *dr)
+{
+  int i;
+
+  printf("\nADFS Disc Record\n");
+
+  printf("Sector size in bytes : %ld\n", rev_log2(dr->log2secsize));
+  printf("Sectors/track : %d\n", dr->secspertrack);
+  printf("Heads: %d (%s)\n", dr->heads, dr->heads==1?"sequenced":dr->heads==2?"interleaved":"Unknown");
+
+  printf("Density: %d ", dr->density);
+  switch (dr->density)
+  {
+    case 0: printf("Hard disk\n"); break;
+    case 1: printf("Single density (125Kbps FM)\n"); break;
+    case 2: printf("Double density (250Kbps FM)\n"); break;
+    case 3: printf("Double+ density (300Kbps FM)\n"); break;
+    case 4: printf("Quad density (500Kbps FM)\n"); break;
+    case 8: printf("Octal density (1000Kbps FM)\n"); break;
+    default:
+      printf("Unknown\n");
+      break;
+  }
+
+  printf("ID field length of a map fragment in bits: %d\n", dr->idlen);
+  if ((dr->idlen<(dr->log2secsize+3)) || (dr->idlen>19))
+    printf("Invalid idlen size\n");
+
+  printf("Bytes/map bit: 0x%.2x (%ld)\n", dr->log2bpmb, rev_log2(dr->log2bpmb));
+  printf("Track to track skew: %d\n", dr->skew);
+  printf("Boot option: %d ", dr->bootoption);
+  switch (dr->bootoption)
+  {
+    case 0: printf("No action\n"); break;
+    case 1: printf("*Load boot file\n"); break;
+    case 2: printf("*Run boot file\n"); break;
+    case 3: printf("*Exec boot file\n"); break;
+    default: printf("Unknown\n"); break;
+  }
+
+  printf("Lowest sector: %d\n", dr->lowsector&0x3f);
+  printf("Treat sides as %s\n", (dr->lowsector&0x40)==0?"interleaved":"sequence");
+  printf("Disc is %d track\n", (dr->lowsector&0x80)==0?80:40);
+
+  printf("Zones in map: %ld\n", (long)((dr->nzones_high<<8) | dr->nzones));
+  printf("Non-allocation bits between zones: 0x%.4x\n", dr->zone_spare);
+  printf("Root directory address: 0x%.8x\n", dr->root);
+  printf("Disc size in bytes: %ld\n", (unsigned long)dr->disc_size);
+
+  printf("Disc cycle ID: 0x%.4x\n", dr->disc_id);
+  printf("Disc name: \"");
+  for (i=0; i<10; i++)
+  {
+    int c=dr->disc_name[i];
+    printf("%c", (c>=' ')&(c<='~')?c:'.');
+  }
+  printf("\"\n");
+
+  printf("Disc filetype: 0x%.8x\n", dr->disc_type);
+  printf("Share size: 0x%.2x\n", dr->log2sharesize);
+  printf("Big flag: 0x%.2x\n", dr->big_flag);
+  printf("Root size: 0x%.8x\n", dr->root_size);
+
+  printf("\n");
+}
+
 void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const int debug)
 {
   int map, dir;
@@ -670,74 +736,31 @@ void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const i
   }
   else
   {
+    struct adfs_zoneheader zh;
+    struct adfs_discrecord dr;
+
     // New MAP
+    if (adfs_format==ADFS_F)
+    {
+
+      diskstore_absoluteseek(ADFS_BOOTBLOCKOFFSET+ADFS_BOOTDROFFSET, dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
+      diskstore_absoluteread((char *)&dr, sizeof(dr), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
+
+      diskstore_absoluteseek((dr.disc_size/2)-(adfs_sectorsize*2), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
+    }
+    else
+      diskstore_absoluteseek(0, dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
+
+    diskstore_absoluteread((char *)&zh, sizeof(zh), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
+
+    printf("ZoneCheck: %.2x\n", zh.zonecheck);
+    printf("FreeLink: %.4x\n", zh.freelink);
+    printf("CrossCheck: %.2x\n", zh.crosscheck);
+
+    diskstore_absoluteread((char *)&dr, sizeof(dr), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
+
+    adfs_dumpdiscrecord(&dr);
   }
-}
-
-void adfs_dumpdiscrecord(struct adfs_discrecord *dr)
-{
-  int i;
-
-  printf("\nADFS Disc Record\n");
-
-  printf("Sector size in bytes : %ld\n", rev_log2(dr->log2secsize));
-  printf("Sectors/track : %d\n", dr->secspertrack);
-  printf("Heads: %d (%s)\n", dr->heads, dr->heads==1?"sequenced":dr->heads==2?"interleaved":"Unknown");
-
-  printf("Density: %d ", dr->density);
-  switch (dr->density)
-  {
-    case 0: printf("Hard disk\n"); break;
-    case 1: printf("Single density (125Kbps FM)\n"); break;
-    case 2: printf("Double density (250Kbps FM)\n"); break;
-    case 3: printf("Double+ density (300Kbps FM)\n"); break;
-    case 4: printf("Quad density (500Kbps FM)\n"); break;
-    case 8: printf("Octal density (1000Kbps FM)\n"); break;
-    default:
-      printf("Unknown\n");
-      break;
-  }
-
-  printf("ID field length of a map fragment in bits: %d\n", dr->idlen);
-  if ((dr->idlen<(dr->log2secsize+3)) || (dr->idlen>19))
-    printf("Invalid idlen size\n");
-
-  printf("Bytes/map bit: 0x%.2x (%ld)\n", dr->log2bpmb, rev_log2(dr->log2bpmb));
-  printf("Track to track skew: %d\n", dr->skew);
-  printf("Boot option: %d ", dr->bootoption);
-  switch (dr->bootoption)
-  {
-    case 0: printf("No action\n"); break;
-    case 1: printf("*Load boot file\n"); break;
-    case 2: printf("*Run boot file\n"); break;
-    case 3: printf("*Exec boot file\n"); break;
-    default: printf("Unknown\n"); break;
-  }
-
-  printf("Lowest sector: %d\n", dr->lowsector&0x3f);
-  printf("Treat sides as %s\n", (dr->lowsector&0x40)==0?"interleaved":"sequence");
-  printf("Disc is %d track\n", (dr->lowsector&0x80)==0?80:40);
-
-  printf("Zones in map: %ld\n", (long)((dr->nzones_high<<8) | dr->nzones));
-  printf("Non-allocation bits between zones: 0x%.4x\n", dr->zone_spare);
-  printf("Root directory address: 0x%.8x\n", dr->root);
-  printf("Disc size in bytes: %ld\n", (unsigned long)dr->disc_size);
-
-  printf("Disc cycle ID: 0x%.4x\n", dr->disc_id);
-  printf("Disc name: \"");
-  for (i=0; i<10; i++)
-  {
-    int c=dr->disc_name[i];
-    printf("%c", (c>=' ')&(c<='~')?c:'.');
-  }
-  printf("\"\n");
-
-  printf("Disc filetype: 0x%.8x\n", dr->disc_type);
-  printf("Share size: 0x%.2x\n", dr->log2sharesize);
-  printf("Big flag: 0x%.2x\n", dr->big_flag);
-  printf("Root size: 0x%.8x\n", dr->root_size);
-
-  printf("\n");
 }
 
 int adfs_validate()
