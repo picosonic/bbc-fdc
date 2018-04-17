@@ -3,6 +3,12 @@
 
 #define DOS_SECTORSIZE 512
 
+// For FAT cluster id ranges
+#define DOS_MINCLUSTER 2
+#define DOS_FAT12MAXCLUSTER 4085
+#define DOS_FAT16MAXCLUSTER 65525
+#define DOS_FAT32MAXCLUSTER 268435445
+
 // For FAT partition boot sector
 #define DOS_UNDOCDIRECTJMP 0x69
 #define DOS_SHORTJMP 0xeb

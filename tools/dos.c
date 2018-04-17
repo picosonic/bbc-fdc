@@ -55,7 +55,7 @@ int dos_fatformat(Disk_Sector *sector1)
 
   if (biosparams->sectorsperfat!=0)
   {
-    if (clusters<4085)
+    if (clusters<DOS_FAT12MAXCLUSTER)
       return DOS_FAT12;
     else
       return DOS_FAT16;
@@ -67,7 +67,7 @@ int dos_fatformat(Disk_Sector *sector1)
 // Absolute disk offset from cluster id
 unsigned long dos_clustertoabsolute(const unsigned long clusterid, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion)
 {
-  return (dataregion+(((clusterid-2)*sectorspercluster)*bytespersector));
+  return (dataregion+(((clusterid-DOS_MINCLUSTER)*sectorspercluster)*bytespersector));
 }
 
 void dos_readdir(const int level, const unsigned long offset, const unsigned int entries, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion, const unsigned long parent, unsigned int disktracks)
@@ -190,6 +190,7 @@ void dos_readfat(const unsigned long offset, const unsigned long length, const u
     }
   }
   else
+  if (fatformat==DOS_FAT12)
   {
     for (i=0; (i+3)<length; i+=3)
     {
