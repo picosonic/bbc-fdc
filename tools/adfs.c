@@ -204,18 +204,26 @@ char *adfs_filetype(const unsigned int filetype)
   {
     case 0x695: return "GIF";
     case 0xa91: return "Zip";
+    case 0xadf: return "PDF";
+    case 0xae9: return "Alarm";
+    case 0xaf1: return "Music";
+    case 0xaff: return "DrawFile";
     case 0xb60: return "PNG";
     case 0xc85: return "JPEG";
     case 0xddc: return "Archive";
+    case 0xdea: return "DXF";
     case 0xdec: return "DiscRec";
     case 0xf89: return "GZip";
     case 0xfae: return "Resource";
     case 0xfaf: return "HTML";
     case 0xfb0: return "Allocate";
+    case 0xfc3: return "Patch";
+    case 0xfc6: return "PrntDefn";
     case 0xfca: return "Squash";
     case 0xfcd: return "HardDisc";
     case 0xfce: return "FloppyDisc";
     case 0xfd1: return "BASICTxt";
+    case 0xfe1: return "Make";
     case 0xfd6: return "TaskExec";
     case 0xfd7: return "TaskObey";
     case 0xfdb: return "TextCRLF";
@@ -223,6 +231,8 @@ char *adfs_filetype(const unsigned int filetype)
     case 0xfeb: return "Obey";
     case 0xfec: return "Template"; 
     case 0xfed: return "Palette";
+    case 0xff2: return "Config";
+    case 0xff5: return "PoScript";
     case 0xff6: return "Font";
     case 0xff8: return "Absolute";
     case 0xff9: return "Sprite";
