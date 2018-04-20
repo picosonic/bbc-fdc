@@ -13,6 +13,8 @@
 
 int adfs_debug=0;
 
+long *fragstart;
+
 // Reverse log2
 unsigned long rev_log2(const unsigned long x)
 {
@@ -244,10 +246,6 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   unsigned char attrib;
   int hasfiletype;
 
-  // Only support old maps for now
-  if (maptype!=ADFS_OLDMAP)
-    return;
-
   diskstore_absoluteseek(offset, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
   diskstore_absoluteread((char *)&dh, sizeof(dh), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
 
@@ -373,7 +371,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
     }
     else
     {
-    //  printf("Indirect disc address: Fragment %x (Sector %x) Offset %x\n", (indirectaddr&0x7fff00)>>8, fragstart[(indirectaddr&0x7fff00)>>8], indirectaddr&0xff);
+      printf(" [Frag %x (Sec %x) Offs %x]", (indirectaddr&0x7fff00)>>8, fragstart[(indirectaddr&0x7fff00)>>8], indirectaddr&0xff);
     }
 
     if (hasfiletype==0)
@@ -432,7 +430,8 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
       {
         curdiskoffs=diskstore_absoffset;
 
-        //adfs_readdir(level+1, newfolder, maptype, dirtype, fragstart[(indirectaddr&0x7fff00)>>8]*1024, adfs_sectorsize, sectorspertrack);
+        adfs_readdir(level+1, newfolder, maptype, dirtype, fragstart[(indirectaddr&0x7fff00)>>8]*adfs_sectorsize, adfs_sectorsize, sectorspertrack);
+
         diskstore_absoluteseek(curdiskoffs, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
       }
     }
@@ -591,6 +590,98 @@ void adfs_dumpdiscrecord(struct adfs_discrecord *dr)
   printf("\n");
 }
 
+void adfs_readnewmap(const unsigned char idlen, const unsigned int bytespermapbit, const unsigned char nzones, const unsigned long discsize, const unsigned long sectorsize, const unsigned long zonespare)
+{
+  unsigned int fragid;
+  unsigned char fragbits;
+  unsigned char mapdata;
+  unsigned int zoneread;
+  unsigned int zeroes;
+  unsigned long pos;
+  unsigned long start;
+  unsigned char bit;
+  unsigned int zone;
+  unsigned int mapbytes;
+
+  if (adfs_debug)
+    printf("New Map @%lx (%d, %d, %d) %d :\n", diskstore_absoffset, idlen, bytespermapbit, nzones, sectorsize);
+
+  pos=0;
+
+  fragid=0; fragbits=0;
+  start=pos; zeroes=0; zone=0;
+  zoneread=sectorsize-(sizeof(struct adfs_discrecord))-(zonespare/8);
+  mapbytes=(discsize/bytespermapbit)/8;
+
+  if (adfs_debug)
+  {
+    printf("Granularity: %d, map bytes %d\n", (sectorsize>bytespermapbit)?sectorsize:bytespermapbit, mapbytes);
+
+    printf("Zone %d/%d @ %lx, %d allocation bytes\n", zone, nzones, diskstore_absoffset, zoneread);
+  }
+
+  fragstart=malloc(ADFS_MAXFRAG*sizeof(long));
+  if (fragstart==NULL) return;
+
+  do
+  {
+    diskstore_absoluteread((char *)&mapdata, 1, INTERLEAVED, 80);
+
+    zoneread--;
+    if (zoneread==0)
+    {
+      zone++;
+      zoneread=sectorsize-(zonespare/8);
+
+      // Skip bit between map data
+      diskstore_absoluteseek(diskstore_absoffset+(zonespare/8), INTERLEAVED, 80);
+
+      if (adfs_debug)
+        printf("Zone %d @ %lx, %d allocation bytes\n", zone, diskstore_absoffset, zoneread);
+    }
+
+    for (bit=0; bit<8; bit++)
+    {
+      // Read fragment id
+      if (fragbits<idlen)
+      {
+        fragid|=((mapdata&0x01)<<fragbits);
+        fragbits++;
+      }
+      else
+      {
+        // Look for next "1" bit to indicate end of fragment
+        if ((mapdata&0x01)==1)
+        {
+          // TODO fix this
+          if (bytespermapbit==64) start/=2;
+
+          fragstart[fragid]=start;
+
+          if (adfs_debug)
+          {
+            printf("  (%.2x): ", fragid);
+            printf("[%.2x = %d bytes] @ %x\n", zeroes, (idlen+zeroes+1)*bytespermapbit, start);
+          }
+
+          fragid=0; fragbits=0;
+          zeroes=0;
+
+          start=pos+1;
+        }
+        else
+          zeroes++;
+      }
+      mapdata=(mapdata>>1);
+    }
+
+    pos++;
+  } while (pos<mapbytes);
+
+  if (adfs_debug)
+    printf("\n");
+}
+
 void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const int debug)
 {
   int map, dir;
@@ -600,6 +691,8 @@ void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const i
   Disk_Sector *sector1;
 
   adfs_debug=debug;
+
+  fragstart=NULL;
 
   switch (adfs_format)
   {
@@ -738,11 +831,13 @@ void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const i
   {
     struct adfs_zoneheader zh;
     struct adfs_discrecord dr;
+    long secoffset;
 
     // New MAP
+
+    // If this is a format with a boot sector, look for that
     if (adfs_format==ADFS_F)
     {
-
       diskstore_absoluteseek(ADFS_BOOTBLOCKOFFSET+ADFS_BOOTDROFFSET, dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
       diskstore_absoluteread((char *)&dr, sizeof(dr), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
 
@@ -760,6 +855,24 @@ void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const i
     diskstore_absoluteread((char *)&dr, sizeof(dr), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
 
     adfs_dumpdiscrecord(&dr);
+
+    adfs_readnewmap(dr.idlen, rev_log2(dr.log2bpmb), dr.nzones, dr.disc_size, rev_log2(dr.log2secsize), dr.zone_spare);
+
+    if (fragstart==NULL) return;
+
+    secoffset=dr.root&0xff;
+    if (secoffset>1)
+      secoffset-=1;
+    else
+      secoffset=0;
+
+    adfs_readdir(0, "", map, dir, (fragstart[(dr.root&0x7fff00)>>8]+secoffset)*adfs_sectorsize, adfs_sectorsize, sectorspertrack);
+  }
+
+  if (fragstart!=NULL)
+  {
+    free(fragstart);
+    fragstart=NULL;
   }
 }
 
