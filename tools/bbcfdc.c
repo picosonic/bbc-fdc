@@ -194,7 +194,7 @@ int main(int argc,char **argv)
           case 32:
           case 64:
             rate=retval;
-            printf("Setting SPI divider to %d\n", rate);
+            printf("Setting SPI divider to %u\n", rate);
             break;
 
           default:
@@ -342,7 +342,7 @@ int main(int argc,char **argv)
     return 3;
   }
 
-  printf("Start with %ld byte sample buffer\n", samplebuffsize);
+  printf("Start with %lu byte sample buffer\n", samplebuffsize);
 
   // Install signal handlers to make sure motor is stopped
   atexit(exitFunction);
@@ -579,7 +579,7 @@ int main(int argc,char **argv)
 
           printf("Retry attempt %d, sectors ", retry+1);
           for (j=0; j<DFS_SECTORSPERTRACK; j++)
-            if (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, j)==NULL) printf("%.2d ", j);
+            if (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, j)==NULL) printf("%.2u ", j);
           printf("\n");
         }
         else
@@ -669,7 +669,7 @@ int main(int argc,char **argv)
         }
 
         if (retry>=retries)
-          printf("I/O error reading head %d track %d\n", hw_currenthead, i);
+          printf("I/O error reading head %d track %u\n", hw_currenthead, i);
       }
       else
       {
@@ -841,15 +841,15 @@ int main(int argc,char **argv)
     if ((diskstore_mintrack!=AUTODETECT) && (diskstore_maxtrack!=AUTODETECT))
       printf("Disk tracks range from %d to %d\n", diskstore_mintrack, diskstore_maxtrack);
 
-    printf("Drive tracks %d\n", drivetracks);
+    printf("Drive tracks %u\n", drivetracks);
 
     if (sides==1)
       printf("Single sided capture\n");
     else
       printf("Double sided capture\n");
 
-    printf("FM sectors found %d\n", fmsectors);
-    printf("MFM sectors found %d\n", mfmsectors);
+    printf("FM sectors found %u\n", fmsectors);
+    printf("MFM sectors found %u\n", mfmsectors);
 
     printf("Detected density : ");
     if ((mod_density&MOD_DENSITYFMSD)!=0) printf("SD ");

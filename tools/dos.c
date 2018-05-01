@@ -146,7 +146,7 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
 
     printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", (de.modifytime&0xf800)>>11, (de.modifytime&0x7e0)>>5, (de.modifytime&0x1f)*2, de.modifydate&0x1f, (de.modifydate&0x1e0)>>5, ((de.modifydate&0xfe00)>>9)+1980);
     printf(" @ 0x%.4x -> %lx", de.startcluster, dos_clustertoabsolute(de.startcluster, sectorspercluster, bytespersector, dataregion));
-    printf(" %d bytes\n", de.filesize);
+    printf(" %u bytes\n", de.filesize);
 
     if (0!=(de.fileattribs&DOS_ATTRIB_DIRECTORY))
     {
@@ -302,7 +302,7 @@ void dos_showinfo(const unsigned int disktracks, const unsigned int debug)
   printf("Sectors/Track: %d\n", biosparams->sectorspertrack);
   printf("Heads: %d\n", biosparams->heads);
   printf("Hidden sectors: %d\n", (biosparams->hiddensectors_hi<<16)|biosparams->hiddensectors_lo);
-  printf("Sectors on volume (large): %d\n", biosparams->largesectors);
+  printf("Sectors on volume (large): %u\n", biosparams->largesectors);
 
   // BIOS extended parameter block
   printf("Physical drive number: %d\n", exbiosparams->physicaldiskid);

@@ -93,10 +93,10 @@ int rfi_readheader(FILE *rfifile)
 
         for (i=0; i<numtokens; i++)
         {
-          char rfic;
-
           if ((tokens[i].type==JSMN_PRIMITIVE) && (tokens[i].size==1) && ((i+1)<=numtokens))
           {
+            char rfic;
+
             if (strncmp(&rfi_headerstring[tokens[i].start], "tracks", tokens[i].end-tokens[i].start)==0)
             {
               rfic=rfi_headerstring[tokens[i+1].end];
@@ -220,7 +220,7 @@ void rfi_writetrack(FILE *rfifile, const int track, const int side, const float 
 
   if (strstr(encoding, "raw")!=NULL)
   {
-    fprintf(rfifile, "enc:\"%s\",len:%ld}", encoding, rawdatalength);
+    fprintf(rfifile, "enc:\"%s\",len:%lu}", encoding, rawdatalength);
     fwrite(rawtrackdata, 1, rawdatalength, rfifile);
   }
   else
@@ -235,7 +235,7 @@ void rfi_writetrack(FILE *rfifile, const int track, const int side, const float 
     {
       rledatalength=rfi_rleencode(rledata, rawdatalength, rawtrackdata, rawdatalength);
 
-      fprintf(rfifile, "enc:\"%s\",len:%ld}", encoding, rledatalength);
+      fprintf(rfifile, "enc:\"%s\",len:%lu}", encoding, rledatalength);
       fwrite(rledata, 1, rledatalength, rfifile);
 
       free(rledata);
@@ -361,7 +361,7 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
             rfic=metabuffer[tokens[i+1].end];
             metabuffer[tokens[i+1].end]=0;
 
-            sscanf(&metabuffer[tokens[i+1].start], "%8ld", &rfi_trackdatalen);
+            sscanf(&metabuffer[tokens[i+1].start], "%8lu", &rfi_trackdatalen);
 
             metabuffer[tokens[i+1].end]=rfic;
           }

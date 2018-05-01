@@ -163,7 +163,7 @@ void dfs_showinfo(const int head)
   totalsectors=(((sector1->data[6]&0x03)<<8) | (sector1->data[7]));
   tracks=totalsectors/DFS_SECTORSPERTRACK;
   totalsize=totalsectors*DFS_SECTORSIZE;
-  printf("Disk size : %d tracks (%d sectors, %d bytes)\n", tracks, totalsectors, totalsize);
+  printf("Disk size : %lu tracks (%u sectors, %lu bytes)\n", (unsigned long)tracks, (unsigned int)totalsectors, (unsigned long)totalsize);
 
   bootoption=(sector1->data[6]&0x30)>>4;
   printf("Boot option: %d ", bootoption);
@@ -213,7 +213,7 @@ void dfs_showinfo(const int head)
     printf("\n");
   }
 
-  printf("Total disk usage : %d bytes (%d%% of disk)\n", totalusage, (totalusage*100)/(totalsize-(2*DFS_SECTORSIZE)));
+  printf("Total disk usage : %lu bytes (%d%% of disk)\n", (unsigned long)totalusage, (totalusage*100)/(totalsize-(2*DFS_SECTORSIZE)));
   printf("Remaining catalogue space : %d files, %d unused disk sectors\n", DFS_MAXFILES-numfiles, (((sector1->data[6]&0x03)<<8) | (sector1->data[7])) - sectorusage);
 }
 
