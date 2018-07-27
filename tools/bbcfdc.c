@@ -49,8 +49,10 @@ unsigned int disktracks, drivetracks;
 int capturetype=DISKNONE; // Default to no output
 int outputtype=IMAGENONE; // Default to no image
 
-unsigned char *samplebuffer;
+unsigned char *samplebuffer=NULL;
+unsigned char *flippybuffer=NULL;
 unsigned long samplebuffsize;
+int flippy=0;
 int info=0;
 
 // Processing position within the SPI buffer
@@ -68,6 +70,21 @@ unsigned char reverse(unsigned char n)
    return (revlookup[n&0x0f]<<4) | revlookup[n>>4];
 }
 
+// Used for flipping the bits in a raw sample buffer
+void fillflippybuffer(const unsigned char *rawdata, const unsigned long rawlen)
+{
+  if (flippybuffer==NULL)
+    flippybuffer=malloc(rawlen);
+
+  if (flippybuffer!=NULL)
+  {
+    unsigned long em;
+
+    for (em=0; em<rawlen; em++)
+      flippybuffer[rawlen-em]=reverse(rawdata[em]);
+  }
+}
+
 // Stop the motor and tidy up upon exit
 void exitFunction()
 {
@@ -78,6 +95,12 @@ void exitFunction()
   {
     free(samplebuffer);
     samplebuffer=NULL;
+  }
+
+  if (flippybuffer!=NULL)
+  {
+    free(flippybuffer);
+    flippybuffer=NULL;
   }
 }
 
@@ -453,6 +476,23 @@ int main(int argc,char **argv)
       hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
       mod_process(samplebuffer, samplebuffsize, 99);
 
+      // Check for flippy disk
+      if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1)
+         && (mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
+      {
+        fillflippybuffer(samplebuffer, samplebuffsize);
+
+        if (flippybuffer!=NULL)
+          mod_process(flippybuffer, samplebuffsize, 99);
+
+        if ((fm_lasttrack!=-1) || (fm_lasthead!=-1) || (fm_lastsector!=-1) || (fm_lastlength!=-1)
+           || (mfm_lasttrack!=-1) || (mfm_lasthead!=-1) || (mfm_lastsector!=-1) || (mfm_lastlength!=-1))
+        {
+          printf("Flippy disk detected\n");
+          flippy=1;
+        }
+      }
+
       // Check readability
       if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1)
          && (mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
@@ -553,7 +593,17 @@ int main(int argc,char **argv)
         // Process the raw sample data to extract FM encoded data
         if (capturetype!=DISKRAW)
         {
-          mod_process(samplebuffer, samplebuffsize, retry);
+          if ((flippy==0) || (side==0))
+          {
+            mod_process(samplebuffer, samplebuffsize, retry);
+          }
+          else
+          {
+            fillflippybuffer(samplebuffer, samplebuffsize);
+
+            if (flippybuffer!=NULL)
+              mod_process(flippybuffer, samplebuffsize, retry);
+          }
 
 #ifdef NOPI
           // No point in retrying when not using real hardware
@@ -826,6 +876,13 @@ int main(int argc,char **argv)
   {
     free(samplebuffer);
     samplebuffer=NULL;
+  }
+
+  // Free any memory allocated to flippy buffer
+  if (flippybuffer!=NULL)
+  {
+    free(flippybuffer);
+    flippybuffer=NULL;
   }
 
   // Dump a list of valid sectors
