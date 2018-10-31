@@ -113,7 +113,10 @@ int main(int argc,char **argv)
   {
     int numtracks;
 
-    // First seek to the requested maximum track
+    // Start from track zero
+    hw_seektotrackzero();
+
+    // Try seeking to the requested maximum track
     hw_seektotrack(hw_maxtracks);
 
     numtracks=0;
