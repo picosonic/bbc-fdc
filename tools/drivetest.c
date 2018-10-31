@@ -117,9 +117,10 @@ int main(int argc,char **argv)
     hw_seektotrackzero();
 
     // Try seeking to the requested maximum track
-    hw_seektotrack(hw_maxtracks);
+    hw_seektotrack(hw_maxtracks-1);
 
-    numtracks=0;
+    // There should always be a track zero
+    numtracks=1;
 
     // Step back towards track 0, counting the tracks
     while (!hw_attrackzero())
@@ -128,6 +129,7 @@ int main(int argc,char **argv)
 
       numtracks++;
 
+      // Prevent seeking more than the requested maximum number of tracks
       if (numtracks>hw_maxtracks)
         break;
     }
