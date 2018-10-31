@@ -68,6 +68,8 @@ extern void hw_seektotrackzero();
 extern void hw_seektotrack(const int track);
 extern void hw_sideselect(const int side);
 extern void hw_setmaxtracks(const int maxtracks);
+extern void hw_seekin();
+extern void hw_seekout();
 
 // Signaling and data sampling
 extern void hw_waitforindex();

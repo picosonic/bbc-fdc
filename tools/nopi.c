@@ -75,6 +75,18 @@ void hw_setmaxtracks(const int maxtracks)
   hw_maxtracks=maxtracks;
 }
 
+// Seek head in by 1 track
+void hw_seekin()
+{
+  if (hw_currenttrack<hw_maxtracks) hw_currenttrack++;
+}
+
+// Seek head out by 1 track, towards track zero
+void hw_seekout()
+{
+  if (hw_currenttrack>0) hw_currenttrack--;
+}
+
 // Switch disk sides
 void hw_sideselect(const int side)
 {

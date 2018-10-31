@@ -138,6 +138,26 @@ int hw_attrackzero()
   return (bcm2835_gpio_lev(TRACK_0)==HIGH);
 }
 
+// Seek head in by 1 track
+void hw_seekin()
+{
+  bcm2835_gpio_set(DIR_SEL);
+  bcm2835_gpio_set(DIR_STEP);
+  delayMicroseconds(8);
+  bcm2835_gpio_clr(DIR_STEP);
+  delay(40); // wait maximum time for step
+}
+
+// Seek head out by 1 track, towards track zero
+void hw_seekout()
+{
+  bcm2835_gpio_clr(DIR_SEL);
+  bcm2835_gpio_set(DIR_STEP);
+  delayMicroseconds(8);
+  bcm2835_gpio_clr(DIR_STEP);
+  delay(40); // wait maximum time for step
+}
+
 // Seek head to track zero
 void hw_seektotrackzero()
 {
@@ -150,11 +170,8 @@ void hw_seektotrackzero()
   // Keep seeking until at track zero
   while (track0 == LOW)
   {
-    bcm2835_gpio_clr(DIR_SEL);
-    bcm2835_gpio_set(DIR_STEP);
-    delayMicroseconds(8);
-    bcm2835_gpio_clr(DIR_STEP);
-    delay(40); // wait maximum time for step
+    hw_seekout();
+
     track0 = bcm2835_gpio_lev(TRACK_0);
   }
 
@@ -192,13 +209,8 @@ void hw_seektotrack(const int track)
   while (hw_currenttrack < track)
   {
     for (i=0; i<steps; i++)
-    {
-      bcm2835_gpio_set(DIR_SEL);
-      bcm2835_gpio_set(DIR_STEP);
-      delayMicroseconds(8);
-      bcm2835_gpio_clr(DIR_STEP);
-      delay(40); // wait maximum time for step
-    }
+      hw_seekin();
+
     hw_currenttrack++;
   }
 
@@ -211,11 +223,7 @@ void hw_seektotrack(const int track)
       if (bcm2835_gpio_lev(TRACK_0)==LOW)
         break;
 
-      bcm2835_gpio_clr(DIR_SEL);
-      bcm2835_gpio_set(DIR_STEP);
-      delayMicroseconds(8);
-      bcm2835_gpio_clr(DIR_STEP);
-      delay(40); // wait maximum time for step
+      hw_seekout();
     }
     hw_currenttrack--;
   }
