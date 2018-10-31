@@ -48,6 +48,16 @@ drivetest is intended for testing basic PCB interface hardware functionality bef
 
 It will check if the drive and disk are detected, check if read head is at track zero, determine if the disk is write-protected and calculate an approximate RPM.
 
+Optionally it can count the number of tracks which can be stepped to by the hardware.
+
+## Syntax :
+
+`[-tmax maxtracks]`
+
+## Where :
+
+ * `-tmax` Specify the maximum track number you wish to try stepping to
+
 ## Return codes :
 
  * `0` - Success

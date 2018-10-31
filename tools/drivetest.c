@@ -27,6 +27,8 @@ void sig_handler(const int sig)
 // Program enty pont
 int main(int argc,char **argv)
 {
+  int argn=0;
+  int counttracks=0;
   unsigned char drivestatus;
 
   // Check user permissions
@@ -34,6 +36,24 @@ int main(int argc,char **argv)
   {
     fprintf(stderr,"Must be run as root\n");
     exit(1);
+  }
+
+  while (argn<argc)
+  {
+    if ((strcmp(argv[argn], "-tmax")==0) && ((argn+1)<argc))
+    {
+      int retval;
+
+      ++argn;
+
+      if (sscanf(argv[argn], "%3d", &retval)==1)
+      {
+        hw_setmaxtracks(retval);
+        counttracks=1;
+      }
+    }
+
+    ++argn;
   }
 
   printf("Start\n");
@@ -87,6 +107,30 @@ int main(int argc,char **argv)
     printf("Disk is writeable\n");
 
   printf("Approximate RPM %.2f\n", hw_measurerpm());
+
+  // Determine the number of tracks we can seek to
+  if (counttracks)
+  {
+    int numtracks;
+
+    // First seek to the requested maximum track
+    hw_seektotrack(hw_maxtracks);
+
+    numtracks=0;
+
+    // Step back towards track 0, counting the tracks
+    while (!hw_attrackzero())
+    {
+      hw_seekout();
+
+      numtracks++;
+
+      if (numtracks>hw_maxtracks)
+        break;
+    }
+
+    printf("Counted %d track positions\n", numtracks);
+  }
 
   hw_sleep(1);
 
