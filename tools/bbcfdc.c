@@ -121,7 +121,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks] [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -201,6 +201,17 @@ int main(int argc,char **argv)
 
       if (sscanf(argv[argn], "%3d", &retval)==1)
         retries=retval;
+    }
+    else
+    if ((strcmp(argv[argn], "-tmax")==0) && ((argn+1)<argc))
+    {
+      int retval;
+
+      ++argn;
+
+      // Override the maximum number of drive tracks
+      if (sscanf(argv[argn], "%3d", &retval)==1)
+        hw_setmaxtracks(retval);
     }
     else
     if ((strcmp(argv[argn], "-spidiv")==0) && ((argn+1)<argc))

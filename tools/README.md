@@ -11,7 +11,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
 ## Syntax :
 
-`[-i input_rfi_file] [[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-v]`
+`[-i input_rfi_file] [[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks] [-v]`
 
 ## Where :
 
@@ -24,6 +24,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
  * `-ds` Force double-sided capture (unless output is to .ssd)
  * `-sort` Sort sectors in diskstore prior to writing image
  * `-summary` Present a summary of operations once complete
+ * `-tmax` Specify the maximum track number you wish to try stepping to
  * `-v` Verbose
 
 ## Return codes :
