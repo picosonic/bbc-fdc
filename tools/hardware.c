@@ -5,6 +5,7 @@
 #include "hardware.h"
 #include "pins.h"
 
+int hw_maxtracks = HW_MAXTRACKS;
 int hw_currenttrack = 0;
 int hw_currenthead = 0;
 unsigned long hw_samplerate = 0;
@@ -167,11 +168,11 @@ void hw_seektotrack(const int track)
   int i;
 
   // Sanity check the requested track is within range
-  if ((track<0) || (track>=HW_MAXTRACKS))
+  if ((track<0) || (track>=hw_maxtracks))
     return;
 
   // Sanity check our "current" track is within range
-  if ((hw_currenttrack<0) || (hw_currenttrack>=HW_MAXTRACKS))
+  if ((hw_currenttrack<0) || (hw_currenttrack>=hw_maxtracks))
     return;
 
   // For seek to track 00, seek until TRACK00 signal
@@ -218,6 +219,12 @@ void hw_seektotrack(const int track)
     }
     hw_currenttrack--;
   }
+}
+
+// Override maximum number of hardware tracks
+void hw_setmaxtracks(const int maxtracks)
+{
+  hw_maxtracks=maxtracks;
 }
 
 // Try to see if both a disk and drive are detectable

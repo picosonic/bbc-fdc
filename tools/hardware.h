@@ -41,6 +41,7 @@
 #define HW_250MHZ 250000000
 #define HW_400MHZ 400000000
 
+extern int hw_maxtracks;
 extern int hw_currenttrack;
 extern int hw_currenthead;
 extern unsigned long hw_samplerate;
@@ -66,6 +67,7 @@ extern int hw_attrackzero();
 extern void hw_seektotrackzero();
 extern void hw_seektotrack(const int track);
 extern void hw_sideselect(const int side);
+extern void hw_setmaxtracks(const int maxtracks);
 
 // Signaling and data sampling
 extern void hw_waitforindex();

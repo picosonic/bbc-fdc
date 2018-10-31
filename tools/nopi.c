@@ -11,6 +11,7 @@
 
 #define HW_OLDRAWTRACKSIZE (1024*1024)
 
+int hw_maxtracks = HW_MAXTRACKS;
 int hw_currenttrack = 0;
 int hw_currenthead = 0;
 unsigned long hw_samplerate = 0;
@@ -66,6 +67,12 @@ void hw_seektotrack(const int track)
 {
   // Actual seeking within input file will be done by sampling function
   hw_currenttrack=track;
+}
+
+// Override maximum number of hardware tracks
+void hw_setmaxtracks(const int maxtracks)
+{
+  hw_maxtracks=maxtracks;
 }
 
 // Switch disk sides
@@ -149,7 +156,7 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
     // Obsolete .raw files were 8 megabits per track, sampled at 12.5Mhz, either 40 or 80 tracks, with second side (if any) folowing the whole of the first
     if (strstr(hw_samplefilename, ".raw")!=NULL)
     {
-      if (fseek(hw_samplefile, ((HW_MAXTRACKS*hw_currenthead)+hw_currenttrack)*HW_OLDRAWTRACKSIZE, SEEK_SET)==0)
+      if (fseek(hw_samplefile, ((hw_maxtracks*hw_currenthead)+hw_currenttrack)*HW_OLDRAWTRACKSIZE, SEEK_SET)==0)
       {
         char *rawbuf;
 

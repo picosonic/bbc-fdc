@@ -409,8 +409,8 @@ int main(int argc,char **argv)
     printf("Disk is writeable\n");
 
   // Start off assuming an 80 track disk in 80 track drive
-  disktracks=HW_MAXTRACKS;
-  drivetracks=HW_MAXTRACKS;
+  disktracks=hw_maxtracks;
+  drivetracks=hw_maxtracks;
 
   // Try to determine what type of disk is in what type of drive
 
@@ -800,7 +800,7 @@ int main(int argc,char **argv)
       // Prepare a blank sector when no sector is found in store
       bzero(blanksector, sizeof(blanksector));
 
-      for (i=0; ((i<HW_MAXTRACKS) && (i<disktracks)); i++)
+      for (i=0; ((i<hw_maxtracks) && (i<disktracks)); i++)
       {
         for (imgside=0; imgside<sides; imgside++)
         {
@@ -838,7 +838,7 @@ int main(int argc,char **argv)
         if ((diskstore_minsectorsize!=-1) && (diskstore_maxsectorsize!=-1) && (diskstore_minsectorsize==diskstore_maxsectorsize))
           sectorsize=diskstore_minsectorsize;
 
-        for (i=0; ((i<HW_MAXTRACKS) && (i<disktracks)); i++)
+        for (i=0; ((i<hw_maxtracks) && (i<disktracks)); i++)
         {
           for (imgside=0; imgside<sides; imgside++)
           {
