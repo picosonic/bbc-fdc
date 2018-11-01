@@ -211,7 +211,10 @@ int main(int argc,char **argv)
 
       // Override the maximum number of drive tracks
       if (sscanf(argv[argn], "%3d", &retval)==1)
+      {
         hw_setmaxtracks(retval);
+        printf("Override maximum number of drive tracks to %d\n", retval);
+      }
     }
     else
     if ((strcmp(argv[argn], "-spidiv")==0) && ((argn+1)<argc))
@@ -907,7 +910,7 @@ int main(int argc,char **argv)
     printf("\nSummary: \n");
 
     if ((diskstore_mintrack!=AUTODETECT) && (diskstore_maxtrack!=AUTODETECT))
-      printf("Disk tracks range from %d to %d\n", diskstore_mintrack, diskstore_maxtrack);
+      printf("Disk tracks with data range from %d to %d\n", diskstore_mintrack, diskstore_maxtrack);
 
     printf("Drive tracks %u\n", drivetracks);
 
