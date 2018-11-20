@@ -11,11 +11,22 @@
 // Try to detect RPi 1, based on information at https://elinux.org/RPi_HardwareHistory
 #if defined (REV_0002) || defined(REV_0003) || defined(REV_0004) || defined(REV_0005) || defined(REV_0006) || defined(REV_0007) || defined(REV_0008) || defined(REV_0009) || defined(REV_000d) || defined(REV_000e) || defined(REV_000f) 
   #define RPI1 1
+  #define HAS_BCM2835 1
 #endif
 
-// Try to detect RPi 3, based on information at https://elinux.org/RPi_HardwareHistory
-#if defined (REV_a02082) || defined(REV_a22082) || defined(REV_a32082) || defined(REV_a020d3) || defined(REV_9020e0)
-  #define RPI3 1
+// Try to detect BCM2835
+#if defined (REV_900021) || defined(REV_900032) || defined(REV_900092) || defined(REV_920092) || defined(REV_900093) || defined(REV_9000c1)
+  #define HAS_BCM2835 1
+#endif
+
+// Try to detect BCM2836
+#if defined (REV_a01040) || defined(a01041) || defined(REV_a21041)
+  #define HAS_BCM2836 1
+#endif
+
+// Try to detect BCM2837, based on information at https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
+#if defined (REV_a02082) || defined(a020a0) || defined(a22042) || defined(REV_a22082) || defined(REV_a32082) || defined(a52082) || defined(REV_a020d3) || defined(REV_9020e0)
+  #define HAS_BCM2837 1
 #endif
 
 #ifdef RPI1
