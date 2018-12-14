@@ -450,7 +450,7 @@ int main(int argc,char **argv)
   if ((mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
     printf("No MFM sector IDs found\n");
   else
-    modulation=MODFM;
+    modulation=MODMFM;
 
   if (modulation!=AUTODETECT)
   {
