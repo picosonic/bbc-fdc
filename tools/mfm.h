@@ -15,6 +15,7 @@
 #define MFM_BLOCKDATA 0xfb
 #define MFM_BLOCKDELDATA 0xf8
 // Alternate MFM Block types
+#define MFM_ALTBLOCKADDR 0xff
 #define MFM_ALTBLOCKDELDATA 0xf9
 #define MFM_ALTBLOCKDATA 0xfa
 #define MFM_RX02BLOCKDATA 0xfd

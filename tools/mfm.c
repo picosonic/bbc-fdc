@@ -81,6 +81,7 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
         switch (data)
         {
           case MFM_BLOCKADDR: // fe - IDAM
+          case MFM_ALTBLOCKADDR: // ff - Alternative IDAM
           case M2FM_BLOCKADDR: // 0e - Intel M2FM IDAM
           case M2FM_HPBLOCKADDR: // 70 - HP M2FM IDAM
             if (mfm_debug)
