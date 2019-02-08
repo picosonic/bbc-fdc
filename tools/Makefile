@@ -22,6 +22,12 @@ checkfsd: checkfsd.o
 checkfsd.o: checkfsd.c fsd.h
 	$(CC) $(BUILDFLAGS) -c -o checkfsd.o checkfsd.c
 
+checktd0: checktd0.o crc.o lzhuf.o
+	$(CC) $(BUILDFLAGS) -o checktd0 checktd0.o crc.o lzhuf.o
+
+checktd0.o: checktd0.c teledisk.h crc.h lzhuf.h
+	$(CC) $(BUILDFLAGS) -c -o checktd0.o checktd0.c
+
 bbcfdc: bbcfdc.o adfs.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o hardware.o jsmn.o mfm.o mod.o rfi.o
 	$(CC) $(BUILDFLAGS) -o bbcfdc adfs.o bbcfdc.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o hardware.o jsmn.o mfm.o mod.o rfi.o -lbcm2835
 
@@ -62,6 +68,9 @@ diskstore.o: diskstore.c diskstore.h hardware.h mod.h
 fm.o: fm.c crc.h diskstore.h dfs.h fm.h hardware.h mod.h
 	$(CC) $(BUILDFLAGS) -c -o fm.o fm.c
 
+lzhuf.o: lzhuf.c lzhuf.h
+	$(CC) $(BUILDFLAGS) -c -o lzhuf.o lzhuf.c
+
 mfm.o: mfm.c crc.h diskstore.h mfm.h hardware.h mod.h
 	$(CC) $(BUILDFLAGS) -c -o mfm.o mfm.c
 
@@ -85,4 +94,5 @@ clean:
 	rm -f drivetest
 	rm -f bbcfdc
 	rm -f checkfsd
+	rm -f checktd0
 	rm -f bbcfdc-nopi
