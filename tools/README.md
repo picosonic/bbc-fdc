@@ -83,3 +83,17 @@ It will check for the fsd magic identifier, show the creation details (date stam
  * `0` - Success
  * `1` - Error with command line arguments
  * `2` - Error opening fsd file
+
+# checktd0
+
+checktd0 - Check the contents of a **.td0** file for debug purposes
+
+checktd0 is intended for looking at the contents of **.td0** files, its primary use is for debugging to make sure the file has been written correctly.
+
+It will check for the .td0 magic identifier, show the header details, decompress the remainder of the file if required, show the comment and date created if used, then iterate through the available tracks printing out the track and sector information. The sector data will be shown (with non-printable characters replaced by ".").
+
+## Syntax :
+
+`[input_td0_file]`
+
+
