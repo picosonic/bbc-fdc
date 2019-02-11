@@ -8,7 +8,7 @@ REVISION = $(shell bash ./hw.sh Revision)
 DEBUGFLAGS = -g -W -Wall
 BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
 
-all: drivetest bbcfdc checkfsd
+all: drivetest bbcfdc checkfsd checktd0
 
 drivetest: drivetest.o hardware.o
 	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835
@@ -28,18 +28,18 @@ checktd0: checktd0.o crc.o lzhuf.o
 checktd0.o: checktd0.c teledisk.h crc.h lzhuf.h
 	$(CC) $(BUILDFLAGS) -c -o checktd0.o checktd0.c
 
-bbcfdc: bbcfdc.o adfs.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o hardware.o jsmn.o mfm.o mod.o rfi.o
-	$(CC) $(BUILDFLAGS) -o bbcfdc adfs.o bbcfdc.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o hardware.o jsmn.o mfm.o mod.o rfi.o -lbcm2835
+bbcfdc: bbcfdc.o adfs.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o hardware.o jsmn.o mfm.o mod.o rfi.o teledisk.o
+	$(CC) $(BUILDFLAGS) -o bbcfdc adfs.o bbcfdc.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o hardware.o jsmn.o mfm.o mod.o rfi.o teledisk.o -lbcm2835
 
-bbcfdc.o: bbcfdc.c adfs.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h hardware.h jsmn.h mfm.h mod.h rfi.h
+bbcfdc.o: bbcfdc.c adfs.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h hardware.h jsmn.h mfm.h mod.h rfi.h teledisk.h
 	$(CC) $(BUILDFLAGS) -c -o bbcfdc.o bbcfdc.c
 
 ##########################
 
-bbcfdc-nopi: bbcfdc-nopi.o adfs.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o jsmn.o mfm.o mod.o nopi.o rfi.o
-	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o adfs.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o jsmn.o mfm.o mod.o nopi.o rfi.o
+bbcfdc-nopi: bbcfdc-nopi.o adfs.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o jsmn.o mfm.o mod.o nopi.o rfi.o teledisk.o
+	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o adfs.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o jsmn.o mfm.o mod.o nopi.o rfi.o teledisk.o
 
-bbcfdc-nopi.o: bbcfdc.c adfs.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h hardware.h jsmn.h mfm.h mod.h rfi.h
+bbcfdc-nopi.o: bbcfdc.c adfs.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h hardware.h jsmn.h mfm.h mod.h rfi.h teledisk.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o bbcfdc-nopi.o bbcfdc.c
 
 nopi.o: nopi.c hardware.h jsmn.h rfi.h
@@ -68,6 +68,9 @@ diskstore.o: diskstore.c diskstore.h hardware.h mod.h
 fm.o: fm.c crc.h diskstore.h dfs.h fm.h hardware.h mod.h
 	$(CC) $(BUILDFLAGS) -c -o fm.o fm.c
 
+hardware.o: hardware.c hardware.h pins.h
+	$(CC) $(BUILDFLAGS) -c -o hardware.o hardware.c
+
 lzhuf.o: lzhuf.c lzhuf.h
 	$(CC) $(BUILDFLAGS) -c -o lzhuf.o lzhuf.c
 
@@ -86,8 +89,8 @@ jsmn.o: jsmn.c jsmn.h
 rfi.o: rfi.c hardware.h jsmn.h rfi.h
 	$(CC) $(BUILDFLAGS) -c -o rfi.o rfi.c
 
-hardware.o: hardware.c hardware.h pins.h
-	$(CC) $(BUILDFLAGS) -c -o hardware.o hardware.c
+teledisk.o: teledisk.c diskstore.h teledisk.h
+	$(CC) $(BUILDFLAGS) -c -o teledisk.o teledisk.c
 
 clean:
 	rm -f *.o

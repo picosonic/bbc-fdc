@@ -12,6 +12,7 @@
 #include "dfs.h"
 #include "dos.h"
 #include "fsd.h"
+#include "teledisk.h"
 #include "rfi.h"
 #include "mod.h"
 #include "fm.h"
@@ -31,6 +32,7 @@
 #define IMAGEFSD 4
 #define IMAGEDFI 5
 #define IMAGEIMG 6
+#define IMAGETD0 7
 
 // Used for values which can be overriden
 #define AUTODETECT -1
@@ -294,7 +296,19 @@ int main(int argc,char **argv)
           outputtype=IMAGEIMG;
         }
         else
-          printf("Unable to save fsd image\n");
+          printf("Unable to save img image\n");
+      }
+      else
+      if (strstr(argv[argn], ".td0")!=NULL)
+      {
+        diskimage=fopen(argv[argn], "w+");
+        if (diskimage!=NULL)
+        {
+          capturetype=DISKIMG;
+          outputtype=IMAGETD0;
+        }
+        else
+          printf("Unable to save td0 image\n");
       }
       else
       if (strstr(argv[argn], ".rfi")!=NULL)
@@ -777,6 +791,34 @@ int main(int argc,char **argv)
   // Write the data to disk image file (if required)
   if (diskimage!=NULL)
   {
+    if (outputtype==IMAGETD0)
+    {
+      char title[100];
+
+      title[0]=0;
+
+      // If they were found and they appear to be DFS catalogue then extract title
+      if (dfs_validcatalogue(0))
+      {
+        dfs_gettitle(0, title, sizeof(title));
+      }
+      else
+      {
+        int adfs_format;
+
+        adfs_format=adfs_validate();
+
+        if (adfs_format!=ADFS_UNKNOWN)
+          adfs_gettitle(adfs_format, title, sizeof(title));
+      }
+
+      // If no title or blank title, then use default
+      if (title[0]==0)
+        strcpy(title, "NO TITLE");
+
+      td0_write(diskimage, disktracks, title);
+    }
+    else
     if (outputtype==IMAGEFSD)
     {
       char title[100];

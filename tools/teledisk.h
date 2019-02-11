@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#pragma pack(1)
-
 #define TELEDISK_POLYNOMIAL 0xa097
 
 #define TELEDISK_LAST_TRACK 0xff
@@ -16,6 +14,8 @@
 #define TELEDISK_FLAGS_UNALLOCATED 0x10
 #define TELEDISK_FLAGS_NODATA      0x20
 #define TELEDISK_FLAGS_NOID        0x40
+
+#pragma pack(push,1)
 
 struct header_s
 {
@@ -66,5 +66,9 @@ struct data_s
   uint16_t blocksize;
   uint8_t encoding;
 };
+
+#pragma pack(pop)
+
+extern void td0_write(FILE *td0file, const unsigned char tracks, const char *title);
 
 #endif
