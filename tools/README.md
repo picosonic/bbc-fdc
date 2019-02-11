@@ -96,4 +96,16 @@ It will check for the .td0 magic identifier, show the header details, decompress
 
 `[input_td0_file]`
 
+## Return codes :
 
+ * `0` - Success
+ * `1` - Error with command line arguments
+ * `2` - Error opening td0 file
+ * `3` - Unable to read header
+ * `4` - Not a valid td0 file
+ * `5` - Unable to read comment, or comment CRC mismatch
+ * `6` - Unable to read track header, or track CRC mismatch
+ * `7` - Unable to read sector header
+ * `8` - Unable to read sector data
+ * `9` - Unable to allocate memory for decompression
+ * `10` - Sector data CRC mismatch
