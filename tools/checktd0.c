@@ -10,6 +10,8 @@
 #include "lzhuf.h"
 #include "teledisk.h"
 
+#define LZ_UNCOMPRESSED (1024*1024*3)
+
 FILE *fp;
 
 struct header_s header;
@@ -186,12 +188,12 @@ int main(int argc, char **argv)
       fread(&lzdata[4], clen, 1, fp);
 
       // Determine decompressed size, and allocate block memory
-      block=malloc(1024*1024);
+      block=malloc(LZ_UNCOMPRESSED);
 
       if (block!=NULL)
       {
         // Decompress data from lzdata to block
-        blocksize=lz_Decode(lzdata, clen, block, (1024*1024));
+        blocksize=lz_Decode(lzdata, clen, block, LZ_UNCOMPRESSED);
 
         printf("Decompressed to %d bytes\n", blocksize);
       }
