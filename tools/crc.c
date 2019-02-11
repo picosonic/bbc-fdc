@@ -1,7 +1,7 @@
 #include "crc.h"
 
 // Configurable CRC16 stream algorithm
-unsigned int calc_crc_stream(unsigned char *data, int datalen, unsigned int initial, unsigned int polynomial)
+unsigned int calc_crc_stream(const unsigned char *data, const int datalen, const unsigned int initial, const unsigned int polynomial)
 {
   unsigned int crc=initial;
   int i, j;
@@ -17,7 +17,7 @@ unsigned int calc_crc_stream(unsigned char *data, int datalen, unsigned int init
 }
 
 // CCITT CRC16 (Floppy Disk Data)
-unsigned int calc_crc(unsigned char *data, int datalen)
+unsigned int calc_crc(const unsigned char *data, const int datalen)
 {
   return (calc_crc_stream(data, datalen, 0xffff, 0x1021));
 }
