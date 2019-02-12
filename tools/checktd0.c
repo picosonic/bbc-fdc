@@ -397,6 +397,7 @@ int main(int argc, char **argv)
                 crcvalue=calc_crc_stream((unsigned char *)&repblock.repdata, sizeof(repblock.repdata), j==0?0:crcvalue, TELEDISK_POLYNOMIAL);
                 printf("%c%c", (((repblock.repdata&0xff00)>>8>=' ')&&((repblock.repdata&0xff00)>>8<='~'))?(repblock.repdata&0xff00)>>8:'.', (((repblock.repdata&0xff)>=' ')&&((repblock.repdata&0xff)<='~'))?(repblock.repdata&0xff):'.');
               }
+              printf("\n");
               break;
 
             case 2: // RLE
