@@ -8,6 +8,31 @@
 #include "teledisk.h"
 #include "diskstore.h"
 
+int td0_checkrepeats(uint8_t *buf, uint16_t buflen)
+{
+  uint16_t i;
+  uint8_t c1, c2;
+
+  c1=buf[0];
+  c2=buf[1];
+
+  // First check for same character repeated
+  for (i=1; i<buflen; i++)
+    if (buf[i]!=c1) break;
+
+  if (i>=buflen)
+    return 1;
+
+  // Next check for pair of characters repeated
+  for (i=2; i<buflen; i+=2)
+    if ((buf[i]!=c1) || (buf[i+1]!=c2)) break;
+
+  if (i>=buflen)
+    return 2;
+
+  return 0;
+}
+
 void td0_write(FILE *td0file, const unsigned char tracks, const char *title)
 {
   struct header_s header;
@@ -87,6 +112,8 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title)
 
             if (sec!=NULL)
             {
+              struct datarepeat_s repblock;
+
               // Sector header
               sector.track=sec->logical_track;
               sector.head=sec->logical_head;
@@ -96,11 +123,25 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title)
               sector.crc=calc_crc_stream(sec->data, sec->datasize, 0x0000, TELEDISK_POLYNOMIAL)&0xff;
               fwrite(&sector, 1, sizeof(sector), td0file);
 
-              // TODO Sector data
+              // Sector data
               data.blocksize=(128<<sector.size)+1;
-              data.encoding=0; // TODO RAW for now
+              data.encoding=0; // Default to RAW
+
+              if (td0_checkrepeats(sec->data, sec->datasize)>0)
+              {
+                data.encoding=1;
+                repblock.repcount=(sec->datasize/2);
+                repblock.repdata=(sec->data[0]<<8)|sec->data[1];
+              }
+
+              // TODO Check for RLE
+
               fwrite(&data, 1, sizeof(data), td0file);
-              fwrite(sec->data, 1, sec->datasize, td0file);
+
+              if (data.encoding==1)
+                fwrite(&repblock, 1, sizeof(repblock), td0file);
+              else
+                fwrite(sec->data, 1, sec->datasize, td0file);
             }
             else
             {
