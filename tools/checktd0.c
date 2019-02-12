@@ -373,11 +373,10 @@ int main(int argc, char **argv)
           printf("    DATA %d bytes, encoding %d\n", data.blocksize-1, data.encoding);
           switch (data.encoding)
           {
-            unsigned short repcount;
-            unsigned short repdata;
+            struct datarepeat_s repblock;
             unsigned char rle_c, rle_r, rle_n;
-            unsigned short rle_l;
-            int output;
+            uint16_t rle_l;
+            int32_t output;
 
             case 0: // Raw as-is
               blockread(&buffer, 1, data.blocksize-1, fp);
@@ -389,15 +388,14 @@ int main(int argc, char **argv)
               break;
 
             case 1: // Repeated 2-byte pattern
-              blockread(&repcount, 1, sizeof(repcount), fp);
-              blockread(&repdata, 1, sizeof(repdata), fp);
+              blockread(&repblock, 1, sizeof(repblock), fp);
 
-              printf("      @ %lx [%d x 0x%.4x]\n", blocktell(fp), repcount, repdata);
-              printf("    [%d]", repcount*2);
-              for (j=0; j<repcount; j++)
+              printf("      @ %lx [%d x 0x%.4x]\n", blocktell(fp), repblock.repcount, repblock.repdata);
+              printf("    [%d]", repblock.repcount*2);
+              for (j=0; j<repblock.repcount; j++)
               {
-                crcvalue=calc_crc_stream((unsigned char *)&repdata, sizeof(repdata), j==0?0:crcvalue, TELEDISK_POLYNOMIAL);
-                printf("%c%c", (((repdata&0xff00)>>8>=' ')&&((repdata&0xff00)>>8<='~'))?(repdata&0xff00)>>8:'.', (((repdata&0xff)>=' ')&&((repdata&0xff)<='~'))?(repdata&0xff):'.');
+                crcvalue=calc_crc_stream((unsigned char *)&repblock.repdata, sizeof(repblock.repdata), j==0?0:crcvalue, TELEDISK_POLYNOMIAL);
+                printf("%c%c", (((repblock.repdata&0xff00)>>8>=' ')&&((repblock.repdata&0xff00)>>8<='~'))?(repblock.repdata&0xff00)>>8:'.', (((repblock.repdata&0xff)>=' ')&&((repblock.repdata&0xff)<='~'))?(repblock.repdata&0xff):'.');
               }
               break;
 

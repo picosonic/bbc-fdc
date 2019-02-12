@@ -64,7 +64,13 @@ struct sector_s
 struct data_s
 {
   uint16_t blocksize;
-  uint8_t encoding;
+  uint8_t encoding; // 0=Raw, 1=Repeating pattern, 2=RLE
+};
+
+struct datarepeat_s
+{
+  uint16_t repcount;
+  uint16_t repdata;
 };
 
 #pragma pack(pop)
