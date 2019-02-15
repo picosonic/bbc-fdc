@@ -119,7 +119,7 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title)
               sector.head=sec->logical_head;
               sector.sector=sec->logical_sector;
               sector.size=sec->logical_size;
-              sector.flags=0; // TODO
+              sector.flags=0|(((sec->datatype==0xf8) || (sec->datatype==0xf9)?TELEDISK_FLAGS_DELDATA:0)); // TODO
               sector.crc=calc_crc_stream(sec->data, sec->datasize, 0x0000, TELEDISK_POLYNOMIAL)&0xff;
               fwrite(&sector, 1, sizeof(sector), td0file);
 
