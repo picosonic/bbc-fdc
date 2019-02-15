@@ -129,7 +129,7 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title)
             buffer[5]=FSD_ERR_NONE;
 
             // Flag if sector marked deleted
-            if (sec->datatype==0xf8)
+            if ((sec->datatype==0xf8) || (sec->datatype==0xf9))
               buffer[5]|=FSD_ERR_DELETED;
 
             fwrite(buffer, 1, 6, fsdfile);
