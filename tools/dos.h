@@ -39,7 +39,7 @@
 #define DOS_ATTRIB_ARCHIVE 0x20
 #define DOS_ATTRIB_DEVICE 0x40
 
-#pragma pack(1)
+#pragma pack(push,1)
 
 // From Revolutionary guide to assembly language, Wrox Press, ISBN 1-874416-12-5
 //  with changes from various sources including Wikipedia
@@ -120,6 +120,8 @@ struct dos_direntry
   uint16_t startcluster; // Start of file cluster in FAT12/FAT16
   uint32_t filesize; // File size in bytes, volume label/directories are 0
 };
+
+#pragma pack(pop)
 
 extern void dos_showinfo(const unsigned int disktracks, const unsigned int debug);
 extern int dos_validate();

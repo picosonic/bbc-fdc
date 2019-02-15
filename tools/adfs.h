@@ -133,7 +133,7 @@ of an object, all bits except 0, 1 and 3 are ignored. If the object is a directo
 #define ADFS_BOOTBLOCKOFFSET 0xc00
 #define ADFS_BOOTDROFFSET 0x1c0
 
-#pragma pack(1)
+#pragma pack(push,1)
 
 // RiscOS PRM 2-200
 struct adfs_oldmap
@@ -243,6 +243,8 @@ struct adfs_discrecord
 
   uint8_t unused52[60 - 52]; // reserved, must be zero
 };
+
+#pragma pack(pop)
 
 extern void adfs_gettitle(const int adfs_format, char *title, const int titlelen);
 extern void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const int debug);
