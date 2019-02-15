@@ -10,6 +10,10 @@
 #define FM_BLOCKADDR 0xfe
 #define FM_BLOCKDATA 0xfb
 #define FM_BLOCKDELDATA 0xf8
+// Alternate FM Block types
+#define FM_ALTBLOCKDELDATA 0xf9
+#define FM_ALTBLOCKDATA 0xfa
+#define FM_RX02BLOCKDATA 0xfd
 
 // Maximum supported sector size
 #define FM_BLOCKSIZE (16384+5)
