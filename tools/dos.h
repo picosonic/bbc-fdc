@@ -29,6 +29,10 @@
 
 // Directory entries
 #define DOS_DIRENTRYLEN 32
+#define DOS_DIRENTRYEND 0x00
+#define DOS_DIRENTRYDEL 0xe5
+#define DOS_DIRENTRYDOT 0x2e
+#define DOS_DIRENTRYPREDEL 0x05
 
 // DOS file attributes
 #define DOS_ATTRIB_READONLY 0x01

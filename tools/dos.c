@@ -73,7 +73,8 @@ unsigned long dos_clustertoabsolute(const unsigned long clusterid, const unsigne
 void dos_readdir(const int level, const unsigned long offset, const unsigned int entries, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion, const unsigned long parent, unsigned int disktracks)
 {
   struct dos_direntry de;
-  int i, j;
+  unsigned int i;
+  int j;
   char shortname[8+1+3+1];
   unsigned char shortlen;
 
@@ -84,7 +85,7 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
     diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, disktracks);
 
     // Check for end of directory
-    if (de.shortname[0]==0)
+    if (de.shortname[0]==DOS_DIRENTRYEND)
       break;
 
     for (j=0; j<level; j++)
@@ -93,6 +94,10 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
     shortlen=0;
     for (j=0; j<8; j++)
       shortname[shortlen++]=de.shortname[j];
+
+    // Check for deleted files, replace first character with '?'
+    if (((unsigned char)shortname[0]==DOS_DIRENTRYDEL) || ((unsigned char)shortname[0]==DOS_DIRENTRYPREDEL))
+      shortname[0]='?';
 
     while ((shortlen>0) && (shortname[shortlen-1]==' '))
       shortlen--;
