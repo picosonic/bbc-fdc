@@ -600,9 +600,6 @@ int main(int argc,char **argv)
     // Process all available disk sides (heads)
     for (side=0; side<sides; side++)
     {
-      // Request a directory listing for this side of the disk
-      if (i==0) info=0;
-
       // Select the correct side
       hw_sideselect(side);
 
@@ -667,7 +664,7 @@ int main(int argc,char **argv)
       if (capturetype!=DISKRAW)
       {
         // Check if catalogue has been done
-        if ((info==0) && (catalogue==1))
+        if ((info<sides) && (catalogue==1))
         {
           if (dfs_validcatalogue(hw_currenthead))
           {
