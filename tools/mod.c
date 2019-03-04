@@ -3,11 +3,12 @@
 #include "hardware.h"
 #include "fm.h"
 #include "mfm.h"
+#include "gcr.h"
 #include "mod.h"
 
 int mod_debug=0;
 
-long mod_hist[MOD_HISTOGRAMSIZE];
+unsigned long mod_hist[MOD_HISTOGRAMSIZE];
 int mod_peak[MOD_PEAKSIZE];
 int mod_peaks;
 char mod_density=MOD_DENSITYAUTO;
@@ -25,13 +26,13 @@ long mod_mstosamples(const float ms)
 void mod_buildhistogram(const unsigned char *sampledata, const unsigned long samplesize)
 {
   int j;
-  char level,bi;
+  char level,bi=0;
   unsigned char c;
   int count;
   unsigned long datapos;
 
   if (mod_debug)
-    fprintf(stderr, "Creating histogram for data sampled at %lu\n", hw_samplerate);
+    fprintf(stderr, "Creating histogram for track %d data sampled at %lu\n", hw_currenttrack, hw_samplerate);
 
   // Clear histogram
   for (j=0; j<MOD_HISTOGRAMSIZE; j++) mod_hist[j]=0;
@@ -74,7 +75,7 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
 {
   int j;
   long localmaxima;
-  long threshold;
+  unsigned long threshold;
   int inpeak;
 
   mod_buildhistogram(sampledata, samplesize);
@@ -86,7 +87,7 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
       localmaxima=j;
 
   if (mod_debug)
-    fprintf(stderr, "Maximum peak at %ld samples, %.3fms\n", localmaxima, mod_samplestoms(localmaxima));
+    fprintf(stderr, "Maximum peak on track %d at %ld samples, %.3fms\n", hw_currenttrack, localmaxima, mod_samplestoms(localmaxima));
 
   // Set noise threshold at 5% of maximum
   threshold=mod_hist[localmaxima]/20;

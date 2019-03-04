@@ -946,6 +946,7 @@ int main(int argc,char **argv)
   {
     unsigned int fmsectors=diskstore_countsectormod(MODFM);
     unsigned int mfmsectors=diskstore_countsectormod(MODMFM);
+    unsigned int gcrsectors=diskstore_countsectormod(MODGCR);
 
     diskstore_dumpsectorlist();
 
@@ -963,6 +964,7 @@ int main(int argc,char **argv)
 
     printf("FM sectors found %u\n", fmsectors);
     printf("MFM sectors found %u\n", mfmsectors);
+    printf("GCR sectors found %u\n", gcrsectors);
 
     printf("Detected density : ");
     if ((mod_density&MOD_DENSITYFMSD)!=0) printf("SD ");

@@ -9,6 +9,7 @@
 // Modulation types
 #define MODFM 0
 #define MODMFM 1
+#define MODGCR 2
 
 // Head interlacing types
 #define SEQUENCED 0
