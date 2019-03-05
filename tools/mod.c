@@ -235,6 +235,7 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
 
   fm_init(mod_debug, mod_density);
   mfm_init(mod_debug, mod_density);
+  gcr_init(mod_debug, mod_density);
 
   // Set up the sampler
   level=(sampledata[0]&0x80)>>7;
@@ -267,6 +268,7 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
         {
           fm_addsample(count, datapos);
           mfm_addsample(count, datapos);
+          gcr_addsample(count, datapos);
 
           // Reset samples counter 
           count=0;

@@ -17,6 +17,7 @@
 #include "mod.h"
 #include "fm.h"
 #include "mfm.h"
+#include "gcr.h"
 
 // For type of capture
 #define DISKNONE 0
@@ -465,6 +466,9 @@ int main(int argc,char **argv)
     printf("No MFM sector IDs found\n");
   else
     modulation=MODMFM;
+
+  if ((gcr_lasttrack==-1) && (gcr_lastsector==-1))
+    printf("No GCR sector IDs found\n");
 
   if (modulation!=AUTODETECT)
   {
