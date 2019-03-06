@@ -229,16 +229,16 @@ void gcr_decodegcr()
         printf("  OF : %.2x", gcr_bytebuffer[7]);
 
         printf("  [OK]\n");
-
-        gcr_idamtrack=gcr_bytebuffer[3];
-        gcr_idamsector=gcr_bytebuffer[2];
-
-        // Record last known good IDAM values for this track
-        gcr_lasttrack=gcr_idamtrack;
-        gcr_lastsector=gcr_idamsector;
-
-        gcr_idblockcrc=gcr_bytebuffer[1];
       }
+
+      gcr_idamtrack=gcr_bytebuffer[3];
+      gcr_idamsector=gcr_bytebuffer[2];
+
+      // Record last known good IDAM values for this track
+      gcr_lasttrack=gcr_idamtrack;
+      gcr_lastsector=gcr_idamsector;
+
+      gcr_idblockcrc=gcr_bytebuffer[1];
     }
     else
     {
