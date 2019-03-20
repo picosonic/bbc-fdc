@@ -249,10 +249,10 @@ void gcr_decodegcr()
   else
   if (gcr_bytebuffer[0]==0x07)
   {
-    eorcalc=eorsum(1, 256);
+    eorcalc=eorsum(1, GCR_SECTORLEN);
 
     // Check the checksum matches before processing
-    if (gcr_bytebuffer[257]==eorcalc)
+    if (gcr_bytebuffer[GCR_SECTORLEN+1]==eorcalc)
     {
       if (gcr_debug)
       {
@@ -264,11 +264,11 @@ void gcr_decodegcr()
         printf(" ***\n");
       }
 
-      gcr_datablockcrc=gcr_bytebuffer[257];
+      gcr_datablockcrc=gcr_bytebuffer[GCR_SECTORLEN+1];
 
       if ((gcr_idamtrack!=-1) && (gcr_idamsector!=-1))
       {
-        diskstore_addsector(MODGCR, hw_currenttrack, hw_currenthead, gcr_idamtrack, hw_currenthead, gcr_idamsector, 1, gcr_idpos, gcr_idblockcrc, gcr_blockpos, gcr_bytebuffer[0], 256, &gcr_bytebuffer[1], gcr_datablockcrc);
+        diskstore_addsector(MODGCR, hw_currenttrack, hw_currenthead, gcr_idamtrack, hw_currenthead, gcr_idamsector, 1, gcr_idpos, gcr_idblockcrc, gcr_blockpos, gcr_bytebuffer[0], GCR_SECTORLEN, &gcr_bytebuffer[1], gcr_datablockcrc);
       }
       else
       {
@@ -286,7 +286,7 @@ void gcr_decodegcr()
     {
       if (gcr_debug)
       {
-        printf("\n** INVALID DATA EORSUM [%.2x] (%.2x)", gcr_bytebuffer[257], eorcalc);
+        printf("\n** INVALID DATA EORSUM [%.2x] (%.2x)", gcr_bytebuffer[GCR_SECTORLEN+1], eorcalc);
         if ((gcr_idamtrack!=-1) && (gcr_idamsector!=-1))
           printf(", possibly for T%d S%d", gcr_idamtrack, gcr_idamsector);
 
