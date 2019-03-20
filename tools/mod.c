@@ -32,7 +32,7 @@ void mod_buildhistogram(const unsigned char *sampledata, const unsigned long sam
   unsigned long datapos;
 
   if (mod_debug)
-    fprintf(stderr, "Creating histogram for track %d data sampled at %lu\n", hw_currenttrack, hw_samplerate);
+    fprintf(stderr, "Creating histogram for track %d data sampled at %lu with %.2f rpm\n", hw_currenttrack, hw_samplerate, hw_rpm);
 
   // Clear histogram
   for (j=0; j<MOD_HISTOGRAMSIZE; j++) mod_hist[j]=0;
