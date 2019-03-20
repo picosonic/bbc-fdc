@@ -11,7 +11,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
 ## Syntax :
 
-`[-i input_rfi_file] [[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks] [-v]`
+`[-i input_rfi_file] [[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks] [-title "Title"] [-v]`
 
 ## Where :
 
@@ -25,6 +25,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
  * `-sort` Sort sectors in diskstore prior to writing image
  * `-summary` Present a summary of operations once complete
  * `-tmax` Specify the maximum track number you wish to try stepping to
+ * `-title` Override the title used in metadata for disk formats which support it (.td0 / .fsd)
  * `-v` Verbose
 
 ## Return codes :

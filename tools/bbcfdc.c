@@ -124,7 +124,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks] [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks]  [-title \"Title\"]  [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -138,6 +138,7 @@ int main(int argc,char **argv)
 #ifdef NOPI
   char *samplefile;
 #endif
+  char title[100];
 
   // Check we have some arguments
   if (argc==1)
@@ -152,6 +153,7 @@ int main(int argc,char **argv)
 #ifdef NOPI
   samplefile=NULL;
 #endif
+  title[0]=0;
 
   // Process command line arguments
   while (argn<argc)
@@ -217,6 +219,18 @@ int main(int argc,char **argv)
       {
         hw_setmaxtracks(retval);
         printf("Override maximum number of drive tracks to %d\n", retval);
+      }
+    }
+    else
+    if ((strcmp(argv[argn], "-title")==0) && ((argn+1)<argc))
+    {
+      ++argn;
+
+      // Override the disk title for certain disk image formats
+      if (strlen(argv[argn])<(sizeof(title)-1))
+      {
+        strcpy(title, argv[argn]);
+        printf("Override disk title to \"%s\"\n", title);
       }
     }
     else
@@ -794,23 +808,23 @@ int main(int argc,char **argv)
   {
     if (outputtype==IMAGETD0)
     {
-      char title[100];
-
-      title[0]=0;
-
-      // If they were found and they appear to be DFS catalogue then extract title
-      if (dfs_validcatalogue(0))
+      // When no title set, try to use title from source disk
+      if (title[0]==0)
       {
-        dfs_gettitle(0, title, sizeof(title));
-      }
-      else
-      {
-        int adfs_format;
+        // If they were found and they appear to be DFS catalogue then extract title
+        if (dfs_validcatalogue(0))
+        {
+          dfs_gettitle(0, title, sizeof(title));
+        }
+        else
+        {
+          int adfs_format;
 
-        adfs_format=adfs_validate();
+          adfs_format=adfs_validate();
 
-        if (adfs_format!=ADFS_UNKNOWN)
-          adfs_gettitle(adfs_format, title, sizeof(title));
+          if (adfs_format!=ADFS_UNKNOWN)
+            adfs_gettitle(adfs_format, title, sizeof(title));
+        }
       }
 
       // If no title or blank title, then use default
@@ -822,23 +836,23 @@ int main(int argc,char **argv)
     else
     if (outputtype==IMAGEFSD)
     {
-      char title[100];
-
-      title[0]=0;
-
-      // If they were found and they appear to be DFS catalogue then extract title
-      if (dfs_validcatalogue(0))
+      // When no title set, try to use title from source disk
+      if (title[0]==0)
       {
-        dfs_gettitle(0, title, sizeof(title));
-      }
-      else
-      {
-        int adfs_format;
+        // If they were found and they appear to be DFS catalogue then extract title
+        if (dfs_validcatalogue(0))
+        {
+          dfs_gettitle(0, title, sizeof(title));
+        }
+        else
+        {
+          int adfs_format;
 
-        adfs_format=adfs_validate();
+          adfs_format=adfs_validate();
 
-        if (adfs_format!=ADFS_UNKNOWN)
-          adfs_gettitle(adfs_format, title, sizeof(title));
+          if (adfs_format!=ADFS_UNKNOWN)
+            adfs_gettitle(adfs_format, title, sizeof(title));
+        }
       }
 
       // If no title or blank title, then use default
