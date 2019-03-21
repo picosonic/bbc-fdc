@@ -447,3 +447,29 @@ int dos_validate()
 
   return dos_fatformat(sector1);
 }
+
+void dos_gettitle(char *title, const int titlelen)
+{
+  Disk_Sector *sector1;
+  struct dos_extendedbiosparams *exbiosparams;
+
+  // Search for sector
+  sector1=diskstore_findhybridsector(0, 0, 1);
+
+  if (sector1==NULL)
+    return;
+
+  if (sector1->data==NULL)
+    return;
+
+  // Check sector is 512 bytes in length
+  if (sector1->datasize!=DOS_SECTORSIZE)
+    return;
+
+  // BIOS parameter block
+  exbiosparams=(struct dos_extendedbiosparams *)&sector1->data[DOS_OFFSETEBPB];
+
+  // Use the volume serial as the title
+  if (titlelen>=10)
+    sprintf(title, "%.4x-%.4x", exbiosparams->volumeserial>>16, exbiosparams->volumeserial&0xffff);
+}

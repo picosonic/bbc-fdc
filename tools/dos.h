@@ -127,6 +127,7 @@ struct dos_direntry
 
 #pragma pack(pop)
 
+extern void dos_gettitle(char *title, const int titlelen);
 extern void dos_showinfo(const unsigned int disktracks, const unsigned int debug);
 extern int dos_validate();
 

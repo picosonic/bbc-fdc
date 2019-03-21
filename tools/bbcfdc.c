@@ -817,6 +817,11 @@ int main(int argc,char **argv)
           dfs_gettitle(0, title, sizeof(title));
         }
         else
+        if (dos_validate()!=DOS_UNKNOWN)
+        {
+          dos_gettitle(title, sizeof(title));
+        }
+        else
         {
           int adfs_format;
 
@@ -843,6 +848,11 @@ int main(int argc,char **argv)
         if (dfs_validcatalogue(0))
         {
           dfs_gettitle(0, title, sizeof(title));
+        }
+        else
+        if (dos_validate()!=DOS_UNKNOWN)
+        {
+          dos_gettitle(title, sizeof(title));
         }
         else
         {
