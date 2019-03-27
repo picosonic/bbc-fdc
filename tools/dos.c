@@ -132,7 +132,7 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
     else
       printf("-");
 
-    if (0!=(de.fileattribs&DOS_ATTRIB_VOLUMELABEL))
+    if (0!=(de.fileattribs&DOS_ATTRIB_VOLUMEID))
       printf("V");
     else
       printf("-");
@@ -150,8 +150,14 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
     printf(" %.2x", de.userattribs);
 
     printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", (de.modifytime&0xf800)>>11, (de.modifytime&0x7e0)>>5, (de.modifytime&0x1f)*2, de.modifydate&0x1f, (de.modifydate&0x1e0)>>5, ((de.modifydate&0xfe00)>>9)+1980);
-    printf(" @ 0x%.4x -> %lx", de.startcluster, dos_clustertoabsolute(de.startcluster, sectorspercluster, bytespersector, dataregion));
-    printf(" %u bytes\n", de.filesize);
+
+    if ((de.fileattribs!=DOS_ATTRIB_VOLUMEID) && (de.fileattribs!=(DOS_ATTRIB_VOLUMEID|DOS_ATTRIB_ARCHIVE)))
+    {
+      printf(" @ 0x%.4x -> %lx", de.startcluster, dos_clustertoabsolute(de.startcluster, sectorspercluster, bytespersector, dataregion));
+      printf(" %u bytes\n", de.filesize);
+    }
+    else
+      printf("\n");
 
     if (0!=(de.fileattribs&DOS_ATTRIB_DIRECTORY))
     {
