@@ -321,21 +321,24 @@ void dos_showinfo(const unsigned int disktracks, const unsigned int debug)
   printf("Signature: %.2x\n", exbiosparams->signature);
   printf("Volume ID serial: %.4x-%.4x\n", exbiosparams->volumeserial>>16, exbiosparams->volumeserial&0xffff);
 
-  printf("Volume label: '");
-  for (i=0; i<11; i++)
+  if (exbiosparams->signature==0x29)
   {
-    int c=exbiosparams->volumelabel[i];
-    printf("%c", ((c>=' ')&&(c<='~'))?c:'.');
-  }
-  printf("'\n");
+    printf("Volume label: '");
+    for (i=0; i<11; i++)
+    {
+      int c=exbiosparams->volumelabel[i];
+      printf("%c", ((c>=' ')&&(c<='~'))?c:'.');
+    }
+    printf("'\n");
 
-  printf("System ID: '");
-  for (i=0; i<8; i++)
-  {
-    int c=exbiosparams->systemid[i];
-    printf("%c", ((c>=' ')&&(c<='~'))?c:'.');
+    printf("System ID: '");
+    for (i=0; i<8; i++)
+    {
+      int c=exbiosparams->systemid[i];
+      printf("%c", ((c>=' ')&&(c<='~'))?c:'.');
+    }
+    printf("'\n");
   }
-  printf("'\n");
 
   fatformat=dos_fatformat(sector1);
   switch (fatformat)

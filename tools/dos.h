@@ -72,13 +72,14 @@ struct dos_biosparams
   uint32_t largesectors; // Number of sectors on volume (if > 65535, else 0)
 };
 
-// FAT12/FAT16 EBPB
+// FAT12/FAT16 EBPB - DOS 4.0 onwards
 struct dos_extendedbiosparams
 {
   uint8_t physicaldiskid; // BIOS physical disk number, floppies start at 0x00, hdd start at 0x80
-  uint8_t currenthead; // Current head (not used by FAT)
+  uint8_t currenthead; // Current head (not used by FAT), CHKDSK flags on Windows NT
   uint8_t signature; // Disk signature, WindowsNT requires this to be 0x28/0x29
   uint32_t volumeserial; // Almost unique serial number created at format, often from month/day combined with seconds/hundreths for high word, and year with hours/minutes for low word
+
   uint8_t volumelabel[11]; // Used to store volume label, this is now a special file in FAT, not available if signature is 0x28
   uint8_t systemid[8]; // System ID, depends on format, not available if signature is 0x28
 };
