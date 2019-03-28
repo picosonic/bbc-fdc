@@ -33,6 +33,7 @@
 #define DOS_DIRENTRYDEL 0xe5
 #define DOS_DIRENTRYDOT 0x2e
 #define DOS_DIRENTRYPREDEL 0x05
+#define DOS_MAXLFNLENGTH 255
 
 // DOS file attributes
 #define DOS_ATTRIB_READONLY 0x01
@@ -125,6 +126,19 @@ struct dos_direntry
   uint16_t modifydate; // Last modified date, range as above
   uint16_t startcluster; // Start of file cluster in FAT12/FAT16
   uint32_t filesize; // File size in bytes, volume label/directories are 0
+};
+
+// VFAT LFN entry
+struct dos_lfnentry
+{
+  uint8_t sequence; // Sequence number
+  uint16_t name1[5]; // UCS-2 characters
+  uint8_t attribs; // Attributes bitfield, always 0xff
+  uint8_t lfntype; // Always 0x00 for VFAT LFN
+  uint8_t checksum; // Checksum of DOS filename
+  uint16_t name2[6]; // UCS-2 characters
+  uint16_t startcluster; // Start of file cluster, always 0x0000
+  uint16_t name3[2]; // UCS-2 characters
 };
 
 #pragma pack(pop)

@@ -70,13 +70,31 @@ unsigned long dos_clustertoabsolute(const unsigned long clusterid, const unsigne
   return (dataregion+(((clusterid-DOS_MINCLUSTER)*sectorspercluster)*bytespersector));
 }
 
+// Computer checksum of short filename to match LFN entry
+uint8_t dos_lfnchecksum(const unsigned char *shortname, const unsigned char *shortextension)
+{
+  int i;
+  unsigned char sum=0;
+
+  for (i=0; i<8; i++)
+     sum=((sum&1)<<7)+(sum>>1)+shortname[i];
+
+  for (i=0; i<3; i++)
+     sum=((sum&1)<<7)+(sum>>1)+shortextension[i];
+
+  return sum;
+}
+
 void dos_readdir(const int level, const unsigned long offset, const unsigned int entries, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion, const unsigned long parent, unsigned int disktracks)
 {
   struct dos_direntry de;
   unsigned int i;
   int j;
-  char shortname[8+1+3+1];
+  char shortname[8+1+3+1]; // 8 dot 3
   unsigned char shortlen;
+  uint16_t longname[DOS_MAXLFNLENGTH+1]; // VFAT LFN
+  uint8_t longchksum; // VFAT checksum of matching short name
+  uint8_t lfnblocks; // VFAT LFN blocks used
 
   diskstore_absoluteseek(offset, INTERLEAVED, disktracks);
 
@@ -114,50 +132,91 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
 
     shortname[shortlen]=0;
 
-    printf("%s%*s", shortname, 12-strlen(shortname), "");
-
-    printf(" %.2x ", de.fileattribs);
-    if (0!=(de.fileattribs&DOS_ATTRIB_READONLY))
-      printf("R");
-    else
-      printf("W");
-
-    if (0!=(de.fileattribs&DOS_ATTRIB_HIDDEN))
-      printf("H");
-    else
-      printf("-");
-
-    if (0!=(de.fileattribs&DOS_ATTRIB_SYSTEM))
-      printf("S");
-    else
-      printf("-");
-
-    if (0!=(de.fileattribs&DOS_ATTRIB_VOLUMEID))
-      printf("V");
-    else
-      printf("-");
-
-    if (0!=(de.fileattribs&DOS_ATTRIB_DIRECTORY))
-      printf("D");
-    else
-      printf("F");
-
-    if (0!=(de.fileattribs&DOS_ATTRIB_ARCHIVE))
-      printf("A");
-    else
-      printf("-");
-
-    printf(" %.2x", de.userattribs);
-
-    printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", (de.modifytime&0xf800)>>11, (de.modifytime&0x7e0)>>5, (de.modifytime&0x1f)*2, de.modifydate&0x1f, (de.modifydate&0x1e0)>>5, ((de.modifydate&0xfe00)>>9)+1980);
-
-    if ((de.fileattribs!=DOS_ATTRIB_VOLUMEID) && (de.fileattribs!=(DOS_ATTRIB_VOLUMEID|DOS_ATTRIB_ARCHIVE)))
+    // Check for LFN entry
+    if ((de.fileattribs==DOS_ATTRIB_LONGNAME) && (de.startcluster==0))
     {
-      printf(" @ 0x%.4x -> %lx", de.startcluster, dos_clustertoabsolute(de.startcluster, sectorspercluster, bytespersector, dataregion));
-      printf(" %u bytes\n", de.filesize);
+      struct dos_lfnentry *lfn;
+
+      lfn=(void *)&de;
+
+      longchksum=lfn->checksum;
+      if (lfnblocks==0)
+        lfnblocks=(lfn->sequence&0x1f);
+
+      for (j=0; j<5; j++)
+        longname[(((lfn->sequence&0x1f)-1)*13)+0+j]=lfn->name1[j];
+
+      for (j=0; j<6; j++)
+        longname[(((lfn->sequence&0x1f)-1)*13)+5+j]=lfn->name2[j];
+
+      for (j=0; j<2; j++)
+        longname[(((lfn->sequence&0x1f)-1)*13)+11+j]=lfn->name3[j];
     }
     else
-      printf("\n");
+    {
+      // This is a normal FAT entry
+
+      // Check for first non LFN entry when LFN has been set
+      if ((de.fileattribs!=DOS_ATTRIB_LONGNAME) && (de.startcluster!=0) && (lfnblocks!=0) && (dos_lfnchecksum(de.shortname, de.shortextension)==longchksum))
+      {
+        for (j=0; j<(DOS_MAXLFNLENGTH); j++)
+        {
+          if (longname[j]==0x0000) break;
+
+          printf("%c", longname[j]&0xff);
+        }
+
+        lfnblocks=0;
+      }
+      else
+      {
+        printf("%s%*s", shortname, 12-strlen(shortname), "");
+        lfnblocks=0;
+      }
+
+      printf(" %.2x ", de.fileattribs);
+      if (0!=(de.fileattribs&DOS_ATTRIB_READONLY))
+        printf("R");
+      else
+        printf("W");
+
+      if (0!=(de.fileattribs&DOS_ATTRIB_HIDDEN))
+        printf("H");
+      else
+        printf("-");
+
+      if (0!=(de.fileattribs&DOS_ATTRIB_SYSTEM))
+        printf("S");
+      else
+        printf("-");
+
+      if (0!=(de.fileattribs&DOS_ATTRIB_VOLUMEID))
+        printf("V");
+      else
+        printf("-");
+
+      if (0!=(de.fileattribs&DOS_ATTRIB_DIRECTORY))
+        printf("D");
+      else
+        printf("F");
+
+      if (0!=(de.fileattribs&DOS_ATTRIB_ARCHIVE))
+        printf("A");
+      else
+        printf("-");
+
+      printf(" %.2x", de.userattribs);
+
+      printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", (de.modifytime&0xf800)>>11, (de.modifytime&0x7e0)>>5, (de.modifytime&0x1f)*2, de.modifydate&0x1f, (de.modifydate&0x1e0)>>5, ((de.modifydate&0xfe00)>>9)+1980);
+
+      if ((de.fileattribs!=DOS_ATTRIB_VOLUMEID) && (de.fileattribs!=(DOS_ATTRIB_VOLUMEID|DOS_ATTRIB_ARCHIVE)))
+      {
+        printf(" @ 0x%.4x -> %lx", de.startcluster, dos_clustertoabsolute(de.startcluster, sectorspercluster, bytespersector, dataregion));
+        printf(" %u bytes\n", de.filesize);
+      }
+      else
+        printf("\n");
+    }
 
     if (0!=(de.fileattribs&DOS_ATTRIB_DIRECTORY))
     {
