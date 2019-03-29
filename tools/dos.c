@@ -157,14 +157,20 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
       // This is a normal FAT entry
 
       // Check for first non LFN entry when LFN has been set
-      if ((de.fileattribs!=DOS_ATTRIB_LONGNAME) && (de.startcluster!=0) && (lfnblocks!=0) && (dos_lfnchecksum(de.shortname, de.shortextension)==longchksum))
+      if ((de.fileattribs!=DOS_ATTRIB_LONGNAME) && (de.startcluster!=0) && (lfnblocks!=0))
       {
-        for (j=0; j<(DOS_MAXLFNLENGTH); j++)
+        // Only print long filename if shortname checksum matches, otherwise assume broken FAT and just print short name
+        if (dos_lfnchecksum(de.shortname, de.shortextension)==longchksum)
         {
-          if (longname[j]==0x0000) break;
+          for (j=0; j<(DOS_MAXLFNLENGTH); j++)
+          {
+            if (longname[j]==0x0000) break;
 
-          printf("%c", longname[j]&0xff);
+            printf("%c", longname[j]&0xff);
+          }
         }
+        else
+          printf("%s%*s", shortname, 12-strlen(shortname), "");
 
         lfnblocks=0;
       }
