@@ -30,6 +30,12 @@ case "$1" in
       2)
         ramsize="1024"
         ;;
+      3)
+        ramsize="2048"
+        ;;
+      4)
+        ramsize="4096"
+        ;;
       *)
         ramsize="UNKNOWN"
         ;;
@@ -74,6 +80,9 @@ case "$1" in
         ;;
       2)
         processor="BCM2837"
+        ;;
+      3)
+        processor="BCM2711"
         ;;
       *)
         processor="UNKNOWN"
@@ -122,6 +131,15 @@ case "$1" in
         ;;
       14)
         boardtype="3A_PLUS"
+        ;;
+      15)
+        boardtype="INTERNAL"
+        ;;
+      16)
+        boardtype="CM3_PLUS"
+        ;;
+      17)
+        boardtype="4B"
         ;;
       *)
         boardtype="UNKNOWN"
