@@ -509,8 +509,8 @@ int main(int argc,char **argv)
       otherlength=mfm_lastlength;
     }
 
-    // Only look at other side if user hasn't specified number of sides
-    if (sides==AUTODETECT)
+    // Only look at other side if user hasn't specified single sided
+    if ((sides==AUTODETECT) || (sides==2))
     {
       // Select upper side
       hw_sideselect(1);
