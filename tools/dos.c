@@ -106,6 +106,9 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
     if (de.shortname[0]==DOS_DIRENTRYEND)
       break;
 
+    // Check if filesize exceeds disk size
+    if (de.filesize>(bytespersector*36*disktracks*2)) break;
+
     for (j=0; j<level; j++)
       printf("  ");
 
