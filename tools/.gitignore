@@ -26,3 +26,4 @@ checkfsd
 # Generic images
 *.img
 *.fsd
+*.td0
