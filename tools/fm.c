@@ -62,7 +62,7 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
         {
           case 0xf77a: // clock=d7 data=fc
             if (fm_debug)
-              fprintf(stderr, "\n[%lx] Index Address Mark\n", datapos);
+              fprintf(stderr, "\n[%lx] FM Index Address Mark\n", datapos);
             fm_blocktype=data;
             fm_bitlen=0;
             fm_state=FM_SYNC;
@@ -76,7 +76,7 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
 
           case 0xf57e: // clock=c7 data=fe
             if (fm_debug)
-              fprintf(stderr, "\n[%lx] ID Address Mark\n", datapos);
+              fprintf(stderr, "\n[%lx] FM ID Address Mark\n", datapos);
             fm_blocktype=data;
             fm_blocksize=6+1;
             fm_bitlen=0;
@@ -93,7 +93,7 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
 
           case 0xf56f: // clock=c7 data=fb
             if (fm_debug)
-              fprintf(stderr, "\n[%lx] Data Address Mark, distance from ID %lx\n", datapos, datapos-fm_idpos);
+              fprintf(stderr, "\n[%lx] FM Data Address Mark, distance from ID %lx\n", datapos, datapos-fm_idpos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((fm_idamtrack!=-1) && (fm_idamhead!=-1) && (fm_idamsector!=-1) && (fm_idamlength!=-1))
@@ -114,7 +114,7 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
 
           case 0xf56a: // clock=c7 data=f8
             if (fm_debug)
-              fprintf(stderr, "\n[%lx] Deleted Data Address Mark, distance from ID %lx\n", datapos, datapos-fm_idpos);
+              fprintf(stderr, "\n[%lx] FM Deleted Data Address Mark, distance from ID %lx\n", datapos, datapos-fm_idpos);
 
             // Don't process if don't have a valid preceding IDAM
             if ((fm_idamtrack!=-1) && (fm_idamhead!=-1) && (fm_idamsector!=-1) && (fm_idamlength!=-1))
