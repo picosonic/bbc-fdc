@@ -595,7 +595,11 @@ int main(int argc,char **argv)
   }
 
   // Number of sides failed to autodetect and was not forced, so assume 2
-  if (sides==AUTODETECT) sides=2;
+  if (sides==AUTODETECT)
+  {
+    printf("Unable to detect known data on either side, capturing both sides\n");
+    sides=2;
+  }
 
   // Write RFI header when doing raw capture
   if (capturetype==DISKRAW)
