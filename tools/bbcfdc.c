@@ -509,8 +509,8 @@ int main(int argc,char **argv)
       otherlength=mfm_lastlength;
     }
 
-    // Only look at other side if user hasn't specified single sided
-    if ((sides==AUTODETECT) || (sides==2))
+    // Only look for data on other side if user hasn't specified number of sides to capture
+    if (sides==AUTODETECT)
     {
       // Select upper side
       hw_sideselect(1);
@@ -594,8 +594,8 @@ int main(int argc,char **argv)
     }
   }
 
-  // Number of sides failed to autodetect and was not forced, so assume 1
-  if (sides==AUTODETECT) sides=1;
+  // Number of sides failed to autodetect and was not forced, so assume 2
+  if (sides==AUTODETECT) sides=2;
 
   // Write RFI header when doing raw capture
   if (capturetype==DISKRAW)
