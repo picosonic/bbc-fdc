@@ -3,6 +3,7 @@
 #include "hardware.h"
 #include "fm.h"
 #include "mfm.h"
+#include "amigamfm.h"
 #include "gcr.h"
 #include "mod.h"
 
@@ -234,6 +235,7 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
   mod_checkdensity();
 
   fm_init(mod_debug, mod_density);
+  amigamfm_init(mod_debug, mod_density);
   mfm_init(mod_debug, mod_density);
   gcr_init(mod_debug, mod_density);
 
@@ -267,6 +269,7 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
         if (level==1)
         {
           fm_addsample(count, datapos);
+          amigamfm_addsample(count, datapos);
           mfm_addsample(count, datapos);
           gcr_addsample(count, datapos);
 

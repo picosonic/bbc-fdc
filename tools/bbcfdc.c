@@ -9,6 +9,7 @@
 #include "diskstore.h"
 #include "dfi.h"
 #include "adfs.h"
+#include "amigamfm.h"
 #include "dfs.h"
 #include "dos.h"
 #include "fsd.h"
@@ -302,7 +303,7 @@ int main(int argc,char **argv)
           printf("Unable to save fsd image\n");
       }
       else
-      if (strstr(argv[argn], ".img")!=NULL)
+      if ((strstr(argv[argn], ".img")!=NULL) || (strstr(argv[argn], ".adf")!=NULL))
       {
         diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
@@ -760,7 +761,7 @@ int main(int argc,char **argv)
                 info++;
               }
               else
-                printf("\nUnknown disk format\n\n");
+                printf("\nUnknown logical disk format\n\n");
             }
           }
         }
