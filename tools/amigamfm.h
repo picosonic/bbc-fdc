@@ -109,6 +109,15 @@ A DD disk has 11*2*80=1760 (0 to 1759) blocks, a HD disk has 22*2*80=3520 blocks
 
 #define AMIGA_MFM_MASK 0x55555555
 
+#define AMIGA_ROOTBLOCK 880
+
+#define AMIGA_UNKNOWN 0
+#define AMIGA_DOS_FORMAT 1
+
+extern void amigamfm_showinfo(const unsigned int disktracks, const int debug);
+
+extern int amigamfm_validate();
+
 extern void amigamfm_addsample(const unsigned long samples, const unsigned long datapos);
 
 extern void amigamfm_init(const int debug, const char density);

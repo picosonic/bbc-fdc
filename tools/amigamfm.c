@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <strings.h>
+#include <string.h>
 
 #include "hardware.h"
 #include "diskstore.h"
@@ -323,4 +325,88 @@ void amigamfm_init(const int debug, const char density)
   amigamfm_p1=0;
   amigamfm_p2=0;
   amigamfm_p3=0;
+}
+
+void amigamfm_showinfo(const unsigned int disktracks, const int debug)
+{
+  // TODO output some disk info
+}
+
+int amigamfm_validate()
+{
+  int format;
+  unsigned char sniff[AMIGA_DATASIZE];
+  Disk_Sector *sector0;
+
+  format=AMIGA_UNKNOWN;
+
+  // Search for first sector
+  sector0=diskstore_findhybridsector(0, 0, 0);
+
+  // Check we have sector
+  if (sector0==NULL) return format;
+
+  // Check we have data for sector
+  if (sector0->data==NULL)
+    return format;
+
+  // Check sector is 512 bytes long
+  if (sector0->datasize==AMIGA_DATASIZE)
+  {
+    // Copy sector data to sniff buffer
+    bzero(sniff, sizeof(sniff));
+
+    memcpy(sniff, sector0->data, sector0->datasize);
+
+    // Test for "DOS"
+    if ((sniff[0]=='D') &&
+        (sniff[1]=='O') &&
+        (sniff[2]=='S'))
+    {
+      unsigned long checksum;
+      unsigned long rootblock;
+
+      checksum=sniff[4];
+      checksum=(checksum<<8)|sniff[5];
+      checksum=(checksum<<8)|sniff[6];
+      checksum=(checksum<<8)|sniff[7];
+
+      rootblock=sniff[8];
+      rootblock=(rootblock<<8)|sniff[9];
+      rootblock=(rootblock<<8)|sniff[10];
+      rootblock=(rootblock<<8)|sniff[11];
+
+      // TODO validate checksum
+
+      if (rootblock==AMIGA_ROOTBLOCK)
+      {
+        format=AMIGA_DOS_FORMAT;
+
+        if (amigamfm_debug)
+        {
+          printf("Amiga DOS found\n");
+
+          if (sniff[3]&0x01)
+            printf("FFS (AmigaDOS 2.04), ");
+          else
+            printf("OFS (AmigaDOS 1.2), ");
+
+          if (sniff[3]&0x02)
+            printf("INTL ONLY, ");
+          else
+            printf("NO_INTL ONLY, ");
+
+          if (sniff[3]&0x04)
+            printf("DIRC&INTL\n");
+          else
+            printf("NO_DIRC&INTL\n");
+
+          printf("Checksum : %lx\n", checksum);
+          printf("Rootblock : %lx\n", rootblock);
+        }
+      }
+    }
+  }
+
+  return format;
 }

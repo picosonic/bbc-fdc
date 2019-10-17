@@ -761,7 +761,16 @@ int main(int argc,char **argv)
                 info++;
               }
               else
-                printf("\nUnknown logical disk format\n\n");
+              {
+                if (amigamfm_validate()!=AMIGA_UNKNOWN)
+                {
+                  printf("\nDetected Amiga DOS\n\n");
+                  amigamfm_showinfo(disktracks, debug);
+                  info++;
+                }
+                else
+                  printf("\nUnknown logical disk format\n\n");
+              }
             }
           }
         }
