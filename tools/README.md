@@ -42,6 +42,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 ## Requirements :
  
  * bcm2835 library, available from [http://www.airspayce.com/mikem/bcm2835/](http://www.airspayce.com/mikem/bcm2835/)
+
 *NOTE : bcm2835 library doesn't work on Raspberry Pi 4*
 
 # drivetest
