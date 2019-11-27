@@ -5,7 +5,7 @@ bbcfdc is intended for capturing raw **.rfi** flux data from floppy disk and opt
 
 It is designed to work with floppy disk interface PCB attached to GPIO of Raspberry Pi 2 or Raspberry Pi 3 running at 400Mhz (not overclocked). With some modifications the PCB and sample code can be made to work with the Raspberry Pi 1 running at 250Mhz.
 
-Raw flux output is to **.rfi** files, these are raw capture data with JSON metadata, the format for these is detailed in rfi.h.
+Raw flux output is to **.rfi** files, these are raw capture data with JSON metadata, the format for these is detailed in [rfi.h](https://github.com/picosonic/bbc-fdc/blob/master/tools/rfi.h).
 
 Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
