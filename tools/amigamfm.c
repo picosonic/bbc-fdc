@@ -240,8 +240,6 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
               fprintf(stderr, "Unknown sector format %x\n", format);
           }
 
-          amigamfm_blockpos=0;
-
           amigamfm_state=MFM_SYNC;
         }
         break;
