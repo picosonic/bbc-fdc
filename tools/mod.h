@@ -10,6 +10,8 @@
 #define MOD_DENSITYMFMHD 4
 #define MOD_DENSITYMFMED 8
 
+extern unsigned long mod_datapos;
+
 extern int mod_peak[MOD_PEAKSIZE];
 extern int mod_peaks;
 extern char mod_density;

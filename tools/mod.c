@@ -8,6 +8,7 @@
 #include "mod.h"
 
 int mod_debug=0;
+unsigned long mod_datapos;
 
 unsigned long mod_hist[MOD_HISTOGRAMSIZE];
 int mod_peak[MOD_PEAKSIZE];
@@ -227,7 +228,7 @@ unsigned char mod_getdata(const unsigned int datacells)
 
 void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt)
 {
-  unsigned long datapos, count;
+  unsigned long count;
   unsigned char c, j;
   char level,bi=0;
 
@@ -245,10 +246,10 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
   count=0;
 
   // Process each byte of the raw flux data
-  for (datapos=0; datapos<samplesize; datapos++)
+  for (mod_datapos=0; mod_datapos<samplesize; mod_datapos++)
   {
     // Extract byte from buffer
-    c=sampledata[datapos];
+    c=sampledata[mod_datapos];
 
     // Process each bit of the extracted byte
     for (j=0; j<BITSPERBYTE; j++)
@@ -268,10 +269,10 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
         // Look for rising edge
         if (level==1)
         {
-          fm_addsample(count, datapos);
-          amigamfm_addsample(count, datapos);
-          mfm_addsample(count, datapos);
-          gcr_addsample(count, datapos);
+          fm_addsample(count, mod_datapos);
+          amigamfm_addsample(count, mod_datapos);
+          mfm_addsample(count, mod_datapos);
+          gcr_addsample(count, mod_datapos);
 
           // Reset samples counter 
           count=0;
