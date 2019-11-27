@@ -321,6 +321,7 @@ void gcr_addbit(const unsigned char bit, const unsigned long datapos)
           gcr_gcrlen=0;
           gcr_addgcr(gcr_datacells & 0xff);
 
+          gcr_idpos=datapos;
           gcr_state=GCR_ID;
 
           gcr_datacells=0;
@@ -339,6 +340,7 @@ void gcr_addbit(const unsigned char bit, const unsigned long datapos)
           gcr_gcrlen=0;
           gcr_addgcr(gcr_datacells & 0xff);
 
+          gcr_blockpos=datapos;
           gcr_state=GCR_DATA;
 
           gcr_datacells=0;
