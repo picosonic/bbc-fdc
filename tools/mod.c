@@ -16,12 +16,12 @@ char mod_density=MOD_DENSITYAUTO;
 
 float mod_samplestoms(const long samples)
 {
-  return ((float)1/(((float)hw_samplerate)/(float)MICROSECONDSINSECOND))*(float)samples;
+  return ((float)1/(((float)hw_samplerate)/(float)USINSECOND))*(float)samples;
 }
 
 long mod_mstosamples(const float ms)
 {
-  return (ms/((float)1/(((float)hw_samplerate)/(float)MICROSECONDSINSECOND)));
+  return (ms/((float)1/(((float)hw_samplerate)/(float)USINSECOND)));
 }
 
 void mod_buildhistogram(const unsigned char *sampledata, const unsigned long samplesize)

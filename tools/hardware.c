@@ -424,15 +424,15 @@ float hw_measurerpm()
 
   // Get time
   gettimeofday(&tv, NULL);
-  starttime=(((unsigned long long)tv.tv_sec)*MICROSECONDSINSECOND)+tv.tv_usec;
+  starttime=(((unsigned long long)tv.tv_sec)*USINSECOND)+tv.tv_usec;
 
   // Wait for next index rising edge
   hw_waitforindex();
 
   gettimeofday(&tv, NULL);
-  endtime=(((unsigned long long)tv.tv_sec)*MICROSECONDSINSECOND)+tv.tv_usec;
+  endtime=(((unsigned long long)tv.tv_sec)*USINSECOND)+tv.tv_usec;
 
-  hw_rpm=((MICROSECONDSINSECOND/(float)(endtime-starttime))*SECONDSINMINUTE);
+  hw_rpm=((USINSECOND/(float)(endtime-starttime))*SECONDSINMINUTE);
 
   return hw_rpm;
 }

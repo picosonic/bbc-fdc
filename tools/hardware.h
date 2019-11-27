@@ -17,7 +17,6 @@
 
 // For RPM calculation
 #define SECONDSINMINUTE 60
-#define MICROSECONDSINSECOND 1000000
 
 // Microseconds in a second
 #define USINSECOND 1000000
