@@ -392,7 +392,11 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
             return rfi_trackdatalen;
           }
           else
-            return 0;
+          {
+            fread(buf, buflen, 1, rfifile);
+
+            return buflen;
+          }
         }
         else
         if (strstr(rfi_trackencoding, "rle")!=NULL)
