@@ -776,9 +776,9 @@ int main(int argc, char **argv)
 
     free(outbuffer);
     free(inbuffer);
-  }
 
-  printf("Output size %d bytes\n", resultlen);
+    printf("Output size %d bytes\n", resultlen);
+  }
 
   fclose(infile);
   fclose(outfile);
