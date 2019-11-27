@@ -404,6 +404,15 @@ void diskstore_dumplayoutmap(const int rotations)
           ppos=((curr->data_pos%samplesperrotation)*100)/samplesperrotation;
           ppos2=((curr->data_endpos%samplesperrotation)*100)/samplesperrotation;
 
+          // Check for data block wrap
+          if (ppos>ppos2)
+          {
+            for (i=ppos; i<100; i++)
+              cyldata[i%100]='d';
+
+            ppos=0;
+          }
+
           for (i=ppos; i<ppos2; i++)
             cyldata[i%100]='d';
 
