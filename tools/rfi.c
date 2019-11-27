@@ -268,7 +268,8 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
   if (rfi_headerlen==0) return 0;
 
   // Seek past file JSON metadata
-  fseek(rfifile, rfi_headerlen+3, SEEK_SET);
+  if (fseek(rfifile, rfi_headerlen+3, SEEK_SET)!=0)
+    return 0;
 
   while (!feof(rfifile))
   {
@@ -290,8 +291,12 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
     if (metapos==-1)
       return 0;
 
-    fread(metabuffer, sizeof(metabuffer), 1, rfifile);
-    fseek(rfifile, metapos, SEEK_SET);
+    if (fread(metabuffer, sizeof(metabuffer), 1, rfifile)!=1)
+      return 0;
+
+    if (fseek(rfifile, metapos, SEEK_SET)!=0)
+      return 0;
+
     for (i=0; i<(int)sizeof(metabuffer); i++)
     {
       if ((metabuffer[i]=='}') && ((i+1)<(int)sizeof(metabuffer)))
@@ -317,7 +322,11 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
       numtokens=jsmn_parse(&parser, metabuffer, sizeof(metabuffer), tokens, numtokens);
 
       // Move file pointer to first byte after track header
-      fseek(rfifile, tokens[0].end, SEEK_CUR);
+      if (fseek(rfifile, tokens[0].end, SEEK_CUR)!=0)
+      {
+        free(tokens);
+        return 0;
+      }
 
       for (i=0; i<numtokens; i++)
       {
@@ -442,7 +451,8 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
         if (rfi_track>track) return 0;
 
         // Skip this track, it's not the one we want
-        fseek(rfifile, rfi_trackdatalen, SEEK_CUR);
+        if (fseek(rfifile, rfi_trackdatalen, SEEK_CUR)!=0)
+          return 0;
       }
     }
     else // No tokens found, give up further processing
