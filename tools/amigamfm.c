@@ -13,6 +13,8 @@ unsigned int amigamfm_datacells=0; // 16 bit sliding buffer
 int amigamfm_bits=0; // Number of used bits within sliding buffer
 unsigned int amigamfm_p1, amigamfm_p2, amigamfm_p3=0; // bit history
 
+unsigned long amigamfm_blockpos;
+
 // Output block data buffer, for a single sector
 unsigned char amigamfm_bitstream[MFM_BLOCKSIZE];
 unsigned int amigamfm_bitlen=0;
@@ -142,6 +144,8 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
           amigamfm_bitstream[amigamfm_bitlen++]=((amigamfm_datacells&0xff00)>>8);
           amigamfm_bitstream[amigamfm_bitlen++]=(amigamfm_datacells&0xff);
 
+          amigamfm_blockpos=datapos;
+
           amigamfm_state=MFM_ADDR; // Move on to read header
         }
         else
@@ -223,7 +227,7 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
               }
 
               // Save the sector
-              if (diskstore_addsector(MODMFM, hw_currenttrack, hw_currenthead, mfm_idamtrack, mfm_idamhead, mfm_idamsector, mfm_idamlength, 0, 0, 0, 0, AMIGA_DATASIZE, &outbuff[0], 0)==1)
+              if (diskstore_addsector(MODMFM, hw_currenttrack, hw_currenthead, mfm_idamtrack, mfm_idamhead, mfm_idamsector, mfm_idamlength, amigamfm_blockpos, 0, amigamfm_blockpos, 0, AMIGA_DATASIZE, &outbuff[0], 0)==1)
               {
                 if (amigamfm_debug)
                   fprintf(stderr, "** AMIGA MFM new sector T%d H%d - C%d H%d R%d **\n", hw_currenttrack, hw_currenthead, track, head, sector);
@@ -236,6 +240,8 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
               fprintf(stderr, "Unknown sector format %x\n", format);
           }
 
+          amigamfm_blockpos=0;
+
           amigamfm_state=MFM_SYNC;
         }
         break;
@@ -246,6 +252,8 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
         amigamfm_p2=0;
         amigamfm_p3=0;
         amigamfm_bits=0;
+
+        amigamfm_blockpos=0;
 
         amigamfm_state=MFM_SYNC;
         break;
@@ -315,6 +323,7 @@ void amigamfm_init(const int debug, const char density)
   amigamfm_bucket0001+=(diff/2);
 
   // Set up MFM parser
+  amigamfm_blockpos=0;
   amigamfm_state=MFM_SYNC;
   amigamfm_datacells=0;
   amigamfm_bits=0;
