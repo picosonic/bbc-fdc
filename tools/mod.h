@@ -11,6 +11,7 @@
 #define MOD_DENSITYMFMED 8
 
 extern unsigned long mod_datapos;
+extern unsigned long mod_samplesize;
 
 extern int mod_peak[MOD_PEAKSIZE];
 extern int mod_peaks;

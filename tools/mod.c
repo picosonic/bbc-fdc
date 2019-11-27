@@ -9,6 +9,7 @@
 
 int mod_debug=0;
 unsigned long mod_datapos;
+unsigned long mod_samplesize;
 
 unsigned long mod_hist[MOD_HISTOGRAMSIZE];
 int mod_peak[MOD_PEAKSIZE];
@@ -231,6 +232,8 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
   unsigned long count;
   unsigned char c, j;
   char level,bi=0;
+
+  mod_samplesize=samplesize;
 
   mod_findpeaks(sampledata, samplesize);
   mod_checkdensity();
