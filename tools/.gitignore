@@ -4,6 +4,7 @@ drivetest
 bbcfdc
 bbcfdc-nopi
 checkfsd
+checktdo
 
 # Raw images
 *.raw
