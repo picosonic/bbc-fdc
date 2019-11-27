@@ -258,8 +258,6 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
           fm_idamsector=-1;
           fm_idamlength=-1;
 
-          fm_idpos=0;
-
           fm_blocktype=FM_BLOCKNULL;
           fm_blocksize=0;
           fm_state=FM_SYNC;
