@@ -11,7 +11,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
 ## Syntax :
 
-`[-i input_rfi_file] [[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks] [-title "Title"] [-v]`
+`[-i input_rfi_file] [[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-l] [-tmax maxtracks] [-title "Title"] [-v]`
 
 ## Where :
 
