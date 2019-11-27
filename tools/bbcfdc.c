@@ -58,6 +58,7 @@ unsigned char *flippybuffer=NULL;
 unsigned long samplebuffsize;
 int flippy=0;
 int info=0;
+int layout=0;
 
 // Processing position within the SPI buffer
 unsigned long datapos=0;
@@ -125,7 +126,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks]  [-title \"Title\"]  [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks] [-l] [-title \"Title\"] [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -171,6 +172,11 @@ int main(int argc,char **argv)
 
       if (capturetype==DISKNONE)
         capturetype=DISKCAT;
+    }
+    else
+    if (strcmp(argv[argn], "-l")==0)
+    {
+      layout=1;
     }
     else
     if (strcmp(argv[argn], "-sort")==0)
@@ -1031,6 +1037,10 @@ int main(int argc,char **argv)
       printf("Total storage is %ld bytes\n", totalstorage);
     }
   }
+
+  // Show a layout map of where data was found on disk surface
+  if (layout)
+    diskstore_dumplayoutmap(ROTATIONS);
 
   if (missingsectors>0)
     printf("Missing %d sectors\n", missingsectors);

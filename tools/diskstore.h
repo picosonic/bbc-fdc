@@ -33,6 +33,7 @@ typedef struct DiskSector
   // Sector data
   unsigned char modulation;
   unsigned long data_pos;
+  unsigned long data_endpos;
   unsigned int datatype;
   unsigned int datasize;
   unsigned char *data;
@@ -71,6 +72,7 @@ extern void diskstore_sortsectors();
 
 // Dump the contents of the disk storage for debug purposes
 extern void diskstore_dumpsectorlist();
+extern void diskstore_dumplayoutmap(const int rotations);
 
 // Absolute data access
 extern unsigned long diskstore_absoffset;

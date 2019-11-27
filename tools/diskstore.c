@@ -256,6 +256,7 @@ int diskstore_addsector(const unsigned char modulation, const unsigned char phys
   newitem->idcrc=idcrc;
   newitem->id_pos=id_pos;
   newitem->data_pos=data_pos;
+  newitem->data_endpos=mod_datapos;
 
   newitem->modulation=modulation;
 
@@ -365,6 +366,55 @@ void diskstore_dumpsectorlist()
   }
 
   fprintf(stderr, "Total extracted sectors: %d\n", totalsectors);
+}
+
+// Dump a layout map of where data was found on the disk surface
+void diskstore_dumplayoutmap(const int rotations)
+{
+  Disk_Sector *curr;
+  int dtrack, dhead;
+  char cyldata[100+1];
+  int i, n, ppos, ppos2;
+  unsigned long samplesperrotation;
+
+  fprintf(stderr, "Samples : %ld Rotations %d\n", mod_samplesize, rotations);
+  samplesperrotation=(mod_samplesize/rotations);
+
+  for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack++)
+  {
+    for (dhead=0; dhead<2; dhead++)
+    {
+      // Clear cylinder data
+      for (i=0; i<(100+1); i++)
+        cyldata[i]='.';
+      cyldata[100]=0;
+
+      fprintf(stderr, "TRACK %.2d[%.1d]: ", dtrack, dhead);
+
+      n=0;
+      do
+      {
+        curr=diskstore_findnthsector(dtrack, dhead, n++);
+
+        if (curr!=NULL)
+        {
+//          fprintf(stderr, "%d{%ld %ld..%ld} ", curr->logical_sector, curr->id_pos, curr->data_pos, curr->data_endpos);
+//          fprintf(stderr, "%d{%d%% %d%%..%d%%} ", curr->logical_sector, (curr->id_pos*100)/mod_samplesize, (curr->data_pos*100)/mod_samplesize, (curr->data_endpos*100)/mod_samplesize);
+
+          ppos=((curr->data_pos%samplesperrotation)*100)/samplesperrotation;
+          ppos2=((curr->data_endpos%samplesperrotation)*100)/samplesperrotation;
+
+          for (i=ppos; i<ppos2; i++)
+            cyldata[i%100]='d';
+
+          ppos=((curr->id_pos%samplesperrotation)*100)/samplesperrotation;
+          cyldata[ppos%100]='s';
+        }
+      } while (curr!=NULL);
+
+      fprintf(stderr, "%s\n", cyldata);
+    }
+  }
 }
 
 // Absolute seek
