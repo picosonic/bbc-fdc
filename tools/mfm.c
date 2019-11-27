@@ -104,6 +104,7 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
             mfm_idamsector=-1;
             mfm_idamlength=-1;
 
+            mfm_idpos=datapos;
             mfm_state=MFM_ADDR;
             break;
 
@@ -127,6 +128,7 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
               mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p3);
               mfm_bitstream[mfm_bitlen++]=data;
 
+              mfm_blockpos=datapos;
               mfm_state=MFM_DATA;
             }
             else
@@ -155,6 +157,7 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
               mfm_bitstream[mfm_bitlen++]=mod_getdata(mfm_p3);
               mfm_bitstream[mfm_bitlen++]=data;
 
+              mfm_blockpos=datapos;
               mfm_state=MFM_DATA;
             }
             else
