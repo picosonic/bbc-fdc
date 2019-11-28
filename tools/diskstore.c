@@ -380,6 +380,7 @@ void diskstore_dumplayoutmap(const int rotations)
   fprintf(stderr, "Samples : %ld Rotations %d\n", mod_samplesize, rotations);
   samplesperrotation=(mod_samplesize/rotations);
 
+  fprintf(stderr, "TRACK[HEAD]\n");
   for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack++)
   {
     for (dhead=0; dhead<2; dhead++)
@@ -389,7 +390,7 @@ void diskstore_dumplayoutmap(const int rotations)
         cyldata[i]='.';
       cyldata[100]=0;
 
-      fprintf(stderr, "TRACK %.2d[%.1d]: ", dtrack, dhead);
+      fprintf(stderr, "%.2d[%.1d]: ", dtrack, dhead);
 
       n=0;
       do
@@ -398,9 +399,6 @@ void diskstore_dumplayoutmap(const int rotations)
 
         if (curr!=NULL)
         {
-//          fprintf(stderr, "%d{%ld %ld..%ld} ", curr->logical_sector, curr->id_pos, curr->data_pos, curr->data_endpos);
-//          fprintf(stderr, "%d{%d%% %d%%..%d%%} ", curr->logical_sector, (curr->id_pos*100)/mod_samplesize, (curr->data_pos*100)/mod_samplesize, (curr->data_endpos*100)/mod_samplesize);
-
           ppos=((curr->data_pos%samplesperrotation)*100)/samplesperrotation;
           ppos2=((curr->data_endpos%samplesperrotation)*100)/samplesperrotation;
 
