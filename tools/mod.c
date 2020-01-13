@@ -35,7 +35,7 @@ void mod_buildhistogram(const unsigned char *sampledata, const unsigned long sam
   unsigned long datapos;
 
   if (mod_debug)
-    fprintf(stderr, "Creating histogram for track %d data sampled at %lu with %.2f rpm\n", hw_currenttrack, hw_samplerate, hw_rpm);
+    fprintf(stderr, "Creating histogram for track %d, head %d data sampled at %lu with %.2f rpm\n", hw_currenttrack, hw_currenthead, hw_samplerate, hw_rpm);
 
   // Clear histogram
   for (j=0; j<MOD_HISTOGRAMSIZE; j++) mod_hist[j]=0;
@@ -90,7 +90,7 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
       localmaxima=j;
 
   if (mod_debug)
-    fprintf(stderr, "Maximum peak on track %d at %ld samples, %.3fms\n", hw_currenttrack, localmaxima, mod_samplestoms(localmaxima));
+    fprintf(stderr, "Maximum peak on track %d, head %d at %ld samples, %.3fms\n", hw_currenttrack, hw_currenthead, localmaxima, mod_samplestoms(localmaxima));
 
   // Set noise threshold at 5% of maximum
   threshold=mod_hist[localmaxima]/20;
