@@ -48,6 +48,8 @@ extern Disk_Sector *Disk_SectorsRoot;
 // Summary information
 extern int diskstore_mintrack;
 extern int diskstore_maxtrack;
+extern int diskstore_minhead;
+extern int diskstore_maxhead;
 extern int diskstore_minsectorsize;
 extern int diskstore_maxsectorsize;
 extern int diskstore_minsectorid;

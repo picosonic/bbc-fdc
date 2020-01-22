@@ -376,14 +376,21 @@ void diskstore_dumplayoutmap(const int rotations)
   char cyldata[100+1];
   int i, n, ppos, ppos2;
   unsigned long samplesperrotation;
+  int mhead, mtrack;
+
+  if ((diskstore_maxhead>-1) && (diskstore_maxhead<2))
+    mhead=diskstore_maxhead+1;
+
+  if ((diskstore_maxtrack>-1) && (diskstore_maxtrack<80))
+    mtrack=diskstore_maxtrack+1;
 
   fprintf(stderr, "Samples : %ld Rotations %d\n", mod_samplesize, rotations);
   samplesperrotation=(mod_samplesize/rotations);
 
   fprintf(stderr, "TRACK[HEAD]\n");
-  for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack++)
+  for (dtrack=0; dtrack<mtrack; dtrack++)
   {
-    for (dhead=0; dhead<2; dhead++)
+    for (dhead=0; dhead<mhead; dhead++)
     {
       // Clear cylinder data
       for (i=0; i<(100+1); i++)
