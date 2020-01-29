@@ -173,13 +173,13 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
           }
         }
         else
-          printf("%s%*s", shortname, 12-strlen(shortname), "");
+          printf("%s%*s", shortname, (int)(12-strlen(shortname)), "");
 
         lfnblocks=0;
       }
       else
       {
-        printf("%s%*s", shortname, 12-strlen(shortname), "");
+        printf("%s%*s", shortname, (int)(12-strlen(shortname)), "");
         lfnblocks=0;
       }
 
