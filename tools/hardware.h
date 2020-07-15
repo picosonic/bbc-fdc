@@ -40,9 +40,9 @@
 #define HW_250MHZ 250000000
 #define HW_400MHZ 400000000
 
-extern int hw_maxtracks;
-extern int hw_currenttrack;
-extern int hw_currenthead;
+extern unsigned int hw_maxtracks;
+extern unsigned int hw_currenttrack;
+extern unsigned int hw_currenthead;
 extern unsigned long hw_samplerate;
 extern float hw_rpm;
 

@@ -10,6 +10,7 @@
 #include "dfi.h"
 #include "adfs.h"
 #include "amigamfm.h"
+#include "applegcr.h"
 #include "dfs.h"
 #include "dos.h"
 #include "fsd.h"

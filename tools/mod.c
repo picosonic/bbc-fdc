@@ -4,6 +4,7 @@
 #include "fm.h"
 #include "mfm.h"
 #include "amigamfm.h"
+#include "applegcr.h"
 #include "gcr.h"
 #include "mod.h"
 
@@ -242,6 +243,7 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
   amigamfm_init(mod_debug, mod_density);
   mfm_init(mod_debug, mod_density);
   gcr_init(mod_debug, mod_density);
+  applegcr_init(mod_debug, mod_density);
 
   // Set up the sampler
   level=(sampledata[0]&0x80)>>7;
@@ -276,6 +278,7 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
           amigamfm_addsample(count, mod_datapos);
           mfm_addsample(count, mod_datapos);
           gcr_addsample(count, mod_datapos);
+          applegcr_addsample(count, mod_datapos);
 
           // Reset samples counter 
           count=0;
