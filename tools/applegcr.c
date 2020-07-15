@@ -6,6 +6,25 @@
 #include "diskstore.h"
 #include "applegcr.h"
 
+// GCR for Apple II
+//
+// Apple DOS 3.2
+//   Single side, soft sectored
+//   35 tracks
+//   13 sectors
+//   256 bytes/sector
+//   Total size 116,480 bytes (113.75k)
+//   GCR 5/3
+//
+//
+// Apple DOS 3.3
+//   Single side, soft sectored
+//   35 tracks
+//   16 sectors, numbered 0 to 15
+//   256 bytes/sector
+//   Total size 143,360 bytes (140k)
+//   GCR 6/2
+
 int applegcr_state=APPLEGCR_IDLE; // state machine
 uint32_t applegcr_datacells; // 32 bit sliding buffer
 int applegcr_bits=0; // Number of used bits within sliding buffer
@@ -111,7 +130,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
             if (applegcr_debug)
               fprintf(stderr, "Found a D5 AA AD, DATA\n");
 
-            // applegcr_state=APPLEGCR_DATA;
+            applegcr_state=APPLEGCR_DATA;
             applegcr_bytelen=0; applegcr_bits=0;
             break;
 
@@ -140,7 +159,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
         applegcr_bits=0;
       }
 
-      if (applegcr_bytelen>=11)
+      if (applegcr_bytelen>=8)
       {
         if (applegcr_debug)
         {
@@ -154,6 +173,43 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
         applegcr_bits=0;
         applegcr_state=APPLEGCR_IDLE;
       }
+      break;
+
+    case APPLEGCR_DATA:
+      // DOS 3.2
+      //
+      // D5 AA AD
+      // 410 x coded 5/8
+      // SUM
+      // DE AA EB
+
+      // DOS 3.3
+      //
+      // D5 AA AD
+      // 342 x coded 6/8
+      // SUM
+      // DE AA EB
+
+      if (applegcr_bits==8)
+      {
+        applegcr_bytebuff[applegcr_bytelen++]=applegcr_datacells&0xff;
+        applegcr_bits=0;
+      }
+
+      if (applegcr_bytelen>=(applegcr_datamode+1))
+      {
+        if (applegcr_debug)
+          fprintf(stderr, "Processing data block [%d]\n", applegcr_datamode);
+
+//        if (applegcr_datamode==APPLEGCR_DATA_62)
+//          applegcr_process_data62();
+//        else
+//          applegcr_process_data53();
+
+        applegcr_bits=0;
+        applegcr_state=APPLEGCR_IDLE;
+      }
+
       break;
 
     default:
