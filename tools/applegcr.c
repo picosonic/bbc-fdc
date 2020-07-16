@@ -8,18 +8,18 @@
 
 // GCR for Apple II
 //
-// Apple DOS 3.2
+// Apple DOS 3.1 / 3.2 / 3.2.1
 //   Single side, soft sectored
-//   35 tracks
-//   13 sectors
+//   35 tracks, at 48tpi
+//   13 sectors, numbered 0 to 12
 //   256 bytes/sector
 //   Total size 116,480 bytes (113.75k)
 //   GCR 5/3
 //
 //
-// Apple DOS 3.3
+// Apple DOS 3.3 / Apple Pascal / ProDOS
 //   Single side, soft sectored
-//   35 tracks
+//   35 tracks, at 48tpi
 //   16 sectors, numbered 0 to 15
 //   256 bytes/sector
 //   Total size 143,360 bytes (140k)
@@ -28,6 +28,12 @@
 int applegcr_state=APPLEGCR_IDLE; // state machine
 uint32_t applegcr_datacells; // 32 bit sliding buffer
 int applegcr_bits=0; // Number of used bits within sliding buffer
+
+// Most recent address mark
+unsigned long applegcr_idpos, applegcr_blockpos;
+int applegcr_idamtrack, applegcr_idamsector; // IDAM values
+int applegcr_lasttrack, applegcr_lastsector; // last known good IDAM values
+unsigned int applegcr_idblockcrc, applegcr_datablockcrc;
 
 unsigned int applegcr_datamode;
 const uint8_t applegcr_gcr53encodemap[]=
@@ -64,11 +70,11 @@ void applegcr_buildgcrdecodemaps()
 {
   unsigned int i;
 
-  memset(applegcr_gcr53decodemap, 0x00, sizeof(applegcr_gcr53decodemap));
+  bzero(applegcr_gcr53decodemap, sizeof(applegcr_gcr53decodemap));
   for (i=0; i<sizeof(applegcr_gcr53encodemap); i++)
     applegcr_gcr53decodemap[applegcr_gcr53encodemap[i]]=i;
 
-  memset(applegcr_gcr62decodemap, 0x00, sizeof(applegcr_gcr62decodemap));
+  bzero(applegcr_gcr62decodemap, sizeof(applegcr_gcr62decodemap));
   for (i=0; i<sizeof(applegcr_gcr62encodemap); i++)
     applegcr_gcr62decodemap[applegcr_gcr62encodemap[i]]=i;
 }
@@ -96,6 +102,92 @@ unsigned char applegcr_calc_eor(unsigned char *buff, unsigned int len)
   return result;
 }
 
+// Process data block stored using 6 data bits, 2 extra bits per byte format
+//
+// * each of the source bytes is cut into two parts: its highest 6 bits and its lowest two;
+// * the first 86 bytes of the encoded sector are used to keep the lowest two bits of all bytes;
+// * the remaining portions of six bits fill the final 256 on-disk bytes of the sector;
+// * an exclusive OR checksum is used, but to reduce decoding time it is applied within the six-bit data
+void applegcr_process_data62()
+{
+  int i;
+  unsigned char buff[512];
+  unsigned char value;
+  unsigned char cx;
+
+  bzero(buff, sizeof(buff));
+
+  // Convert 342+1 disk bytes into 342+1 6-bit GCR
+  for (i=0; i<(342+1); i++)
+    applegcr_decodebuff[i]=applegcr_gcr62decodemap[applegcr_bytebuff[i]];
+
+  // XOR 342+1 GCR bytes to undo checksum process
+  for (i=0; i<(342+1); i++)
+  {
+    if (i==0)
+      applegcr_decodebuff[i]^=0;
+    else
+      applegcr_decodebuff[i]^=applegcr_decodebuff[i-1];
+  }
+
+  cx=applegcr_decodebuff[341]^applegcr_decodebuff[342];
+
+  if (cx==0)
+  {
+    // Recombine bits
+    for (i=0; i<86; i++)
+    {
+      value=applegcr_decodebuff[i];
+
+      if (i<84)
+        buff[i+172]|=applegcr_bit_reverse[(value>>4) & 0x3];
+
+      buff[i+86]|=applegcr_bit_reverse[(value>>2) & 0x3];
+      buff[i]|=applegcr_bit_reverse[(value>>0) & 0x3];
+    }
+
+    for (i=86; i<(342+1); i++)
+      buff[i-86]|=(applegcr_decodebuff[i]<<2);
+
+    // Check we have an ID
+    if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
+    {
+      diskstore_addsector(MODGCR, hw_currenttrack, hw_currenthead, applegcr_idamtrack, hw_currenthead, applegcr_idamsector, 1, applegcr_idpos, applegcr_idblockcrc, applegcr_blockpos, applegcr_datamode, APPLEGCR_SECTORLEN, &buff[0], applegcr_decodebuff[342]);
+    }
+    else
+    {
+      if (applegcr_debug)
+      {
+        fprintf(stderr, "** VALID DATA BUT INVALID ID");
+        if ((applegcr_lasttrack!=-1) && (applegcr_lastsector!=-1))
+          fprintf(stderr, ", last found ID was T%d S%d", applegcr_lasttrack, applegcr_lastsector);
+
+        fprintf(stderr, " **\n");
+      }
+    }
+  }
+  else
+  {
+    if (applegcr_debug)
+    {
+      fprintf(stderr, "** INVALID DATA EORSUM [%.2x] (%.2x)", applegcr_decodebuff[341], applegcr_decodebuff[342]);
+      if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
+        fprintf(stderr, ", possibly for T%d S%d", applegcr_idamtrack, applegcr_idamsector);
+
+      fprintf(stderr, " **\n");
+    }
+  }
+
+  // Clear IDAM cache
+  applegcr_idamtrack=-1;
+  applegcr_idamsector=-1;
+}
+
+// Process data block stored using 5 data bits, 3 extra bits per byte format
+void applegcr_process_data53()
+{
+}
+
 void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
 {
   applegcr_datacells=(applegcr_datacells<<1)|bit;
@@ -110,33 +202,47 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
         {
           case 0xd5aab5: // Address field / DOS 3.2
             if (applegcr_debug)
-              fprintf(stderr, "Found a D5 AA B5, DOS 3.2 (5/3) ID\n");
+              fprintf(stderr, "Found a D5 AA B5, DOS 3.2 (5/3) ID @ %ld\n", datapos);
 
             applegcr_datamode=APPLEGCR_DATA_53;
             applegcr_state=APPLEGCR_ID;
             applegcr_bytelen=0; applegcr_bits=0;
+
+            applegcr_idpos=datapos;
+
+            // Clear IDAM cache
+            applegcr_idamtrack=-1;
+            applegcr_idamsector=-1;
             break;
 
           case 0xd5aa96: // Address field / DOS 3.3
             if (applegcr_debug)
-              fprintf(stderr, "Found a D5 AA 96, DOS 3.3 (6/2) ID\n");
+              fprintf(stderr, "Found a D5 AA 96, DOS 3.3 (6/2) ID @ %ld\n", datapos);
 
             applegcr_datamode=APPLEGCR_DATA_62;
             applegcr_state=APPLEGCR_ID;
             applegcr_bytelen=0; applegcr_bits=0;
+
+            applegcr_idpos=datapos;
+
+            // Clear IDAM cache
+            applegcr_idamtrack=-1;
+            applegcr_idamsector=-1;
             break;
 
           case 0xd5aaad: // Data field / 342+1 bytes encoded as 6 and 2
             if (applegcr_debug)
-              fprintf(stderr, "Found a D5 AA AD, DATA\n");
+              fprintf(stderr, "Found a D5 AA AD, DATA @ %ld\n", datapos);
 
             applegcr_state=APPLEGCR_DATA;
             applegcr_bytelen=0; applegcr_bits=0;
+
+            applegcr_blockpos=datapos;
             break;
 
           case 0xdeaaeb: // Epilogue
             if (applegcr_debug)
-              fprintf(stderr, "Found a DE AA EB, EPILOGUE\n");
+              fprintf(stderr, "Found a DE AA EB, EPILOGUE @ %ld\n", datapos);
             break;
 
           default:
@@ -146,12 +252,12 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
       break;
 
     case APPLEGCR_ID:
-      // D5 AA B5 or D5 AA 96
-      // VOL VOL
-      // TRK TRK
-      // SCT SCT
-      // SUM SUM
-      // DE AA EB
+      // D5 AA B5 or D5 AA 96 - Prologue
+      // VOL VOL - Volume
+      // TRK TRK - Track
+      // SCT SCT - Sector
+      // SUM SUM - Checksum (XOR of previous 6 bytes comprising volume/track/sector)
+      // DE AA EB - Epilogue
 
       if (applegcr_bits==8)
       {
@@ -170,6 +276,23 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
           fprintf(stderr, " EOR : %d\n", applegcr_calc_eor(&applegcr_bytebuff[0], 6));
         }
 
+        if (applegcr_decode4and4(applegcr_bytebuff[6], applegcr_bytebuff[7]) == applegcr_calc_eor(&applegcr_bytebuff[0], 6))
+        {
+          applegcr_idamtrack=applegcr_decode4and4(applegcr_bytebuff[2], applegcr_bytebuff[3]);
+          applegcr_idamsector=applegcr_decode4and4(applegcr_bytebuff[4], applegcr_bytebuff[5]);
+
+          // Record last known good IDAM values for this track
+          applegcr_lasttrack=applegcr_idamtrack;
+          applegcr_lastsector=applegcr_idamsector;
+
+          applegcr_idblockcrc=applegcr_decode4and4(applegcr_bytebuff[6], applegcr_bytebuff[7]);
+        }
+        else
+        {
+          applegcr_idamtrack=-1;
+          applegcr_idamsector=-1;
+        }
+
         applegcr_bits=0;
         applegcr_state=APPLEGCR_IDLE;
       }
@@ -178,17 +301,17 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
     case APPLEGCR_DATA:
       // DOS 3.2
       //
-      // D5 AA AD
-      // 410 x coded 5/8
-      // SUM
-      // DE AA EB
+      // D5 AA AD - Prologue
+      // 410 bytes, coded 5/8 - 256 bytes of data
+      // SUM - Checksum (XOR)
+      // DE AA EB - Epilogue
 
       // DOS 3.3
       //
-      // D5 AA AD
-      // 342 x coded 6/8
-      // SUM
-      // DE AA EB
+      // D5 AA AD - Prologue
+      // 342 bytes, coded 6/8 - 256 bytes of data
+      // SUM - Checksum (XOR)
+      // DE AA EB - Epilogue
 
       if (applegcr_bits==8)
       {
@@ -201,10 +324,10 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
         if (applegcr_debug)
           fprintf(stderr, "Processing data block [%d]\n", applegcr_datamode);
 
-//        if (applegcr_datamode==APPLEGCR_DATA_62)
-//          applegcr_process_data62();
-//        else
-//          applegcr_process_data53();
+        if (applegcr_datamode==APPLEGCR_DATA_62)
+          applegcr_process_data62();
+        else
+          applegcr_process_data53();
 
         applegcr_bits=0;
         applegcr_state=APPLEGCR_IDLE;
@@ -243,4 +366,12 @@ void applegcr_init(const int debug, const char density)
   applegcr_state=APPLEGCR_IDLE;
 
   applegcr_buildgcrdecodemaps();
+
+  applegcr_idpos=0;
+  applegcr_blockpos=0;
+
+  applegcr_idamtrack=-1;
+  applegcr_idamsector=-1;
+  applegcr_lasttrack=-1;
+  applegcr_lastsector=-1;
 }
