@@ -140,6 +140,7 @@ void applegcr_process_data62()
   unsigned char cx;
 
   bzero(buff, sizeof(buff));
+  bzero(applegcr_decodebuff, sizeof(applegcr_decodebuff));
 
   // Convert 342+1 disk bytes into 342+1 6-bit GCR
   for (i=0; i<(342+1); i++)
@@ -154,7 +155,7 @@ void applegcr_process_data62()
       applegcr_decodebuff[i]^=applegcr_decodebuff[i-1];
   }
 
-  cx=applegcr_decodebuff[341]^applegcr_decodebuff[342];
+  cx=applegcr_decodebuff[342];
 
   if (cx==0)
   {
