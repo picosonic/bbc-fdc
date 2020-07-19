@@ -13,6 +13,7 @@
 //   35 tracks, at 48tpi
 //   13 sectors, numbered 0 to 12
 //   256 bytes/sector
+//   Total sectors/disk 455
 //   Total size 116,480 bytes (113.75k)
 //   GCR 5/3
 //
@@ -23,6 +24,7 @@
 //   35 tracks, at 48tpi
 //   16 sectors, numbered 0 to 15
 //   256 bytes/sector
+//   Total sectors/disk 560
 //   Total size 143,360 bytes (140k)
 //   GCR 6/2
 //
@@ -224,7 +226,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
         {
           case 0xd5aab5: // Address field / DOS 3.2
             if (applegcr_debug)
-              fprintf(stderr, "Found a D5 AA B5, DOS 3.2 (5/3) ID @ %ld\n", datapos);
+              fprintf(stderr, "Found a [%.2X] D5 AA B5, DOS 3.2 (5/3) ID @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
 
             applegcr_datamode=APPLEGCR_DATA_53;
             applegcr_state=APPLEGCR_ID;
@@ -239,7 +241,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
 
           case 0xd5aa96: // Address field / DOS 3.3
             if (applegcr_debug)
-              fprintf(stderr, "Found a D5 AA 96, DOS 3.3 (6/2) ID @ %ld\n", datapos);
+              fprintf(stderr, "Found a [%.2X] D5 AA 96, DOS 3.3 (6/2) ID @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
 
             applegcr_datamode=APPLEGCR_DATA_62;
             applegcr_state=APPLEGCR_ID;
@@ -254,7 +256,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
 
           case 0xd5aaad: // Data field / 342+1 bytes encoded as 6 and 2
             if (applegcr_debug)
-              fprintf(stderr, "Found a D5 AA AD, DATA @ %ld\n", datapos);
+              fprintf(stderr, "Found a [%.2X] D5 AA AD, DATA @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
 
             applegcr_state=APPLEGCR_DATA;
             applegcr_bytelen=0; applegcr_bits=0;
