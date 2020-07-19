@@ -8,7 +8,7 @@
 
 // GCR for Apple II
 //
-// Apple DOS 3.1 / 3.2 / 3.2.1
+// Apple DOS 3.1 (Jul '78) / 3.2 (Feb '79) / 3.2.1 (Jul '79)
 //   Single side, soft sectored
 //   35 tracks, at 48tpi
 //   13 sectors, numbered 0 to 12
@@ -17,13 +17,35 @@
 //   GCR 5/3
 //
 //
-// Apple DOS 3.3 / Apple Pascal / ProDOS
+// Apple DOS 3.3 (Aug '80) / Apple Pascal (Aug '79)
+// ProDOS (Oct '83) / Apple Fortran / CP/M
 //   Single side, soft sectored
 //   35 tracks, at 48tpi
 //   16 sectors, numbered 0 to 15
 //   256 bytes/sector
 //   Total size 143,360 bytes (140k)
 //   GCR 6/2
+//
+//
+// Sector interleaving / skewing
+//
+// Physical    DOS3.3     PASCAL     CP/M
+//    0          0          0         0
+//    1          7          8         B
+//    2          E          1         6
+//    3          6          9         1
+//    4          D          2         C
+//    5          5          A         7
+//    6          C          3         2
+//    7          4          B         D
+//    8          B          4         8
+//    9          3          C         3
+//    A          A          5         E
+//    B          2          D         9
+//    C          9          6         4
+//    D          1          E         F
+//    E          8          7         A
+//    F          F          F         5
 
 int applegcr_state=APPLEGCR_IDLE; // state machine
 uint32_t applegcr_datacells; // 32 bit sliding buffer
