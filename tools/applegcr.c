@@ -270,6 +270,26 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
               fprintf(stderr, "Found a DE AA EB, EPILOGUE @ %ld\n", datapos);
             break;
 
+          case 0xd4aab7: // Address field / 13 sector / non-standard
+            if (applegcr_debug)
+              fprintf(stderr, "Found a [%.2X] D4 AA B7, non-standard ID @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
+            break;
+
+          case 0xd4aa96: // Address field / 16 sector / non-standard
+            if (applegcr_debug)
+              fprintf(stderr, "Found a [%.2X] D4 AA 96, non-standard ID @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
+            break;
+
+          case 0xd5bbcf: // Data field non-standard
+            if (applegcr_debug)
+              fprintf(stderr, "Found a [%.2X] D5 BB CF, non-standard DATA @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
+            break;
+
+          case 0xdaaaeb: // Epilogue non-standard
+            if (applegcr_debug)
+              fprintf(stderr, "Found a DA AA EB, non-standard EPILOGUE @ %ld\n", datapos);
+            break;
+
           default:
             break;
         }
