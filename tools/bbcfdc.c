@@ -647,7 +647,7 @@ int main(int argc,char **argv)
   hw_seektotrackzero();
 
   // Loop through the tracks
-  for (i=0; i<drivetracks; i++)
+  for (i=0; i<(drivetracks/hw_stepping); i++)
   {
     hw_seektotrack(i);
 

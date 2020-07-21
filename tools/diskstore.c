@@ -344,9 +344,9 @@ void diskstore_dumpsectorlist()
   int n;
   int totalsectors=0;
 
-  for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack++)
+  for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack+=hw_stepping)
   {
-    fprintf(stderr, "TRACK %.2d: ", dtrack);
+    fprintf(stderr, "TRACK %.2d: ", dtrack/hw_stepping);
 
     for (dhead=0; dhead<2; dhead++)
     {
@@ -388,7 +388,7 @@ void diskstore_dumplayoutmap(const int rotations)
   samplesperrotation=(mod_samplesize/rotations);
 
   fprintf(stderr, "TRACK[HEAD]\n");
-  for (dtrack=0; dtrack<mtrack; dtrack++)
+  for (dtrack=0; dtrack<mtrack; dtrack+=hw_stepping)
   {
     for (dhead=0; dhead<mhead; dhead++)
     {
@@ -397,7 +397,7 @@ void diskstore_dumplayoutmap(const int rotations)
         cyldata[i]='.';
       cyldata[100]=0;
 
-      fprintf(stderr, "%.2d[%.1d]: ", dtrack, dhead);
+      fprintf(stderr, "%.2d[%.1d]: ", dtrack/hw_stepping, dhead);
 
       n=0;
       do

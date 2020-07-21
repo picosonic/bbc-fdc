@@ -66,7 +66,7 @@ void hw_seektotrackzero()
 void hw_seektotrack(const int track)
 {
   // Actual seeking within input file will be done by sampling function
-  hw_currenttrack=track;
+  hw_currenttrack=track*hw_stepping;
 }
 
 // Override maximum number of hardware tracks
