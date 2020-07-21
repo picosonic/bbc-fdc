@@ -177,7 +177,7 @@ void applegcr_process_data62()
     // Check we have an ID
     if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
     {
-      diskstore_addsector(MODGCR, hw_currenttrack, hw_currenthead, applegcr_idamtrack, hw_currenthead, applegcr_idamsector, 1, applegcr_idpos, applegcr_idblockcrc, applegcr_blockpos, applegcr_datamode, APPLEGCR_SECTORLEN, &buff[0], applegcr_decodebuff[342]);
+      diskstore_addsector(MODAPPLEGCR, hw_currenttrack, hw_currenthead, applegcr_idamtrack, hw_currenthead, applegcr_idamsector, 1, applegcr_idpos, applegcr_idblockcrc, applegcr_blockpos, applegcr_datamode, APPLEGCR_SECTORLEN, &buff[0], applegcr_decodebuff[342]);
     }
     else
     {
@@ -408,6 +408,7 @@ void applegcr_init(const int debug, const char density)
 {
   applegcr_debug=debug;
 
+  // Set up Apple GCR parser
   applegcr_state=APPLEGCR_IDLE;
 
   applegcr_buildgcrdecodemaps();
@@ -415,8 +416,11 @@ void applegcr_init(const int debug, const char density)
   applegcr_idpos=0;
   applegcr_blockpos=0;
 
+  // Initialise last found sector IDAM to invalid
   applegcr_idamtrack=-1;
   applegcr_idamsector=-1;
+
+  // Initialise last known good sector IDAM to invalid
   applegcr_lasttrack=-1;
   applegcr_lastsector=-1;
 }
