@@ -438,6 +438,7 @@ void gcr_init(const int debug, const char density)
 {
   gcr_debug=debug;
 
+  // Set up C64 GCR parser
   gcr_state=GCR_IDLE;
   gcr_bits=0;
   gcr_datacells=0;
@@ -445,8 +446,11 @@ void gcr_init(const int debug, const char density)
   gcr_idpos=0;
   gcr_blockpos=0;
 
+  // Initialise last found sector IDAM to invalid
   gcr_idamtrack=-1;
   gcr_idamsector=-1;
+
+  // Initialise last known good sector IDAM to invalid
   gcr_lasttrack=-1;
   gcr_lastsector=-1;
 }
