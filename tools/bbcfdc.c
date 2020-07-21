@@ -490,14 +490,20 @@ int main(int argc,char **argv)
     modulation=MODMFM;
 
   if ((gcr_lasttrack==-1) && (gcr_lastsector==-1))
-    printf("No GCR sector IDs found\n");
+    printf("No C64 GCR sector IDs found\n");
+  else
+    modulation=MODGCR;
+
+  if ((applegcr_lasttrack==-1) && (applegcr_lastsector==-1))
+    printf("No Apple GCR sector IDs found\n");
+  else
+    modulation=MODAPPLEGCR;
 
   if (modulation!=AUTODETECT)
   {
     int othertrack;
     int otherhead;
     int othersector;
-    int otherlength;
 
     // Check if it was FM sectors found
     if ((fm_lasttrack!=-1) && (fm_lasthead!=-1) && (fm_lastsector!=-1) && (fm_lastlength!=-1))
@@ -505,7 +511,6 @@ int main(int argc,char **argv)
       othertrack=fm_lasttrack;
       otherhead=fm_lasthead;
       othersector=fm_lastsector;
-      otherlength=fm_lastlength;
     }
 
     // Check if it was MFM sectors found
@@ -514,7 +519,20 @@ int main(int argc,char **argv)
       othertrack=mfm_lasttrack;
       otherhead=mfm_lasthead;
       othersector=mfm_lastsector;
-      otherlength=mfm_lastlength;
+    }
+
+    // Check if it was C64 GCR sectors found
+    if ((gcr_lasttrack!=-1) && (gcr_lastsector!=-1))
+    {
+      othertrack=gcr_lasttrack;
+      othersector=gcr_lastsector;
+    }
+
+    // Check if it was Apple GCR sectors found
+    if ((applegcr_lasttrack!=-1) && (applegcr_lastsector!=-1))
+    {
+      othertrack=applegcr_lasttrack;
+      othersector=applegcr_lastsector;
     }
 
     // Only look for data on other side if user hasn't specified number of sides to capture
@@ -532,7 +550,9 @@ int main(int argc,char **argv)
 
       // Check for flippy disk
       if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1)
-         && (mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
+         && (mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1)
+         && (gcr_lasttrack==-1) && (gcr_lastsector==-1)
+         && (applegcr_lasttrack==-1) && (applegcr_lastsector==-1))
       {
         fillflippybuffer(samplebuffer, samplebuffsize);
 
@@ -540,7 +560,9 @@ int main(int argc,char **argv)
           mod_process(flippybuffer, samplebuffsize, 99);
 
         if ((fm_lasttrack!=-1) || (fm_lasthead!=-1) || (fm_lastsector!=-1) || (fm_lastlength!=-1)
-           || (mfm_lasttrack!=-1) || (mfm_lasthead!=-1) || (mfm_lastsector!=-1) || (mfm_lastlength!=-1))
+           || (mfm_lasttrack!=-1) || (mfm_lasthead!=-1) || (mfm_lastsector!=-1) || (mfm_lastlength!=-1)
+           || (gcr_lasttrack!=-1) || (gcr_lastsector!=-1)
+           || (applegcr_lasttrack!=-1) || (applegcr_lastsector!=-1))
         {
           printf("Flippy disk detected\n");
           flippy=1;
@@ -549,7 +571,9 @@ int main(int argc,char **argv)
 
       // Check readability
       if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1)
-         && (mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1))
+         && (mfm_lasttrack==-1) && (mfm_lasthead==-1) && (mfm_lastsector==-1) && (mfm_lastlength==-1)
+         && (gcr_lasttrack==-1) && (gcr_lastsector==-1)
+         && (applegcr_lasttrack==-1) && (applegcr_lastsector==-1))
       {
         // Only lower side was readable
         printf("Single-sided disk assumed, only found data on side 0\n");
@@ -993,6 +1017,7 @@ int main(int argc,char **argv)
     unsigned int fmsectors=diskstore_countsectormod(MODFM);
     unsigned int mfmsectors=diskstore_countsectormod(MODMFM);
     unsigned int gcrsectors=diskstore_countsectormod(MODGCR);
+    unsigned int applegcrsectors=diskstore_countsectormod(MODAPPLEGCR);
 
     diskstore_dumpsectorlist();
 
@@ -1011,6 +1036,7 @@ int main(int argc,char **argv)
     printf("FM sectors found %u\n", fmsectors);
     printf("MFM sectors found %u\n", mfmsectors);
     printf("GCR sectors found %u\n", gcrsectors);
+    printf("Apple GCR sectors found %u\n", applegcrsectors);
 
     printf("Detected density : ");
     if ((mod_density&MOD_DENSITYFMSD)!=0) printf("SD ");
