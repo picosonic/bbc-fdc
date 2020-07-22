@@ -52,6 +52,9 @@
 int applegcr_state=APPLEGCR_IDLE; // state machine
 uint32_t applegcr_datacells; // 32 bit sliding buffer
 int applegcr_bits=0; // Number of used bits within sliding buffer
+float applegcr_defaultwindow; // Number of samples in window
+float applegcr_threshold01; // Number of samples for an 01
+float applegcr_threshold001; // Number of samples for an 001
 
 // Most recent address mark
 unsigned long applegcr_idpos, applegcr_blockpos;
@@ -395,10 +398,10 @@ void applegcr_addsample(const unsigned long samples, const unsigned long datapos
   //   4us, 8us and 12us
   //   1, 01, 001
 
-  if (samples>125)
+  if (samples>applegcr_threshold001)
     applegcr_addbit(0, datapos);
 
-  if (samples>75)
+  if (samples>applegcr_threshold01)
     applegcr_addbit(0, datapos);
 
   applegcr_addbit(1, datapos);
@@ -407,6 +410,10 @@ void applegcr_addsample(const unsigned long samples, const unsigned long datapos
 void applegcr_init(const int debug, const char density)
 {
   applegcr_debug=debug;
+
+  applegcr_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)APPLEGCR_BITCELL;
+  applegcr_threshold01=applegcr_defaultwindow*1.5;
+  applegcr_threshold001=applegcr_defaultwindow*2.5;
 
   // Set up Apple GCR parser
   applegcr_state=APPLEGCR_IDLE;

@@ -12,6 +12,8 @@
 
 #define APPLEGCR_SECTORLEN 256
 
+#define APPLEGCR_BITCELL 4
+
 extern int applegcr_idamtrack, applegcr_idamsector;
 extern int applegcr_lasttrack, applegcr_lastsector;
 
