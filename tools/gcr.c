@@ -316,7 +316,7 @@ void gcr_addbit(const unsigned char bit, const unsigned long datapos)
         if (gcr_datacells==0xff52) // ID
         {
           if (gcr_debug)
-            fprintf(stderr, "GCR ID @ 0x%lx\n", datapos);
+            fprintf(stderr, "[%lx] GCR ID\n", datapos);
 
           gcr_gcrlen=0;
           gcr_addgcr(gcr_datacells & 0xff);
@@ -335,7 +335,7 @@ void gcr_addbit(const unsigned char bit, const unsigned long datapos)
         if (gcr_datacells==0xff55) // DATA
         {
           if (gcr_debug)
-            fprintf(stderr, "GCR DATA @ 0x%lx\n", datapos);
+            fprintf(stderr, "[%lx] GCR DATA\n", datapos);
 
           gcr_gcrlen=0;
           gcr_addgcr(gcr_datacells & 0xff);

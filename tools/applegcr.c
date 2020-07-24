@@ -230,7 +230,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
         {
           case 0xd5aab5: // Address field / DOS 3.2
             if (applegcr_debug)
-              fprintf(stderr, "Found a [%.2X] D5 AA B5, DOS 3.2 (5/3) ID @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
+              fprintf(stderr, "[%lx] Found a [%.2X] D5 AA B5, DOS 3.2 (5/3) ID\n", datapos, (applegcr_datacells&0xff000000)>>24);
 
             applegcr_datamode=APPLEGCR_DATA_53;
             applegcr_state=APPLEGCR_ID;
@@ -245,7 +245,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
 
           case 0xd5aa96: // Address field / DOS 3.3
             if (applegcr_debug)
-              fprintf(stderr, "Found a [%.2X] D5 AA 96, DOS 3.3 (6/2) ID @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
+              fprintf(stderr, "[%lx] Found a [%.2X] D5 AA 96, DOS 3.3 (6/2) ID\n", datapos, (applegcr_datacells&0xff000000)>>24);
 
             applegcr_datamode=APPLEGCR_DATA_62;
             applegcr_state=APPLEGCR_ID;
@@ -260,7 +260,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
 
           case 0xd5aaad: // Data field / 342+1 bytes encoded as 6 and 2
             if (applegcr_debug)
-              fprintf(stderr, "Found a [%.2X] D5 AA AD, DATA @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
+              fprintf(stderr, "[%lx] Found a [%.2X] D5 AA AD, DATA\n", datapos, (applegcr_datacells&0xff000000)>>24);
 
             applegcr_state=APPLEGCR_DATA;
             applegcr_bytelen=0; applegcr_bits=0;
@@ -270,27 +270,27 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
 
           case 0xdeaaeb: // Epilogue
             if (applegcr_debug)
-              fprintf(stderr, "Found a DE AA EB, EPILOGUE @ %ld\n", datapos);
+              fprintf(stderr, "[%lx] Found a DE AA EB, EPILOGUE\n", datapos);
             break;
 
           case 0xd4aab7: // Address field / 13 sector / non-standard
             if (applegcr_debug)
-              fprintf(stderr, "Found a [%.2X] D4 AA B7, non-standard ID @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
+              fprintf(stderr, "[%lx] Found a [%.2X] D4 AA B7, non-standard ID\n", datapos, (applegcr_datacells&0xff000000)>>24);
             break;
 
           case 0xd4aa96: // Address field / 16 sector / non-standard
             if (applegcr_debug)
-              fprintf(stderr, "Found a [%.2X] D4 AA 96, non-standard ID @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
+              fprintf(stderr, "[%lx] Found a [%.2X] D4 AA 96, non-standard ID\n", datapos, (applegcr_datacells&0xff000000)>>24);
             break;
 
           case 0xd5bbcf: // Data field non-standard
             if (applegcr_debug)
-              fprintf(stderr, "Found a [%.2X] D5 BB CF, non-standard DATA @ %ld\n", (applegcr_datacells&0xff000000)>>24, datapos);
+              fprintf(stderr, "[%lx] Found a [%.2X] D5 BB CF, non-standard DATA\n", datapos, (applegcr_datacells&0xff000000)>>24);
             break;
 
           case 0xdaaaeb: // Epilogue non-standard
             if (applegcr_debug)
-              fprintf(stderr, "Found a DA AA EB, non-standard EPILOGUE @ %ld\n", datapos);
+              fprintf(stderr, "[%lx] Found a DA AA EB, non-standard EPILOGUE\n", datapos);
             break;
 
           default:
