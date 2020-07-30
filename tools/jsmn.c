@@ -20,13 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 Software from : https://github.com/zserge/jsmn
-Date of last change : 1st Oct 2016
+Date of last change : 2nd Oct 2018
 */
 
 #include "jsmn.h"
 
 /**
- * Allocates a fresh unused token from the token pull.
+ * Allocates a fresh unused token from the token pool.
  */
 static jsmntok_t *jsmn_alloc_token(jsmn_parser *parser,
 		jsmntok_t *tokens, size_t num_tokens) {
