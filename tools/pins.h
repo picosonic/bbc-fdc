@@ -25,12 +25,12 @@
 #endif
 
 // Try to detect BCM2837, based on information at https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
-#if defined (REV_a02082) || defined(REV_a020a0) || defined(REV_a22042) || defined(REV_a22082) || defined(REV_a32082) || defined(REV_a52082) || defined(REV_a020d3) || defined(REV_9020e0) || defined(REV_a220a0) || defined(REV_a22083) || defined(REV_a02100)
+#if defined(REV_9020e0) || defined (REV_a02082) || defined(REV_a020a0) || defined(REV_a020d3) || defined(REV_a02042) || defined(REV_a22042) || defined(REV_a22082) || defined(REV_a220a0) || defined(REV_a32082) || defined(REV_a52082) || defined(REV_a22083) || defined(REV_a02100)
   #define HAS_BCM2837 1
 #endif
 
 // Try to detect BCM2711, based on information at https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
-#if defined (REV_a03111) || defined(REV_b03111) || defined(REV_c03111) || defined(REV_c03112)
+#if defined (REV_a03111) || defined(REV_b03111) || defined(REV_b03112) || defined(REV_c03111) || defined(REV_c03112) || defined(REV_d03114)
   #define HAS_BCM2711 1
 #endif
 
