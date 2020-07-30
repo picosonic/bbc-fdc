@@ -36,6 +36,9 @@ case "$1" in
       4)
         ramsize="4096"
         ;;
+      5)
+        ramsize="8192"
+        ;;
       *)
         ramsize="UNKNOWN"
         ;;
