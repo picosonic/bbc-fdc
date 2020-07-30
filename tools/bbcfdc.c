@@ -818,7 +818,7 @@ int main(int argc,char **argv)
             rfi_writetrack(rawdata, i, side, hw_measurerpm(), "rle", samplebuffer, samplebuffsize);
 
           if (outputtype==IMAGEDFI)
-            dfi_writetrack(rawdata, i, side, samplebuffer, samplebuffsize);
+            dfi_writetrack(rawdata, i, side, samplebuffer, samplebuffsize, ROTATIONS);
         }
       }
     } // side loop
@@ -1043,6 +1043,7 @@ int main(int argc,char **argv)
     if ((mod_density&MOD_DENSITYMFMDD)!=0) printf("DD ");
     if ((mod_density&MOD_DENSITYMFMHD)!=0) printf("HD ");
     if ((mod_density&MOD_DENSITYMFMED)!=0) printf("ED ");
+    if ((mod_density&MOD_DENSITYAPPLEGCR)!=0) printf("APPLEGCR ");
     if (mod_density==MOD_DENSITYAUTO) printf("Unknown density ");
     printf("\n");
 

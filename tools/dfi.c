@@ -79,7 +79,7 @@ void dfi_writeheader(FILE *dfifile)
 }
 
 // DFE2 encode raw binary sample data
-unsigned long dfi_encodedata(unsigned char *buffer, const unsigned long maxdfilen, const unsigned char *rawtrackdata, const unsigned long rawdatalength)
+unsigned long dfi_encodedata(unsigned char *buffer, const unsigned long maxdfilen, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const unsigned int rotations)
 {
   unsigned long dfilen=0;
   unsigned char c;
@@ -127,10 +127,14 @@ unsigned long dfi_encodedata(unsigned char *buffer, const unsigned long maxdfile
     }
   }
 
+  // Simulate an index pulse for each rotation
+  for (i=0; i<rotations; i++)
+    buffer[(dfilen/(rotations+1))*i]|=0x80;
+
   return dfilen;
 }
 
-void dfi_writetrack(FILE *dfifile, const int track, const int side, const unsigned char *rawtrackdata, const unsigned long rawdatalength)
+void dfi_writetrack(FILE *dfifile, const int track, const int side, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const unsigned int rotations)
 {
   unsigned char trackheader[10];
   unsigned char *dfidata;
@@ -156,7 +160,7 @@ void dfi_writetrack(FILE *dfifile, const int track, const int side, const unsign
   dfidata=malloc(rawdatalength);
   if (dfidata==NULL) return;
 
-  dfidatalength=dfi_encodedata(dfidata, rawdatalength, rawtrackdata, rawdatalength);
+  dfidatalength=dfi_encodedata(dfidata, rawdatalength, rawtrackdata, rawdatalength, rotations);
   if (dfidatalength==0)
   {
     free(dfidata);
