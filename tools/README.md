@@ -44,7 +44,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
  
  * bcm2835 library, available from [http://www.airspayce.com/mikem/bcm2835/](http://www.airspayce.com/mikem/bcm2835/)
 
-*NOTE : bcm2835 library doesn't work on Raspberry Pi 4*
+*NOTE : For bcm2835 library to work on Raspberry Pi 4 you should get the latest version (I've not tested it past Pi 3B+ yet)*
 
 # drivetest
 drivetest - Floppy disk drive testing tool
