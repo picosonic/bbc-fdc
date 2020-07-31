@@ -9,6 +9,7 @@
 #define MOD_DENSITYMFMDD 2
 #define MOD_DENSITYMFMHD 4
 #define MOD_DENSITYMFMED 8
+#define MOD_DENSITYAPPLEGCR 16
 
 extern unsigned long mod_datapos;
 extern unsigned long mod_samplesize;

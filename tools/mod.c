@@ -159,6 +159,15 @@ int mod_haspeak(const float ms)
 
 void mod_checkdensity()
 {
+  // APPLE GCR
+  // 1=4ms, 01=8ms, 001=12ms
+  if ((mod_haspeak(4)+mod_haspeak(8)+mod_haspeak(12))==3)
+  {
+    mod_density|=MOD_DENSITYAPPLEGCR;
+
+    return;
+  }
+
   // MFM ED
   // 01=1ms, 001=1.5ms, 0001=2ms
   if ((mod_haspeak(1)+mod_haspeak(1.5)+mod_haspeak(2))==3)
