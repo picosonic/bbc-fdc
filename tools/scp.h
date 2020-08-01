@@ -3,8 +3,15 @@
 
 #include <stdio.h>
 
-extern void scp_writeheader(FILE *scpfile);
+#define SCP_MAGIC "SCP"
+#define SCP_VERSION 0x22
 
-extern void scp_writetrack(FILE *scpfile, const int track, const int side, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const unsigned int rotations);
+#define SCP_TRACK "TRK"
+
+extern void scp_writeheader(FILE *scpfile, const unsigned int rotations, const unsigned int starttrack, const unsigned int endtrack, const float rpm, const unsigned int sides);
+
+extern void scp_writetrack(FILE *scpfile, const int track, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const unsigned int rotations);
+
+extern void scp_finalise(FILE *scpfile, const unsigned int endtrack);
 
 #endif

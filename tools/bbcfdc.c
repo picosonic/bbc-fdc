@@ -661,7 +661,7 @@ int main(int argc,char **argv)
         break;
 
       case IMAGESCP:
-        scp_writeheader(rawdata);
+        scp_writeheader(rawdata, ROTATIONS, 0, (drivetracks/hw_stepping)*sides, hw_measurerpm(), sides);
         break;
 
       default:
@@ -851,7 +851,7 @@ int main(int argc,char **argv)
               break;
 
             case IMAGESCP:
-              scp_writetrack(rawdata, i, side, samplebuffer, samplebuffsize, ROTATIONS);
+              scp_writetrack(rawdata, ((i/hw_stepping)*sides)+side, samplebuffer, samplebuffsize, ROTATIONS);
               break;
 
             default:
@@ -1029,6 +1029,13 @@ int main(int argc,char **argv)
     }
     else
       printf("Unknown output format\n");
+  }
+
+  // Finalise disk images
+  if (rawdata!=NULL)
+  {
+    if (outputtype==IMAGESCP)
+      scp_finalise(rawdata, (drivetracks/hw_stepping)*sides);
   }
 
   // Close disk image files (if open)
