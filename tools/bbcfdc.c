@@ -8,6 +8,7 @@
 #include "hardware.h"
 #include "diskstore.h"
 #include "dfi.h"
+#include "scp.h"
 #include "adfs.h"
 #include "amigamfm.h"
 #include "applegcr.h"
@@ -660,7 +661,7 @@ int main(int argc,char **argv)
         break;
 
       case IMAGESCP:
-        // TODO
+        scp_writeheader(rawdata);
         break;
 
       default:
@@ -850,7 +851,7 @@ int main(int argc,char **argv)
               break;
 
             case IMAGESCP:
-              // TODO
+              scp_writetrack(rawdata, i, side, samplebuffer, samplebuffsize, ROTATIONS);
               break;
 
             default:
