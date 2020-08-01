@@ -5,9 +5,9 @@
 #include "hardware.h"
 #include "pins.h"
 
-int hw_maxtracks = HW_MAXTRACKS;
-int hw_currenttrack = 0;
-int hw_currenthead = 0;
+unsigned int hw_maxtracks = HW_MAXTRACKS;
+unsigned int hw_currenttrack = 0;
+unsigned int hw_currenthead = 0;
 unsigned long hw_samplerate = 0;
 float hw_rpm = HW_DEFAULTRPM;
 
