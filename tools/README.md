@@ -17,9 +17,9 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
  * `-i` Specify input **.rfi** file (when not being run on RPi hardware)
  * `-c` Catalogue the disk contents (DFS/ADFS/DOS only)
- * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .ssd, .dsd, .fsd, .td0, .img, .adf)
+ * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .ssd, .dsd, .fsd, .td0, .img, .adf)
  * `-spidiv` Specify SPI clock divider to adjust sample rate (one of 16,32,64)
- * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi or .raw)
+ * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi, .dfi, .scp or .raw)
  * `-l` Show a layout diagram of where sectors were found upon the disk surface for each track/side
  * `-ss` Force single-sided capture
  * `-ds` Force double-sided capture (unless output is to .ssd)

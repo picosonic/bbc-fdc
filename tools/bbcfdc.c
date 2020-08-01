@@ -36,6 +36,7 @@
 #define IMAGEDFI 5
 #define IMAGEIMG 6
 #define IMAGETD0 7
+#define IMAGESCP 8
 
 // Used for values which can be overriden
 #define AUTODETECT -1
@@ -357,6 +358,18 @@ int main(int argc,char **argv)
         else
           printf("Unable to save dfi image\n");
       }
+      else
+      if (strstr(argv[argn], ".scp")!=NULL)
+      {
+        rawdata=fopen(argv[argn], "w+");
+        if (rawdata!=NULL)
+        {
+          capturetype=DISKRAW;
+          outputtype=IMAGESCP;
+        }
+        else
+          printf("Unable to save scp image\n");
+      }
     }
 #ifdef NOPI
     else
@@ -633,14 +646,26 @@ int main(int argc,char **argv)
     sides=2;
   }
 
-  // Write RFI header when doing raw capture
+  // Write header when doing raw capture
   if (capturetype==DISKRAW)
   {
-    if (outputtype==IMAGERAW)
-      rfi_writeheader(rawdata, drivetracks, sides, hw_samplerate, hw_writeprotected());
+    switch (outputtype)
+    {
+      case IMAGERAW:
+        rfi_writeheader(rawdata, drivetracks, sides, hw_samplerate, hw_writeprotected());
+        break;
 
-    if (outputtype==IMAGEDFI)
-      dfi_writeheader(rawdata);
+      case IMAGEDFI:
+        dfi_writeheader(rawdata);
+        break;
+
+      case IMAGESCP:
+        // TODO
+        break;
+
+      default:
+        break;
+    }
   }
 
   // Start at track 0
@@ -814,11 +839,23 @@ int main(int argc,char **argv)
         // Write the raw sample data if required
         if (rawdata!=NULL)
         {
-          if (outputtype==IMAGERAW)
-            rfi_writetrack(rawdata, i, side, hw_measurerpm(), "rle", samplebuffer, samplebuffsize);
+          switch (outputtype)
+          {
+            case IMAGERAW:
+              rfi_writetrack(rawdata, i, side, hw_measurerpm(), "rle", samplebuffer, samplebuffsize);
+              break;
 
-          if (outputtype==IMAGEDFI)
-            dfi_writetrack(rawdata, i, side, samplebuffer, samplebuffsize, ROTATIONS);
+            case IMAGEDFI:
+              dfi_writetrack(rawdata, i, side, samplebuffer, samplebuffsize, ROTATIONS);
+              break;
+
+            case IMAGESCP:
+              // TODO
+              break;
+
+            default:
+              break;
+          }
         }
       }
     } // side loop
