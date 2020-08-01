@@ -283,10 +283,10 @@ int diskstore_addsector(const unsigned char modulation, const unsigned char phys
   if ((diskstore_maxhead==-1) || (physical_head>diskstore_maxhead))
     diskstore_maxhead=physical_head;
 
-  if ((diskstore_minsectorsize==-1) || (datasize<diskstore_minsectorsize))
+  if ((diskstore_minsectorsize==-1) || (datasize<(unsigned int)diskstore_minsectorsize))
     diskstore_minsectorsize=datasize;
 
-  if ((diskstore_maxsectorsize==-1) || (datasize>diskstore_maxsectorsize))
+  if ((diskstore_maxsectorsize==-1) || (datasize>(unsigned int)diskstore_maxsectorsize))
     diskstore_maxsectorsize=datasize;
 
   if ((diskstore_maxsectorid==-1) || (logical_sector>diskstore_maxsectorid))
@@ -457,7 +457,7 @@ void diskstore_absoluteseek(const unsigned long offset, const int interlacing, c
   diskoffs=offset;
 
   // Convert absolute offset to C/H/S/sector offset
-  while (diskoffs>=diskstore_minsectorsize)
+  while (diskoffs>=(unsigned int)diskstore_minsectorsize)
   {
     diskstore_abssecoffs+=diskstore_minsectorsize;
     diskoffs-=diskstore_minsectorsize;

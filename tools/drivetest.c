@@ -111,7 +111,7 @@ int main(int argc,char **argv)
   // Determine the number of tracks we can seek to
   if (counttracks)
   {
-    int numtracks;
+    unsigned int numtracks;
 
     // Start from track zero
     hw_seektotrackzero();

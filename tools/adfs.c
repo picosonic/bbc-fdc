@@ -29,8 +29,11 @@ unsigned long adfs_readval(unsigned char *p, int len)
   switch (len)
   {
     case 4:  val |= p[3] << 24;
+    // fall through
     case 3:  val |= p[2] << 16;
+    // fall through
     case 2:  val |= p[1] << 8;
+    // fall through
     default: val |= p[0];
   }
 
@@ -312,7 +315,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
     }
 
     // Print filename padded to 10 characters
-    printf("%s%*s", filename, 10-strlen(filename), "");
+    printf("%s%*s", filename, (int)(10-strlen(filename)), "");
 
     // Extract object attributes
     if (dirtype==ADFS_NEWDIR)
@@ -625,7 +628,7 @@ void adfs_readnewmap(const unsigned char idlen, const unsigned int bytespermapbi
 
   if (adfs_debug)
   {
-    printf("Granularity: %d, map bytes %u\n", (sectorsize>bytespermapbit)?sectorsize:bytespermapbit, mapbytes);
+    printf("Granularity: %ld, map bytes %u\n", (sectorsize>bytespermapbit)?sectorsize:bytespermapbit, mapbytes);
 
     printf("Zone %u/%d @ %lx, %u allocation bytes\n", zone, nzones, diskstore_absoffset, zoneread);
   }

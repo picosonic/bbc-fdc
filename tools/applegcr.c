@@ -117,7 +117,7 @@ unsigned char applegcr_calc_eor(unsigned char *buff, unsigned int len)
 {
   unsigned char result;
   unsigned char decoded;
-  int i;
+  unsigned int i;
 
   result=0;
   for (i=0; i<(len/2); i++)

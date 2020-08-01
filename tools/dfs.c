@@ -213,8 +213,8 @@ void dfs_showinfo(const int head)
     printf("\n");
   }
 
-  printf("Total disk usage : %lu bytes (%d%% of disk)\n", (unsigned long)totalusage, (totalusage*100)/(totalsize-(2*DFS_SECTORSIZE)));
-  printf("Remaining catalogue space : %d files, %d unused disk sectors\n", DFS_MAXFILES-numfiles, (((sector1->data[6]&0x03)<<8) | (sector1->data[7])) - sectorusage);
+  printf("Total disk usage : %lu bytes (%ld%% of disk)\n", (unsigned long)totalusage, (totalusage*100)/(totalsize-(2*DFS_SECTORSIZE)));
+  printf("Remaining catalogue space : %d files, %ld unused disk sectors\n", DFS_MAXFILES-numfiles, (((sector1->data[6]&0x03)<<8) | (sector1->data[7])) - sectorusage);
 }
 
 // Test for valid DFS catalogue, checks from http://beebwiki.mdfs.net/Acorn_DFS_disc_format

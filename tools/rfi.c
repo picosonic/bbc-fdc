@@ -412,7 +412,7 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
           blen=0; s=0;
           fread(rlebuff, rfi_trackdatalen, 1, rfifile);
 
-          for (i=0; i<rfi_trackdatalen; i++)
+          for (i=0; (unsigned int)i<rfi_trackdatalen; i++)
           {
             // Extract next RLE value
             c=rlebuff[i];
