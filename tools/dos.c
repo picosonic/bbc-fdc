@@ -337,40 +337,48 @@ void dos_showinfo(const unsigned int disktracks, const unsigned int debug)
   printf("Media type: %.2x", biosparams->mediatype);
   switch (biosparams->mediatype)
   {
+    case 0xe5:
+      printf(" [250K 8-inch, 1-sided, 77-track, 26-sector]");
+      break;
+
+    case 0xed:
+      printf(" [720K 5.25-inch, 2-sided, 80-track, 9-sector]");
+      break;
+
     case 0xf0:
-      printf(" [2.88MB 3.5-inch, 2-sided, 36-sector or 1.44MB 3.5-inch, 2-sided, 18-sector]");
+      printf(" [2.88MB 3.5-inch, 2-sided, 80-track, 36-sector or 1.44MB 3.5-inch, 2-sided, 80-track, 18-sector]");
       break;
 
     case 0xf8:
-      printf(" [Hard disk]");
+      printf(" [Hard disk or 360K 3.5-inch, 1-sided, 80-track, 9-sector or 720K 5.25-inch, 2-sided, 80-track, 9-sector]");
       break;
 
     case 0xf9:
-      printf(" [720K 3.5-inch, 2-sided, 9-sector or 1.2 MB 5.25-inch, 2-sided, 15-sector]");
+      printf(" [720K 3.5-inch, 2-sided, 80-track, 9-sector or 1.44MB 3.5-inch, 2-sided, 80-track, 18-sector or 1.2 MB 5.25-inch, 2-sided, 80-track, 15-sector]");
       break;
 
     case 0xfa:
-      printf(" [320K 5.25-inch or 3.5-inch, 1-sided, 8-sector]");
+      printf(" [320K 5.25-inch or 3.5-inch, 1-sided, 80-track, 8-sector]");
       break;
 
     case 0xfb:
-      printf(" [640K 5.25-inch or 3.5-inch, 2-sided, 8-sector]");
+      printf(" [640K 5.25-inch or 3.5-inch, 2-sided, 80-track, 8-sector]");
       break;
 
     case 0xfc:
-      printf(" [180K 5.25-inch, 1-sided, 9-sector]");
+      printf(" [180K 5.25-inch, 1-sided, 40-track, 9-sector]");
       break;
 
     case 0xfd:
-      printf(" [360K 5.25-inch, 2-sided, 9-sector or 500K 8-inch, 2-sided, single-density]");
+      printf(" [360K 5.25-inch, 2-sided, 40-track, 9-sector or 500K 8-inch, 2-sided, 77-track, single-density, 26 sector]");
       break;
 
     case 0xfe:
-      printf(" [160K 5.25-inch, 1-sided, 8-sector or 250K 8-inch, 1-sided, single-density or 1.2 MB 8-inch, 2-sided, double-density]");
+      printf(" [160K 5.25-inch, 1-sided, 40-track, 8-sector or 250K 8-inch, 1-sided, 77-track, single-density, 26-sector or 1.2 MB 8-inch, 2-sided, 77-track, 8-sector, double-density]");
       break;
 
     case 0xff:
-      printf(" [320K 5.25-inch, 2-sided, 8-sector]");
+      printf(" [320K 5.25-inch, 2-sided, 40-track, 8-sector]");
       break;
 
     default:
