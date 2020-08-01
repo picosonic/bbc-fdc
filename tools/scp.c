@@ -1,3 +1,6 @@
+#include <time.h>
+#include <sys/time.h>
+
 #include "scp.h"
 
 /*
@@ -300,7 +303,17 @@ void scp_writetrack(FILE *scpfile, const int track, const unsigned char *rawtrac
 
 void scp_finalise(FILE *scpfile, const unsigned int endtrack)
 {
-  // TODO write timestamp
+  struct tm tim;
+  struct timeval tv;
+
+  if (scpfile==NULL) return;
+
+  // Write timestamp
+  gettimeofday(&tv, NULL);
+  localtime_r(&tv.tv_sec, &tim);
+
+  fprintf(scpfile, "%02d/%02d/%d %02d:%02d:%02d", tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900, tim.tm_hour, tim.tm_min, tim.tm_sec);
+
 
   // TODO write optional footer
 
