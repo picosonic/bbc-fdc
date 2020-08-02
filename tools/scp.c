@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
 
@@ -290,7 +291,14 @@ void scp_writeheader(FILE *scpfile, const unsigned int rotations, const unsigned
 
 void scp_writetrack(FILE *scpfile, const int track, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const unsigned int rotations)
 {
+  long scppos;
+  long scpdatapos;
+  unsigned int i;
+
   if (scpfile==NULL) return;
+
+  // Remember where this track starts TODO cache this for adding to track offsets table in header
+  scppos=ftell(scpfile);
 
   // Track ID
   fprintf(scpfile, "%s", SCP_TRACK);
@@ -299,6 +307,18 @@ void scp_writetrack(FILE *scpfile, const int track, const unsigned char *rawtrac
   fprintf(scpfile, "%c", track);
 
   // TODO
+  for (i=0; i<rotations; i++)
+  {
+    // Index time
+    fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
+
+    // Track length (in bitcells)
+    fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
+
+    scpdatapos=(ftell(scpfile)+4)-scppos;
+    // Data offset for track flux (from start of track)
+    fprintf(scpfile, "%c%c%c%c", (unsigned char)(scpdatapos&0xff000000)>>24, (unsigned char)(scpdatapos&0xff0000)>>16, (unsigned char)(scpdatapos&0xff00)>>8, (unsigned char)scpdatapos&0xff);
+  }
 }
 
 void scp_finalise(FILE *scpfile, const unsigned int endtrack)
