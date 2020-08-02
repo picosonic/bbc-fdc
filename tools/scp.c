@@ -269,7 +269,7 @@ void scp_writeheader(FILE *scpfile, const unsigned int rotations, const unsigned
   fprintf(scpfile, "%c%c%c", rotations, starttrack, endtrack);
 
   // Flags
-  fprintf(scpfile, "%c", ((rpm>330)?0x4:0x0) | ((endtrack>40)?0x02:0x0) | 0x1); // TODO add 0x20 when footer added
+  fprintf(scpfile, "%c", ((rpm>330)?SCP_FLAGS_360RPM:0x0) | ((endtrack>40)?SCP_FLAGS_96TPI:0x0) | SCP_FLAGS_INDEX); // TODO add 0x20 when footer added
 
   // Bit cell encoding ??
   fprintf(scpfile, "%c", 0x00);
