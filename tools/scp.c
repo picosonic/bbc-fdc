@@ -269,10 +269,10 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
 
   // Magic and version
   memcpy(header.magic, SCP_MAGIC, sizeof(header.magic));
-  header.version=SCP_VERSION;
+  header.version=SCP_VERSION; // Or 0x00 if footer used
 
   // Disk type ??
-  header.disktype=SCP_TYPE_OTHER | 0x05;
+  header.disktype=SCP_MAN_OTHER | SCP_DISK_144M;
 
   // Rotations captures, start and end tracks (multiplied by sides)
   header.revolutions=rotations;
@@ -282,7 +282,7 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   // Flags
   header.flags=((rpm>330)?SCP_FLAGS_360RPM:0x0) | ((endtrack>44)?SCP_FLAGS_96TPI:0x0) | SCP_FLAGS_INDEX; // TODO add 0x20 if footer added
 
-  // Bit cell encoding ??
+  // Bit cell encoding - for future expansion, so always 0x00 for now
   header.bitcellencoding=0x00;
 
   // Sides / Heads
@@ -302,6 +302,8 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   if (scp_trackoffsets==NULL) return;
 
   scp_endofheader=ftell(scpfile);
+
+  // TODO it looks like this always contains the full 168 entries, unused ones are blank, every other blank for single sided
 
   // Blank offsets to tracks - to be filled in later
   for (i=0; i<endtrack; i++)
@@ -340,6 +342,8 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
     // Data offset for track flux (from start of track)
     fprintf(scpfile, "%c%c%c%c", (unsigned char)(scpdatapos&0xff000000)>>24, (unsigned char)(scpdatapos&0xff0000)>>16, (unsigned char)(scpdatapos&0xff00)>>8, (unsigned char)scpdatapos&0xff);
   }
+
+  // TODO note flux data in big endian format
 }
 
 void scp_finalise(FILE *scpfile, const uint8_t endtrack)
