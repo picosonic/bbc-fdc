@@ -10,6 +10,7 @@ checktdo
 *.raw
 *.rfi
 *.dfi
+*.scp
 
 # BBC Micro DFS images
 *.ssd
