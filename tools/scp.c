@@ -272,7 +272,7 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   header.version=SCP_VERSION;
 
   // Disk type ??
-  header.disktype=0x85;
+  header.disktype=SCP_TYPE_OTHER | 0x05;
 
   // Rotations captures, start and end tracks (multiplied by sides)
   header.revolutions=rotations;
@@ -286,7 +286,7 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   header.bitcellencoding=0x00;
 
   // Sides / Heads
-  header.heads=sides;
+  header.heads=(sides==2)?0:1;
 
   // Capture resolution, default is 80ns, which has closest SCP multiplier of 75ns
   header.resolution=2; // TODO determine best value for this
@@ -367,4 +367,6 @@ void scp_finalise(FILE *scpfile, const uint8_t endtrack)
   }
 
   // TODO update 32bit checksum
+  // fseek()
+  // fwrite()
 }
