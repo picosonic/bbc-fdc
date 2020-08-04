@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 #include <time.h>
 #include <sys/time.h>
 
@@ -254,35 +256,43 @@ From : https://www.cbmstuff.com/downloads/scp/scp_image_specs.txt
 
 */
 
-void scp_writeheader(FILE *scpfile, const unsigned int rotations, const unsigned int starttrack, const unsigned int endtrack, const float rpm, const unsigned int sides)
+void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t starttrack, const uint8_t endtrack, const float rpm, const uint8_t sides)
 {
   unsigned int i;
+  struct scp_header header;
 
   if (scpfile==NULL) return;
 
   // Magic and version
-  fprintf(scpfile, "%s%c", SCP_MAGIC, SCP_VERSION);
+  memcpy(header.magic, SCP_MAGIC, sizeof(header.magic));
+  header.version=SCP_VERSION;
 
   // Disk type ??
-  fprintf(scpfile, "%c", 0x85);
+  header.disktype=0x85;
 
   // Rotations captures, start and end tracks (multiplied by sides)
-  fprintf(scpfile, "%c%c%c", rotations, starttrack, endtrack);
+  header.revolutions=rotations;
+  header.starttrack=starttrack;
+  header.endtrack=endtrack;
 
   // Flags
-  fprintf(scpfile, "%c", ((rpm>330)?SCP_FLAGS_360RPM:0x0) | ((endtrack>40)?SCP_FLAGS_96TPI:0x0) | SCP_FLAGS_INDEX); // TODO add 0x20 when footer added
+  header.flags=((rpm>330)?SCP_FLAGS_360RPM:0x0) | ((endtrack>40)?SCP_FLAGS_96TPI:0x0) | SCP_FLAGS_INDEX; // TODO add 0x20 if footer added
 
   // Bit cell encoding ??
-  fprintf(scpfile, "%c", 0x00);
+  header.bitcellencoding=0x00;
 
   // Sides / Heads
-  fprintf(scpfile, "%c", sides);
+  header.heads=sides;
 
   // Capture resolution, default is 80ns, which has closest SCP multiplier of 75ns
-  fprintf(scpfile, "%c", 2); // TODO determine best value for this
+  header.resolution=2; // TODO determine best value for this
 
   // Blank checksum  - to be filled in later (calculated from next byte to EOF)
-  fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
+  header.checksum=0x0;
+
+  fwrite(&header, 1, sizeof(header), scpfile);
+
+  //////////////////
 
   // Blank offsets to tracks - to be filled in later
   for (i=0; i<endtrack; i++)
