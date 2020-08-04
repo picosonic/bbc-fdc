@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
@@ -256,6 +257,9 @@ From : https://www.cbmstuff.com/downloads/scp/scp_image_specs.txt
 
 */
 
+uint32_t *scp_trackoffsets=NULL;
+long scp_endofheader=0;
+
 void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t starttrack, const uint8_t endtrack, const float rpm, const uint8_t sides)
 {
   unsigned int i;
@@ -276,7 +280,7 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   header.endtrack=endtrack;
 
   // Flags
-  header.flags=((rpm>330)?SCP_FLAGS_360RPM:0x0) | ((endtrack>40)?SCP_FLAGS_96TPI:0x0) | SCP_FLAGS_INDEX; // TODO add 0x20 if footer added
+  header.flags=((rpm>330)?SCP_FLAGS_360RPM:0x0) | ((endtrack>44)?SCP_FLAGS_96TPI:0x0) | SCP_FLAGS_INDEX; // TODO add 0x20 if footer added
 
   // Bit cell encoding ??
   header.bitcellencoding=0x00;
@@ -292,23 +296,30 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
 
   fwrite(&header, 1, sizeof(header), scpfile);
 
-  //////////////////
+  // Prepare for storing track offsets, and created space to store them in file
+  scp_trackoffsets=malloc(sizeof(uint32_t) * (endtrack+1));
+
+  if (scp_trackoffsets==NULL) return;
+
+  scp_endofheader=ftell(scpfile);
 
   // Blank offsets to tracks - to be filled in later
   for (i=0; i<endtrack; i++)
     fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
 }
 
-void scp_writetrack(FILE *scpfile, const int track, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const unsigned int rotations)
+void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const uint8_t rotations)
 {
   long scppos;
   long scpdatapos;
   unsigned int i;
 
   if (scpfile==NULL) return;
+  if (scp_trackoffsets==NULL) return;
 
-  // Remember where this track starts TODO cache this for adding to track offsets table in header
+  // Remember where this track starts and cache this for adding to track offsets table in header
   scppos=ftell(scpfile);
+  scp_trackoffsets[track]=scppos;
 
   // Track ID
   fprintf(scpfile, "%s", SCP_TRACK);
@@ -331,7 +342,7 @@ void scp_writetrack(FILE *scpfile, const int track, const unsigned char *rawtrac
   }
 }
 
-void scp_finalise(FILE *scpfile, const unsigned int endtrack)
+void scp_finalise(FILE *scpfile, const uint8_t endtrack)
 {
   struct tm tim;
   struct timeval tv;
@@ -347,7 +358,13 @@ void scp_finalise(FILE *scpfile, const unsigned int endtrack)
 
   // TODO write optional footer
 
-  // TODO update track data offsets
+  // update track data offsets table
+  if (scp_trackoffsets!=NULL)
+  {
+    fseek(scpfile, scp_endofheader, SEEK_SET);
+    fwrite(scp_trackoffsets, 1, endtrack*sizeof(uint32_t), scpfile);
+    free(scp_trackoffsets);
+  }
 
   // TODO update 32bit checksum
 }
