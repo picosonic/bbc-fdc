@@ -1,11 +1,11 @@
 # bbc-fdc
 Floppy disk interface for Raspberry Pi
 
-This project is to allow the direct connection of floppy disk drives with 34-pin [Shugart bus](https://en.wikipedia.org/wiki/Shugart_bus) ribbon cables to the Raspberry Pi for the purpose of reading floppy disks.
+This project is to allow the direct connection of floppy disk drives with 34-pin [Shugart bus](https://en.wikipedia.org/wiki/Shugart_bus) ribbon cables to the [Raspberry Pi](https://www.raspberrypi.org/) for the purpose of reading floppy disks.
 
 It controls the drive using GPIO and samples the read data pin using SPI to obtain a forensic level capture of the raw magnetic flux transitions on the floppy disk.
 
-Initially this was created to read my BBC Micro 5.25 inch disks formatted in Acorn DFS, but I've also been able to read and extract data from Acorn ADFS, MS-DOS, Commodore 64 and Apple II 5.25 inch disks.
+Initially this was created to read my BBC Micro 5.25 inch disks formatted in [Acorn DFS](http://beebwiki.mdfs.net/Acorn_DFS_disc_format), but I've also been able to read and extract data from Acorn ADFS, MS-DOS, Commodore 64 and Apple II 5.25 inch disks.
 
 The Cumana dual 5.25 inch disk drive (built November 1985) I'm using is capable of reading multiple different logical formats.
 
