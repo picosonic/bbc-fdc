@@ -17,7 +17,7 @@ Identifier: "FSD"  string literal 3 bytes
 
 For each track
 ==============
-   track_num: 1 byte ** PHYSICAL **
+   track_num: 1 byte (physical track number starting from 0) ** PHYSICAL **
      num_sec: 1 byte (00 == unformated)
 
     readable: 1 byte (00 == unreadable, ff ==readable) **ONLY IF FORMATTED**
@@ -49,6 +49,10 @@ Decoding of the "creator" 5 byte field:
      Date_YYYY = (byte1 AND &07)*256+byte2 ** ONLY SUPPORTS YEARS UP TO 2047 **
     Creator_ID = (byte3 AND &F0)/16
    Release_num = ((byte5 AND &C0)/64)*256 + byte4
+
+Notes
+=====
+The &E1 error code represents a sector that is really &100 bytes long but declares itself as something longer, for example &200 bytes.  The FSD format stores the over-read data so both the reported and real sizes are &200 bytes, but the CRC is only correct for a read of &100 bytes.  The E0 and E2 codes work similarly.
 */
 
 void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title)
@@ -138,7 +142,7 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title)
           }
           else
           {
-            // TODO handle missing sector
+            // TODO handle missing sector - may be due to ID or DATA CRC errors
           }
         }
       }
