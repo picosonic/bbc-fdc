@@ -7,9 +7,15 @@
 
 // OSWORD &7F result byte
 #define FSD_ERR_NONE 0x00
+#define FSD_ERR_NOSECTOR 0x18
 #define FSD_ERR_DELETED 0x20
 #define FSD_ERR_BADIDCRC 0x0c
 #define FSD_ERR_BADDATACRC 0x0e
+
+// Error codes not returned by OSWORD &7F but indicate a length mismatch
+#define FSD_ERR_CRC_OK_128 0xe0
+#define FSD_ERR_CRC_OK_256 0xe1
+#define FSD_ERR_CRC_OK_512 0xe2
 
 #define FSD_CREATORID 0x0a
 
