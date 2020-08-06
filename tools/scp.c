@@ -296,19 +296,29 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   // Blank checksum  - to be filled in later (calculated from next byte to EOF)
   header.checksum=0x0;
 
+  // Write the header
   fwrite(&header, 1, sizeof(header), scpfile);
 
+  // If we're using extended mode, reserve some space for extended variables
+  if ((header.flags&SCP_FLAGS_EXTENDED)!=0)
+  {
+    struct scp_extensions extensions;
+
+    bzero(extensions.extdata, sizeof(extensions));
+
+    fwrite(&extensions, 1, sizeof(extensions), scpfile);
+  }
+
   // Prepare for storing track offsets, and created space to store them in file
-  scp_trackoffsets=malloc(sizeof(uint32_t) * (endtrack+1));
+  scp_trackoffsets=malloc(sizeof(uint32_t) * SCP_MAXTRACKS);
 
   if (scp_trackoffsets==NULL) return;
 
+  // Cache file position after header
   scp_endofheader=ftell(scpfile);
 
-  // TODO it looks like this always contains the full 168 entries, unused ones are blank, every other blank for single sided
-
   // Blank offsets to tracks - to be filled in later
-  for (i=0; i<endtrack; i++)
+  for (i=0; i<SCP_MAXTRACKS; i++)
     fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
 }
 

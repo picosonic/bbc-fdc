@@ -6,6 +6,8 @@
 
 #define SCP_TRACK "TRK"
 
+#define SCP_MAXTRACKS 168
+
 // Flags
 #define SCP_FLAGS_INDEX 0x01
 #define SCP_FLAGS_96TPI 0x02
@@ -88,6 +90,11 @@ struct scp_header
   uint8_t heads; // 0=both sides, 1=side 0 only, 2=side 1 only
   uint8_t resolution; // 0=25ns, 1=50ns, 2=75ns, 3=100ns, 4=125ns, etc.
   uint32_t checksum; // data added together from next byte to EOF
+};
+
+struct scp_extensions
+{
+  uint8_t extdata[0x70];
 };
 
 #pragma pack(pop)
