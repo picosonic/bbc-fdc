@@ -94,14 +94,14 @@ struct scp_header
 
 struct scp_extensions
 {
-  uint8_t extdata[0x70];
+  uint8_t extdata[0x70]; // Information on the extended mode variables is forthcoming
 };
 
 #pragma pack(pop)
 
 extern void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t starttrack, const uint8_t endtrack, const float rpm, const uint8_t sides);
 
-extern void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const uint8_t rotations);
+extern void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const uint8_t rotations, const float rpm);
 
 extern void scp_finalise(FILE *scpfile, const uint8_t endtrack);
 

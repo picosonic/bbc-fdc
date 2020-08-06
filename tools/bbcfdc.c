@@ -851,7 +851,7 @@ int main(int argc,char **argv)
               break;
 
             case IMAGESCP:
-              scp_writetrack(rawdata, ((i/hw_stepping)*sides)+side, samplebuffer, samplebuffsize, ROTATIONS);
+              scp_writetrack(rawdata, ((i/hw_stepping)*sides)+side, samplebuffer, samplebuffsize, ROTATIONS, hw_measurerpm());
               break;
 
             default:

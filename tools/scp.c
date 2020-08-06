@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include "hardware.h"
 #include "scp.h"
 
 /*
@@ -322,7 +323,7 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
     fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
 }
 
-void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const uint8_t rotations)
+void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const uint8_t rotations, const float rpm)
 {
   long scppos;
   long scpdatapos;
@@ -344,8 +345,11 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
   // TODO
   for (i=0; i<rotations; i++)
   {
-    // Index time
-    fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
+    uint32_t value;
+
+    // Index time - duration of first revolution in nanoseconds/25
+    value=(1/(rpm/SECONDSINMINUTE))*(NSINSECOND/25);
+    fwrite(&value, 1, sizeof(uint32_t), scpfile);
 
     // Track length (in bitcells)
     fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
