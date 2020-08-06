@@ -274,8 +274,10 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   // Disk type ??
   header.disktype=SCP_MAN_OTHER | SCP_DISK_144M;
 
-  // Rotations captures, start and end tracks (multiplied by sides)
+  // Rotations captured
   header.revolutions=rotations;
+
+  // Start and end tracks (multiplied by sides)
   header.starttrack=starttrack;
   header.endtrack=endtrack;
 
@@ -286,10 +288,10 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   header.bitcellencoding=0x00;
 
   // Sides / Heads
-  header.heads=(sides==2)?0:1;
+  header.heads=(sides==2)?0:1; // TODO return 2 when only top side is captured
 
-  // Capture resolution, default is 80ns, which has closest SCP multiplier of 75ns
-  header.resolution=2; // TODO determine best value for this
+  // Capture resolution, default in .rfi files is 80ns, which has closest SCP multiplier of 2 (i.e. 75ns)
+  header.resolution=2; // TODO determine programatically the best value for this based on rate
 
   // Blank checksum  - to be filled in later (calculated from next byte to EOF)
   header.checksum=0x0;
@@ -350,6 +352,10 @@ void scp_finalise(FILE *scpfile, const uint8_t endtrack)
 {
   struct tm tim;
   struct timeval tv;
+  uint32_t checksum;
+  uint8_t block[256];
+  size_t blocklen;
+  size_t i;
 
   if (scpfile==NULL) return;
 
@@ -358,7 +364,6 @@ void scp_finalise(FILE *scpfile, const uint8_t endtrack)
   localtime_r(&tv.tv_sec, &tim);
 
   fprintf(scpfile, "%02d/%02d/%d %02d:%02d:%02d", tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900, tim.tm_hour, tim.tm_min, tim.tm_sec);
-
 
   // TODO write optional footer
 
@@ -370,7 +375,18 @@ void scp_finalise(FILE *scpfile, const uint8_t endtrack)
     free(scp_trackoffsets);
   }
 
-  // TODO update 32bit checksum
-  // fseek()
-  // fwrite()
+  // Calculate 32bit checksum
+  fseek(scpfile, scp_endofheader, SEEK_SET);
+  checksum=0;
+  while (!feof(scpfile))
+  {
+    blocklen=fread(block, 1, sizeof(block), scpfile);
+    if (blocklen>0)
+      for (i=0; i<blocklen; i++)
+        checksum+=block[i];
+  }
+
+  // Update checksum in header
+  fseek(scpfile, scp_endofheader-(sizeof(uint32_t)), SEEK_SET);
+  fwrite(&checksum, 1, sizeof(uint32_t), scpfile);
 }
