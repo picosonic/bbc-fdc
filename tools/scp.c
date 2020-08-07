@@ -4,9 +4,11 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <math.h>
 
 #include "hardware.h"
 #include "scp.h"
+#include "mod.h"
 
 /*
 
@@ -327,7 +329,16 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
 {
   long scppos;
   long scpdatapos;
-  unsigned int i;
+  long trackpos;
+  uint8_t i;
+  uint16_t fluxtime;
+  uint32_t numfluxes;
+  unsigned char c,j;
+  char level,bi=0;
+  unsigned long fluxdatapos;
+  float celltime;
+  uint32_t value;
+  unsigned long rotpoint;
 
   if (scpfile==NULL) return;
   if (scp_trackoffsets==NULL) return;
@@ -342,24 +353,97 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
   // Track number
   fprintf(scpfile, "%c", track);
 
-  // TODO
+  rotpoint=rawdatalength/rotations;
+
+  // Write track timings
   for (i=0; i<rotations; i++)
   {
-    uint32_t value;
-
-    // Index time - duration of first revolution in nanoseconds/25
-    value=(1/(rpm/SECONDSINMINUTE))*(NSINSECOND/25);
+    // Index time - duration of first revolution between index pulses (in nanoseconds/25)
+    value=(1/(rpm/SECONDSINMINUTE))*(NSINSECOND/SCP_BASE_NS);
     fwrite(&value, 1, sizeof(uint32_t), scpfile);
 
     // Track length (in bitcells)
-    fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
+    value=0;
+    fwrite(&value, 1, sizeof(uint32_t), scpfile);
 
-    scpdatapos=(ftell(scpfile)+4)-scppos;
     // Data offset for track flux (from start of track)
-    fprintf(scpfile, "%c%c%c%c", (unsigned char)(scpdatapos&0xff000000)>>24, (unsigned char)(scpdatapos&0xff0000)>>16, (unsigned char)(scpdatapos&0xff00)>>8, (unsigned char)scpdatapos&0xff);
+    value=0;
+    fwrite(&value, 1, sizeof(uint32_t), scpfile);
   }
 
-  // TODO note flux data in big endian format
+  // Split raw data into rotations
+  for (i=0; i<rotations; i++)
+  {
+    // 16 bit big-endian time in nanoseconds/25 between fluxes
+    level=(rawtrackdata[rotpoint*i]&0x80)>>7;
+    bi=level;
+    fluxtime=0;
+    numfluxes=0;
+
+    scpdatapos=ftell(scpfile);
+    value=(uint32_t) scpdatapos;
+
+    // Process each byte of the raw flux data
+    for (fluxdatapos=(rotpoint*i); ((fluxdatapos<rotpoint*(i+1)) && (fluxdatapos<rawdatalength)); fluxdatapos++)
+    {
+      // Extract byte from buffer
+      c=rawtrackdata[fluxdatapos];
+
+      // Process each bit of the extracted byte
+      for (j=0; j<BITSPERBYTE; j++)
+      {
+        // Determine next level
+        bi=((c&0x80)>>7);
+
+        // Increment samples counter
+        fluxtime++;
+
+        // Look for level changes
+        if (bi!=level)
+        {
+          // Flip level cache
+          level=1-level;
+
+          // Look for rising edge
+          if (level==1)
+          {
+            // Increment total number of fluxes
+            numfluxes++;
+
+            // Convert samples into nanoseconds/25
+            celltime=(mod_samplestoms(fluxtime)*NSINUS)/SCP_BASE_NS;
+
+            // Convert back from float to uint16_t
+            fluxtime=roundf(celltime);
+
+            // Write sample between fluxes
+            fprintf(scpfile, "%c%c", (fluxtime>>8)&0xff, fluxtime&0xff);
+
+            // Reset samples counter
+            fluxtime=0;
+          }
+        }
+
+        // Move on to next sample level (bit)
+        c=c<<1;
+      }
+    }
+
+    // Store where we are
+    trackpos=ftell(scpfile);
+
+    // Go back to update table for this rotation
+    fseek(scpfile, scppos+(12*i)+4, SEEK_SET);
+
+    value=numfluxes;
+    fwrite(&value, 1, sizeof(uint32_t), scpfile);
+
+    value=(uint32_t)scpdatapos;
+    fwrite(&value, 1, sizeof(uint32_t), scpfile);
+
+    // Reset back to where we were
+    fseek(scpfile, trackpos, SEEK_SET);
+  }
 }
 
 void scp_finalise(FILE *scpfile, const uint8_t endtrack)
