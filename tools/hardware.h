@@ -24,6 +24,9 @@
 // Nanoseconds in a second
 #define NSINSECOND 1000000000
 
+// Nanoseconds in a microsecond
+#define NSINUS 1000
+
 // For buffer calculations
 #define BITSPERBYTE 8
 #define HW_DEFAULTRPM 300
