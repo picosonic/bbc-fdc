@@ -8,6 +8,8 @@
 
 #define SCP_MAXTRACKS 168
 
+#define SCP_BASE_NS 25
+
 // Flags
 #define SCP_FLAGS_INDEX 0x01
 #define SCP_FLAGS_96TPI 0x02
