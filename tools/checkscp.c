@@ -19,7 +19,9 @@ unsigned char scp_processheader(FILE *scpfile)
 
   printf("SCP magic detected\n");
 
-  printf("Version: %d.%d\n", header.version>>4, header.version&0x0f);
+  if ((header.flags & SCP_FLAGS_FOOTER)==0)
+    printf("Version: %d.%d\n", header.version>>4, header.version&0x0f);
+
   printf("Disk type: %d %d\n", header.disktype>>4, header.disktype&0x0f);
   printf("Revolutions: %d\n", header.revolutions);
   printf("Tracks: %d to %d\n", header.starttrack, header.endtrack);
