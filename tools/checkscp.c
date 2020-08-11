@@ -6,15 +6,16 @@
 #include "scp.h"
 
 struct scp_header header;
+long scp_endofheader;
 
-unsigned char scp_processheader(FILE *scpfile)
+void scp_processheader(FILE *scpfile)
 {
+  bzero(&header, sizeof(header));
   fread(&header, 1, sizeof(header), scpfile);
 
   if (strncmp((char *)&header.magic, SCP_MAGIC, strlen(SCP_MAGIC))!=0)
   {
     printf("Not an SCP file\n");
-    return 0;
   }
 
   printf("SCP magic detected\n");
@@ -65,10 +66,6 @@ unsigned char scp_processheader(FILE *scpfile)
   printf("Heads: %d\n", header.heads);
   printf("Resolution: %dns\n", (header.resolution+1)*SCP_BASE_NS);
   printf("Checksum: 0x%.8x\n", header.checksum);
-
-  printf("Tracks in SCP: %d\n", header.endtrack-header.starttrack);
-
-  return 0;
 }
 
 void scp_processtrack(FILE *scpfile, const unsigned char track)
@@ -77,8 +74,11 @@ void scp_processtrack(FILE *scpfile, const unsigned char track)
 
 int main(int argc, char **argv)
 {
-  unsigned char numtracks;
   unsigned char track;
+  uint32_t checksum;
+  uint8_t block[256];
+  size_t blocklen;
+  size_t i;
   FILE *fp;
 
   if (argc!=2)
@@ -94,9 +94,33 @@ int main(int argc, char **argv)
     return 2;
   }
 
-  numtracks=scp_processheader(fp);
+  scp_processheader(fp);
 
-  for (track=0; track<numtracks; track++)
+  scp_endofheader=ftell(fp);
+
+  // validate checksum
+  checksum=0;
+  while (!feof(fp))
+  {
+    blocklen=fread(block, 1, sizeof(block), fp);
+    if (blocklen>0)
+      for (i=0; i<blocklen; i++)
+        checksum+=block[i];
+  }
+  fseek(fp, scp_endofheader, SEEK_SET);
+  printf("Calculated Checksum: 0x%.8x ", checksum);
+
+  if (checksum!=header.checksum)
+  {
+    printf("(Mismatch) \n");
+    fclose(fp);
+
+    return 1;
+  }
+  else
+    printf("(OK) \n");
+
+  for (track=header.starttrack; track<header.endtrack; track++)
     scp_processtrack(fp, track);
 
   fclose(fp);
