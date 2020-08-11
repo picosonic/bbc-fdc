@@ -8,7 +8,7 @@ REVISION = $(shell bash ./hw.sh Revision)
 DEBUGFLAGS = -g -W -Wall
 BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
 
-all: drivetest bbcfdc checkfsd checktd0
+all: drivetest bbcfdc checkfsd checktd0 checkscp
 
 drivetest: drivetest.o hardware.o
 	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835
@@ -21,6 +21,12 @@ checkfsd: checkfsd.o
 
 checkfsd.o: checkfsd.c fsd.h
 	$(CC) $(BUILDFLAGS) -c -o checkfsd.o checkfsd.c
+
+checkscp: checkscp.o
+	$(CC) $(BUILDFLAGS) -o checkscp checkscp.o
+
+checkscp.o: checkscp.c scp.h
+	$(CC) $(BUILDFLAGS) -c -o checkscp.o checkscp.c
 
 checktd0: checktd0.o crc.o lzhuf.o
 	$(CC) $(BUILDFLAGS) -o checktd0 checktd0.o crc.o lzhuf.o
@@ -109,5 +115,6 @@ clean:
 	rm -f drivetest
 	rm -f bbcfdc
 	rm -f checkfsd
+	rm -f checkscp
 	rm -f checktd0
 	rm -f bbcfdc-nopi
