@@ -23,7 +23,42 @@ unsigned char scp_processheader(FILE *scpfile)
   printf("Disk type: %d %d\n", header.disktype>>4, header.disktype&0x0f);
   printf("Revolutions: %d\n", header.revolutions);
   printf("Tracks: %d to %d\n", header.starttrack, header.endtrack);
-  printf("Flags: 0x%.2x\n", header.flags);
+
+  printf("Flags: 0x%.2x [", header.flags);
+
+  if ((header.flags & SCP_FLAGS_INDEX)!=0)
+    printf(" Indexed");
+  else
+    printf(" NonIndexed");
+
+  if ((header.flags & SCP_FLAGS_96TPI)!=0)
+    printf(" 96tpi");
+  else
+    printf(" 48tpi");
+
+  if ((header.flags & SCP_FLAGS_360RPM)!=0)
+    printf(" 360rpm");
+  else
+    printf(" 300rpm");
+
+  if ((header.flags & SCP_FLAGS_NORMALISED)!=0)
+    printf(" Normalised");
+  else
+    printf(" Captured");
+
+  if ((header.flags & SCP_FLAGS_RW)!=0)
+    printf(" Read/Write");
+  else
+    printf(" Read_Only");
+
+  if ((header.flags & SCP_FLAGS_FOOTER)!=0)
+    printf(" Has_Footer");
+
+  if ((header.flags & SCP_FLAGS_EXTENDED)!=0)
+    printf(" Extended");
+
+  printf(" ]\n");
+
   printf("Bitcell encoding: %d bits\n", header.bitcellencoding==0?16:header.bitcellencoding);
   printf("Heads: %d\n", header.heads);
   printf("Resolution: %dns\n", (header.resolution+1)*SCP_BASE_NS);
