@@ -63,7 +63,27 @@ void scp_processheader(FILE *scpfile)
   printf(" ]\n");
 
   printf("Bitcell encoding: %d bits\n", header.bitcellencoding==0?16:header.bitcellencoding);
-  printf("Heads: %d\n", header.heads);
+  printf("Heads: %d (", header.heads);
+  switch (header.heads)
+  {
+    case 0:
+      printf("Both");
+      break;
+
+    case 1:
+      printf("Bottom");
+      break;
+
+    case 2:
+      printf("Top");
+      break;
+
+    default:
+      printf("Unknown");
+      break;
+
+  }
+  printf(")\n");
   printf("Resolution: %dns\n", (header.resolution+1)*SCP_BASE_NS);
   printf("Checksum: 0x%.8x\n", header.checksum);
 }
