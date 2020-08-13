@@ -72,7 +72,7 @@
 // OTHER DISK TYPES
 #define SCP_DISK_360 0x00
 #define SCP_DISK_12M 0x01
-#define SCP_DISK_Rrsvd1 0x02
+#define SCP_DISK_Rsrvd1 0x02
 #define SCP_DISK_Rsrvd2 0x03
 #define SCP_DISK_720 0x04
 #define SCP_DISK_144M 0x05
