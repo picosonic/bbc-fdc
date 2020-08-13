@@ -340,6 +340,7 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
   uint32_t value;
   unsigned long rotpoint;
   struct scp_tdh tdh;
+  struct scp_timings timings;
 
   if (scpfile==NULL) return;
   if (scp_trackoffsets==NULL) return;
@@ -360,16 +361,15 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
   for (i=0; i<rotations; i++)
   {
     // Index time - duration of first revolution between index pulses (in nanoseconds/25)
-    value=(1/(rpm/SECONDSINMINUTE))*(NSINSECOND/SCP_BASE_NS);
-    fwrite(&value, 1, sizeof(uint32_t), scpfile);
+    timings.indextime=(1/(rpm/SECONDSINMINUTE))*(NSINSECOND/SCP_BASE_NS);
 
     // Track length (in bitcells)
-    value=0;
-    fwrite(&value, 1, sizeof(uint32_t), scpfile);
+    timings.tracklen=0;
 
     // Data offset for track flux (from start of track)
-    value=0;
-    fwrite(&value, 1, sizeof(uint32_t), scpfile);
+    timings.dataoffset=0;
+
+    fwrite(&timings, 1, sizeof(timings), scpfile);
   }
 
   // Split raw data into rotations
