@@ -23,7 +23,222 @@ void scp_processheader(FILE *scpfile)
   if ((header.flags & SCP_FLAGS_FOOTER)==0)
     printf("Version: %d.%d\n", header.version>>4, header.version&0x0f);
 
-  printf("Disk type: %d %d\n", header.disktype>>4, header.disktype&0x0f);
+  printf("Disk type: %d %d (", header.disktype>>4, header.disktype&0x0f);
+  switch (header.disktype&0xf0)
+  {
+    case SCP_MAN_COMMODORE:
+      printf("Commodore");
+
+      switch (header.disktype&0x0f)
+      {
+        case SCP_DISK_C64:
+          printf(" C64");
+          break;
+
+        case SCP_DISK_Amiga:
+          printf(" Amiga");
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    case SCP_MAN_ATARI:
+      printf("Atari");
+
+      switch (header.disktype&0x0f)
+      {
+        case SCP_DISK_AtariFMSS:
+          printf(" FM SS");
+          break;
+
+        case SCP_DISK_AtariFMDS:
+          printf(" FM DS");
+          break;
+
+        case SCP_DISK_AtariFMEx:
+          printf(" FM Ex");
+          break;
+
+        case SCP_DISK_AtariSTSS:
+          printf(" ST SS");
+          break;
+
+        case SCP_DISK_AtariSTDS:
+          printf(" ST DS");
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    case SCP_MAN_APPLE:
+      printf("Apple");
+
+      switch (header.disktype&0x0f)
+      {
+        case SCP_DISK_AppleII:
+          printf(" II");
+          break;
+
+        case SCP_DISK_AppleIIPro:
+          printf(" II Pro");
+          break;
+
+        case SCP_DISK_Apple400K:
+          printf(" 400K");
+          break;
+
+        case SCP_DISK_Apple800K:
+          printf(" 800K");
+          break;
+
+        case SCP_DISK_Apple144:
+          printf(" 144");
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    case SCP_MAN_PC:
+      printf("PC");
+
+      switch (header.disktype&0x0f)
+      {
+        case SCP_DISK_PC360K:
+          printf(" 360K");
+          break;
+
+        case SCP_DISK_PC720K:
+          printf(" 720K");
+          break;
+
+        case SCP_DISK_PC12M:
+          printf(" 1.2Mb");
+          break;
+
+        case SCP_DISK_PC144M:
+          printf(" 1.44Mb");
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    case SCP_MAN_TANDY:
+      printf("Tandy");
+
+      switch (header.disktype&0x0f)
+      {
+        case SCP_DISK_TRS80SSSD:
+          printf(" TRS80 SSSD");
+          break;
+
+        case SCP_DISK_TRS80SSDD:
+          printf(" TRS80 SSDD");
+          break;
+
+        case SCP_DISK_TRS80DSSD:
+          printf(" TRS80 DSSD");
+          break;
+
+        case SCP_DISK_TRS80DSDD:
+          printf(" TRS80 DSDD");
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    case SCP_MAN_TI:
+      printf("TI");
+
+      switch (header.disktype&0x0f)
+      {
+        case SCP_DISK_TI994A:
+          printf(" 994A");
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    case SCP_MAN_ROLAND:
+      printf("Roland");
+
+      switch (header.disktype&0x0f)
+      {
+        case SCP_DISK_D20:
+          printf(" D20");
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    case SCP_MAN_AMSTRAD:
+      printf("Amstrad");
+
+      switch (header.disktype&0x0f)
+      {
+        case SCP_DISK_CPC:
+          printf(" CPC");
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    case SCP_MAN_OTHER:
+      printf("Other");
+
+      switch (header.disktype&0x0f)
+      {
+        case SCP_DISK_360:
+          printf(" 360K");
+          break;
+
+        case SCP_DISK_12M:
+          printf(" 1.2Mb");
+          break;
+
+        case SCP_DISK_Rsrvd1:
+          printf(" Reserved 1");
+          break;
+
+        case SCP_DISK_Rsrvd2:
+          printf(" Reserved 2");
+          break;
+
+        case SCP_DISK_720:
+          printf(" 720K");
+          break;
+
+        case SCP_DISK_144M:
+          printf(" 1.44Mb");
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    default:
+      printf("Unknown");
+      break;
+  }
+
+  printf(")\n");
+
   printf("Revolutions: %d\n", header.revolutions);
   printf("Tracks: %d to %d\n", header.starttrack, header.endtrack);
 
