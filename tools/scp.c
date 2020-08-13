@@ -339,6 +339,7 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
   float celltime;
   uint32_t value;
   unsigned long rotpoint;
+  struct scp_tdh tdh;
 
   if (scpfile==NULL) return;
   if (scp_trackoffsets==NULL) return;
@@ -347,11 +348,11 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
   scppos=ftell(scpfile);
   scp_trackoffsets[track]=scppos;
 
-  // Track ID
-  fprintf(scpfile, "%s", SCP_TRACK);
+  memcpy(tdh.magic, SCP_TRACK, sizeof(tdh.magic)); // Track ID
+  tdh.track=track; // Track number
 
-  // Track number
-  fprintf(scpfile, "%c", track);
+  // Write the track header
+  fwrite(&tdh, 1, sizeof(tdh), scpfile);
 
   rotpoint=rawdatalength/rotations;
 

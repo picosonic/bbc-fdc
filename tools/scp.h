@@ -79,6 +79,7 @@
 
 #pragma pack(push,1)
 
+// SCP file header
 struct scp_header
 {
   uint8_t magic[3]; // "SCP"
@@ -94,9 +95,25 @@ struct scp_header
   uint32_t checksum; // data added together from next byte to EOF
 };
 
+// Extensions data block
 struct scp_extensions
 {
   uint8_t extdata[0x70]; // Information on the extended mode variables is forthcoming
+};
+
+// Track data header
+struct scp_tdh
+{
+  uint8_t magic[3]; // "TRK"
+  uint8_t track; // track number
+};
+
+// Per-revolution timings
+struct scp_timings
+{
+  uint32_t indextime; // time in ns/25ns for one revolution
+  uint32_t tracklen; // number of bitcells for this track
+  uint32_t dataoffset; // offset to flux data from start of TDH
 };
 
 #pragma pack(pop)
