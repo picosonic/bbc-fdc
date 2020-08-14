@@ -17,12 +17,13 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
  * `-i` Specify input **.rfi** file (when not being run on RPi hardware)
  * `-c` Catalogue the disk contents (DFS/ADFS/DOS only)
- * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .ssd, .dsd, .fsd, .td0, .img, .adf)
+ * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .sdd, .ssd, .ddd, .dsd, .fsd, .td0, .img, .adf)
  * `-spidiv` Specify SPI clock divider to adjust sample rate (one of 16,32,64)
  * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi, .dfi, .scp or .raw)
  * `-l` Show a layout diagram of where sectors were found upon the disk surface for each track/side
  * `-ss` Force single-sided capture
  * `-ds` Force double-sided capture (unless output is to .ssd)
+ * `-sectors` force DFS sectors e.g. 16 for Solidisk / Watford double density
  * `-sort` Sort sectors in diskstore prior to writing image
  * `-summary` Present a summary of operations once complete
  * `-tmax` Specify the maximum track number you wish to try stepping to
@@ -113,3 +114,14 @@ It will check for the .td0 magic identifier, show the header details, decompress
  * `8` - Unable to read sector data
  * `9` - Unable to allocate memory for decompression
  * `10` - Sector data CRC mismatch
+
+## BBC DFS Notes:
+ * Using a `.ddd` or `.sdd` output file for BBC DFS disks will assume 16 sectors per track (i.e. double density)
+ * Above can be overriden with the `-sectors` switch e.g. `-sectors 18`
+ * Disks with different densities on different sides cannot currently be captured into `.ddd` (watch this space)
+ * Better for the code to ultimately use the mod_density flag to auto detect the densities (maybe in the future)
+ * Not currently possible to just capture the second side of the disk - can just capture the first side (watch this space)
+
+ 
+
+
