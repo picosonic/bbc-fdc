@@ -38,6 +38,8 @@
 #define IMAGEIMG 6
 #define IMAGETD0 7
 #define IMAGESCP 8
+#define IMAGESDD 9
+#define IMAGEDDD 10
 
 // Used for values which can be overriden
 #define AUTODETECT -1
@@ -69,6 +71,13 @@ unsigned long datapos=0;
 // File handles
 FILE *diskimage=NULL;
 FILE *rawdata=NULL;
+
+// DFS sectors per track - standard density DFS is 10 sectors
+// however double density with e.g. Solidiisk DDFS and Watford 
+// is 16 sectors per track.  Opus went to 18. Allow this to be
+// overriden 
+unsigned int dfssectorspertrack = DFS_SECTORSPERTRACK;
+unsigned int dfstotalsectors = 0;
 
 // Used for reversing bit order within a byte
 static unsigned char revlookup[16] = {0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe, 0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf};
@@ -129,7 +138,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-tmax maxtracks] [-l] [-title \"Title\"] [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-sectors dfs_sectors_per_track] [-summary] [-tmax maxtracks] [-l] [-title \"Title\"] [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -190,6 +199,14 @@ int main(int argc,char **argv)
     if (strcmp(argv[argn], "-summary")==0)
     {
       summary=1;
+    }
+    else
+    if (strcmp(argv[argn], "-sectors")==0)
+    {
+      unsigned int retval;
+      ++argn;
+      if (sscanf(argv[argn], "%2u", &retval)==1)
+        dfssectorspertrack = retval;
     }
     else
     if (strcmp(argv[argn], "-ds")==0)
@@ -288,6 +305,28 @@ int main(int argc,char **argv)
           printf("Unable to save ssd image\n");
       }
       else
+      if (strstr(argv[argn], ".sdd")!=NULL)
+      {
+        // .SSD is single sided
+        sides=1;
+
+        diskimage=fopen(argv[argn], "w+");
+        if (diskimage!=NULL)
+        {
+          capturetype=DISKIMG;
+          outputtype=IMAGESDD;
+	  
+	  // Overide the sectors per track if it has not been 
+	  // manually set above - default to 16
+	  if(dfssectorspertrack == DFS_SECTORSPERTRACK) 
+	  {
+            dfssectorspertrack = DFS_DDSECTORSPERTRACK; 
+	  }
+        }
+        else
+          printf("Unable to save sdd image\n");
+      }
+      else
       if (strstr(argv[argn], ".dsd")!=NULL)
       {
         diskimage=fopen(argv[argn], "w+");
@@ -298,6 +337,25 @@ int main(int argc,char **argv)
         }
         else
           printf("Unable to save dsd image\n");
+      }
+      else
+      if (strstr(argv[argn], ".ddd")!=NULL)
+      {
+        diskimage=fopen(argv[argn], "w+");
+        if (diskimage!=NULL)
+        {
+          capturetype=DISKIMG;
+          outputtype=IMAGEDDD;
+
+	  // Overide the sectors per track if it has not been 
+	  // manually set above - default to 16
+	  if(dfssectorspertrack == DFS_SECTORSPERTRACK) 
+	  {
+            dfssectorspertrack = DFS_DDSECTORSPERTRACK; 
+	  }
+        }
+        else
+          printf("Unable to save ddd image\n");
       }
       else
       if (strstr(argv[argn], ".fsd")!=NULL)
@@ -603,7 +661,7 @@ int main(int argc,char **argv)
           printf("Double-sided disk detected\n");
 
         // Only mark as double-sided when not using single-sided output
-        if (outputtype!=IMAGESSD)
+        if (outputtype!=IMAGESSD && outputtype!=IMAGESDD)
           sides=2;
         else
           sides=1;
@@ -669,6 +727,15 @@ int main(int argc,char **argv)
     }
   }
 
+  // Create a buffer for bad sectors that could not be read ater all retries
+  // - can be used for a report later. Only used for BBC DFS.
+  int readstatus[sides][drivetracks][dfssectorspertrack];
+
+  // Initialise all statuses to zero - note that this will only work for 
+  // zero as memset works per byte and an int is e.g. 4 bytes - so if you
+  // set to e.g. 1 it'll actually set to 0x01010101 
+  memset(readstatus, 0, sides*drivetracks*dfssectorspertrack*sizeof(int));
+  
   // Start at track 0
   hw_seektotrackzero();
 
@@ -714,26 +781,30 @@ int main(int argc,char **argv)
           // No point in retrying when not using real hardware
           break;
 #endif
-
           // Don't retry unless imaging DFS disks
-          if ((outputtype!=IMAGEDSD) && (outputtype!=IMAGESSD))
+          if ((outputtype!=IMAGEDSD) && (outputtype!=IMAGESSD) && 
+              (outputtype!=IMAGEDDD) && (outputtype!=IMAGESDD) )
             break;
-
-          // Determine if we have successfully read the whole track
-          if ((diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 0)!=NULL) &&
-              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 1)!=NULL) &&
-              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 2)!=NULL) &&
-              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 3)!=NULL) &&
-              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 4)!=NULL) &&
-              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 5)!=NULL) &&
-              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 6)!=NULL) &&
-              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 7)!=NULL) &&
-              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 8)!=NULL) &&
-              (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, 9)!=NULL))
-            break;
+	
+          // See if we have successfully read a full track
+          int trackstatus = 1;
+          for (j=0; j<dfssectorspertrack; j++)
+	  {
+              if(diskstore_findhybridsector(hw_currenttrack, hw_currenthead, j)==NULL)
+	      {
+		  // Failed to read at least one track
+	          trackstatus=0; 
+	          readstatus[side][hw_currenttrack][j]=0;
+	      }
+	      else
+	      {
+	          readstatus[side][hw_currenttrack][j]=1;
+	      }
+	  }
+	  if(trackstatus == 1) break;
 
           printf("Retry attempt %d, sectors ", retry+1);
-          for (j=0; j<DFS_SECTORSPERTRACK; j++)
+          for (j=0; j<dfssectorspertrack; j++)
             if (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, j)==NULL) printf("%.2u ", j);
           printf("\n");
         }
@@ -746,10 +817,10 @@ int main(int argc,char **argv)
         // Check if catalogue has been done
         if ((info<sides) && (catalogue==1))
         {
-          if (dfs_validcatalogue(hw_currenthead))
+          if (dfs_validcatalogue(hw_currenthead, &dfstotalsectors))
           {
             printf("\nDetected DFS, side : %d\n", hw_currenthead);
-            dfs_showinfo(hw_currenthead);
+            dfs_showinfo(hw_currenthead, drivetracks, dfssectorspertrack);
             info++;
             printf("\n");
           }
@@ -837,6 +908,7 @@ int main(int argc,char **argv)
       }
       else
       {
+
         // Write the raw sample data if required
         if (rawdata!=NULL)
         {
@@ -869,6 +941,44 @@ int main(int argc,char **argv)
     if ((drivetracks==40) && (disktracks==80))
       break;
   } // track loop
+  
+
+  if(capturetype != DISKCAT)
+  {
+     // List the failed sectors so they are all listed together
+     // and list as a CSV for ease of import into a spreadsheet
+     // BBC DFS images only... 
+     if ((outputtype!=IMAGEDSD) || (outputtype!=IMAGESSD) ||
+        (outputtype!=IMAGEDDD) || (outputtype!=IMAGESDD) ) 
+     {
+        if(capturetype != DISKCAT) 
+	{
+             int diskstatus = 1;
+             printf("\nThe following sectors could not be read:\n");
+  	     for(side=0; side<sides;side++)
+	     {
+	        for(i=0; i<drivetracks/hw_stepping; i++) 
+	        {
+	           for(j=0; j<dfssectorspertrack; j++)
+		   {
+		      if(readstatus[side][i][j] == 0)
+		      {
+		         printf("%.2x, %.2x, %.2x\n", side, i, j);
+		         diskstatus =0;
+		      }
+
+		   }
+	        }
+
+	     }
+             if(diskstatus) 
+             {
+                 printf("100%% of sectors read successfully");
+             }
+             printf("\n");
+	}
+     }
+  }
 
   // Return the disk head to track 0 following disk imaging
   hw_seektotrackzero();
@@ -895,7 +1005,7 @@ int main(int argc,char **argv)
       if (title[0]==0)
       {
         // If they were found and they appear to be DFS catalogue then extract title
-        if (dfs_validcatalogue(0))
+        if (dfs_validcatalogue(0,&dfssectorspertrack))
         {
           dfs_gettitle(0, title, sizeof(title));
         }
@@ -928,7 +1038,7 @@ int main(int argc,char **argv)
       if (title[0]==0)
       {
         // If they were found and they appear to be DFS catalogue then extract title
-        if (dfs_validcatalogue(0))
+        if (dfs_validcatalogue(0, &dfssectorspertrack))
         {
           dfs_gettitle(0, title, sizeof(title));
         }
@@ -955,10 +1065,11 @@ int main(int argc,char **argv)
       fsd_write(diskimage, disktracks, title);
     }
     else
-    if ((outputtype==IMAGEDSD) || (outputtype==IMAGESSD))
+    if ((outputtype==IMAGEDSD) || (outputtype==IMAGESSD) || 
+        (outputtype==IMAGEDDD) || (outputtype==IMAGESDD))
     {
       Disk_Sector *sec;
-      unsigned char blanksector[DFS_SECTORSIZE];
+      unsigned char blanksector[dfssectorspertrack];
       int imgside;
 
       // Prepare a blank sector when no sector is found in store
@@ -968,7 +1079,7 @@ int main(int argc,char **argv)
       {
         for (imgside=0; imgside<sides; imgside++)
         {
-          for (j=0; j<DFS_SECTORSPERTRACK; j++)
+          for (j=0; j<dfssectorspertrack; j++)
           {
             // Write
             sec=diskstore_findhybridsector(i, imgside, j);

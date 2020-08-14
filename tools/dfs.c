@@ -124,13 +124,14 @@ void dfs_gettitle(const int head, char *title, const int titlelen)
   }
 }
 
-void dfs_showinfo(const int head)
+
+void dfs_showinfo(const int head, const unsigned int disktracks, const unsigned int sectorspertrack)
 {
   int i;
   int numfiles;
   int locked;
   unsigned char bootoption;
-  size_t tracks, totalusage, totalsectors, totalsize, sectorusage;
+  size_t totalusage, totalsectors, totalsize, sectorusage, calcsize;
   char filename[10];
   Disk_Sector *sector0;
   Disk_Sector *sector1;
@@ -160,41 +161,44 @@ void dfs_showinfo(const int head)
   }
   printf("\"\n");
 
-  totalsectors=(((sector1->data[6]&0x03)<<8) | (sector1->data[7]));
-  tracks=totalsectors/DFS_SECTORSPERTRACK;
-  totalsize=totalsectors*DFS_SECTORSIZE;
-  printf("Disk size : %lu tracks (%u sectors, %lu bytes)\n", (unsigned long)tracks, (unsigned int)totalsectors, (unsigned long)totalsize);
+  // On some DDFS filesystems, bit 3 is also used of byte 6 to provide an 11-bit 
+  // disk size instead of the standard Acorn DFS 10-bit disk size - Acorn DFS always 
+  // sets bit 3 to zero so extended this to bit 3 doesn't hurt Acorn DFS 
+  totalsectors=(((sector1->data[6]&0x07)<<8) | (sector1->data[7])); 
+  
+  // Don't calculate this as we already worked it previously 
+  // from the hardware - commented out for posterity 
+  // tracks=totalsectors/dfsSectorsPerTrack; 
+  
+  totalsize=totalsectors*DFS_SECTORSIZE; 
+  printf("Disk size : %lu tracks (%u sectors, %lu bytes)\n", (unsigned long)disktracks, (unsigned int)totalsectors, (unsigned long)totalsize); 
+  bootoption=(sector1->data[6]&0x30)>>4; 
+  printf("Boot option: %d ", bootoption); 
 
-  bootoption=(sector1->data[6]&0x30)>>4;
-  printf("Boot option: %d ", bootoption);
-  switch (bootoption)
-  {
-    case 0:
-      printf("Nothing");
-      break;
 
-    case 1:
-      printf("*LOAD !BOOT");
-      break;
-
-    case 2:
-      printf("*RUN !BOOT");
-      break;
-
-    case 3:
-      printf("*EXEC !BOOT");
-      break;
-
-    default:
-      printf("Unknown");
-      break;
-  }
-  printf("\n");
-
-  totalusage=0; sectorusage=2;
-  printf("Write operations made to disk : %.2x\n", sector1->data[4]); // Stored in BCD
-
-  numfiles=sector1->data[5]/8;
+  switch (bootoption) { 
+     case 0: 
+        printf("Nothing"); 
+	break; 
+     case 1: 
+	printf("*LOAD !BOOT"); 
+	break; 
+     case 2: 
+	printf("*RUN !BOOT"); 
+	break; 
+     case 3: 
+	printf("*EXEC !BOOT"); 
+	break; 
+     default: 
+	printf("Unknown"); 
+	break; 
+  } 
+  printf("\n"); 
+  
+  totalusage=0; sectorusage=2; 
+  printf("Write operations made to disk : %.2x\n", sector1->data[4]); // Stored in BCD 
+  
+  numfiles=sector1->data[5]/8; 
   printf("Catalogue entries : %d\n", numfiles);
 
   for (i=1; ((i<=numfiles) && (i<DFS_MAXFILES)); i++)
@@ -214,11 +218,26 @@ void dfs_showinfo(const int head)
   }
 
   printf("Total disk usage : %lu bytes (%ld%% of disk)\n", (unsigned long)totalusage, (totalusage*100)/(totalsize-(2*DFS_SECTORSIZE)));
-  printf("Remaining catalogue space : %d files, %ld unused disk sectors\n", DFS_MAXFILES-numfiles, (((sector1->data[6]&0x03)<<8) | (sector1->data[7])) - sectorusage);
+  // Use bits 0-2 of byte 6 to cater for 11-bit double density sizes
+  // Acorn DFS will always set to zero - so & with 0x07 not 0x03
+  printf("Remaining catalogue space : %d files, %ld unused disk sectors\n", DFS_MAXFILES-numfiles, (((sector1->data[6]&0x07)<<8) | (sector1->data[7])) - sectorusage);
+  calcsize = disktracks * sectorspertrack * DFS_SECTORSIZE;
+  printf("Disk tracks %d, sectors %d\n", disktracks, sectorspertrack);
+  if( calcsize > totalsize ) {
+      printf("\nWARNING: Disk catalogue size %d is SMALLER than disk size %d\n", totalsize, calcsize);
+      printf("WARNING: Catatlogue sectors per track %d but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack); 
+      printf("WARNING: If you try and create a DFS image try using switch -sectors %d\n", sectorspertrack);
+  } else if( calcsize< totalsize ) {
+      printf("\nWARNING: Disk catalogue size %d is BIGGER than disk size %d \n", totalsize, calcsize);
+      printf("WARNING: Catatlogue sectors per track %d but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack); 
+      printf("WARNING: If you try and create a DFS image try using switch -sectors %d\n", totalsectors/disktracks);
+  }
 }
 
+
+
 // Test for valid DFS catalogue, checks from http://beebwiki.mdfs.net/Acorn_DFS_disc_format
-int dfs_validcatalogue(const int head)
+int dfs_validcatalogue(const int head, unsigned int* totalsectors)
 {
   Disk_Sector *sector0;
   Disk_Sector *sector1;
@@ -245,12 +264,23 @@ int dfs_validcatalogue(const int head)
 
   // Check reserved bits
   if ((sector1->data[5]&0x07)!=0) return 0;
+  
   if ((sector1->data[6]&0xc0)!=0) return 0;
-  if ((sector1->data[6]&0x0c)!=0) return 0;
+
+  // On some double density DFS systems, bits 0-2 are used to make an 11 bit 
+  // disk size in byte 6 rather than the standard single density Acorn DFS which
+  // only uses bits 0-1 - so only do this check if it's single density
+  // (10 sectors per track) DFS. Regardless, bit 3 should be set to 0.
+  // The original check stopped DDFS disks being catalogued - which meant you
+  // couldn't check their total sectors.  Original check was against 0x0C (00001100)
+  if ((sector1->data[6]&0x08)!=0) return 0;
 
   // TODO check that the disk size is between 2 and 800 sectors (maybe also up to 1023)
-  if ((((sector1->data[6]&0x03)<<8) | (sector1->data[7]))<1)
+  if ((((sector1->data[6]&0x07)<<8) | (sector1->data[7]))<1)
     return 0;
+
+  *totalsectors = (((sector1->data[6]&0x07)<<8) | (sector1->data[7]));
+  printf("Catalogue has %d sectors\n", *totalsectors);
 
   // TODO check the title contains printable ASCII padded with NULs or spaces
 
