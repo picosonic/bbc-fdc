@@ -948,8 +948,8 @@ int main(int argc,char **argv)
      // List the failed sectors so they are all listed together
      // and list as a CSV for ease of import into a spreadsheet
      // BBC DFS images only... 
-     if ((outputtype!=IMAGEDSD) || (outputtype!=IMAGESSD) ||
-        (outputtype!=IMAGEDDD) || (outputtype!=IMAGESDD) ) 
+     if ((outputtype==IMAGEDSD) || (outputtype==IMAGESSD) ||
+        (outputtype==IMAGEDDD) || (outputtype==IMAGESDD) ) 
      {
         if(capturetype != DISKCAT) 
 	{
