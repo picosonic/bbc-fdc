@@ -139,7 +139,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-sectors dfs_sectors_per_track] [-summary] [-tmax maxtracks] [-l] [-title \"Title\"] [-v]\n");
+  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-sectors dfs_sectors_per_track] [-summary] [-csv] [-tmax maxtracks] [-l] [-title \"Title\"] [-v]\n");
 }
 
 int main(int argc,char **argv)
