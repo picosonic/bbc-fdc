@@ -135,6 +135,7 @@ void dfs_showinfo(const int head, const unsigned int disktracks, const unsigned 
   char filename[10];
   Disk_Sector *sector0;
   Disk_Sector *sector1;
+  Disk_Sector *sectorn;
 
   // Search for sectors
   sector0=diskstore_findhybridsector(0, head, 0);
@@ -215,6 +216,14 @@ void dfs_showinfo(const int head, const unsigned int disktracks, const unsigned 
 
     if (locked) printf(" L");
     printf("\n");
+  }
+
+  // Check to see if this is a Solidisk disk with a chained catalogue
+  // If it is then the top two bits of byte 2 in sector 1 will be set
+  if((sector1->data[2]&0xC0) == 0xC0)
+  {
+    printf("Solidisk chained catalogue detected (not listed)\n");
+    printf("Second Solidisk catalogue in at sector %.4x\n", ((sector1->data[2]&0x3F)<<8) | (sector1->data[3]));
   }
 
   printf("Total disk usage : %lu bytes (%ld%% of disk)\n", (unsigned long)totalusage, (totalusage*100)/(totalsize-(2*DFS_SECTORSIZE)));

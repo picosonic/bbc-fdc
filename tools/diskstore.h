@@ -75,6 +75,7 @@ extern void diskstore_sortsectors();
 
 // Dump the contents of the disk storage for debug purposes
 extern void diskstore_dumpsectorlist();
+extern void diskstore_dumpbadsectors(FILE* fh);
 extern void diskstore_dumplayoutmap(const int rotations);
 
 // Absolute data access

@@ -71,6 +71,7 @@ unsigned long datapos=0;
 // File handles
 FILE *diskimage=NULL;
 FILE *rawdata=NULL;
+FILE *csvhandle=NULL;
 
 // DFS sectors per track - standard density DFS is 10 sectors
 // however double density with e.g. Solidiisk DDFS and Watford 
@@ -148,10 +149,12 @@ int main(int argc,char **argv)
   unsigned char retry, retries, side, drivestatus;
   int sortsectors=0;
   int missingsectors=0;
+  int csv = 0;
   char modulation=AUTODETECT;
 #ifdef NOPI
   char *samplefile;
 #endif
+  char *outputfilename = NULL;
   char title[100];
 
   // Check we have some arguments
@@ -225,6 +228,14 @@ int main(int argc,char **argv)
       sides=1;
     }
     else
+    if (strcmp(argv[argn], "-csv")==0)
+    {
+      printf("Failed sector CSV report requested\n");
+
+      // Request single-sided
+      csv=1;
+    }
+    else
     if ((strcmp(argv[argn], "-r")==0) && ((argn+1)<argc))
     {
       int retval;
@@ -289,6 +300,7 @@ int main(int argc,char **argv)
     if ((strcmp(argv[argn], "-o")==0) && ((argn+1)<argc))
     {
       ++argn;
+      outputfilename = argv[argn];
 
       if (strstr(argv[argn], ".ssd")!=NULL)
       {
@@ -442,6 +454,22 @@ int main(int argc,char **argv)
 #endif
 
     ++argn;
+  }
+
+  // Create a csv file with the same name as the output file
+  // but with a .csv extension
+  if((csv != 0) && (outputfilename != NULL))
+  {
+     char *buffer = NULL;
+     buffer = malloc((strlen(outputfilename) + 5) * sizeof(char));
+     strcpy(buffer, outputfilename);
+     strcat(buffer, ".csv");
+     csvhandle=fopen(buffer, "w+");
+     if (csvhandle == NULL) 
+     {
+          printf("Unable to create CSV report file\n");
+     }
+     free(buffer);
   }
 
 #ifdef NOPI
@@ -727,15 +755,6 @@ int main(int argc,char **argv)
     }
   }
 
-  // Create a buffer for bad sectors that could not be read ater all retries
-  // - can be used for a report later. Only used for BBC DFS.
-  int readstatus[sides][drivetracks][dfssectorspertrack];
-
-  // Initialise all statuses to zero - note that this will only work for 
-  // zero as memset works per byte and an int is e.g. 4 bytes - so if you
-  // set to e.g. 1 it'll actually set to 0x01010101 
-  memset(readstatus, 0, sides*drivetracks*dfssectorspertrack*sizeof(int));
-  
   // Start at track 0
   hw_seektotrackzero();
 
@@ -794,11 +813,6 @@ int main(int argc,char **argv)
 	      {
 		  // Failed to read at least one track
 	          trackstatus=0; 
-	          readstatus[side][hw_currenttrack][j]=0;
-	      }
-	      else
-	      {
-	          readstatus[side][hw_currenttrack][j]=1;
 	      }
 	  }
 	  if(trackstatus == 1) break;
@@ -904,7 +918,7 @@ int main(int argc,char **argv)
         }
 
         if (retry>=retries)
-          printf("I/O error reading head %d track %u\n", hw_currenthead, i);
+          printf("I/O error reading head %.2X track %.2X\n", hw_currenthead, i);
       }
       else
       {
@@ -942,43 +956,6 @@ int main(int argc,char **argv)
       break;
   } // track loop
   
-
-  if(capturetype != DISKCAT)
-  {
-     // List the failed sectors so they are all listed together
-     // and list as a CSV for ease of import into a spreadsheet
-     // BBC DFS images only... 
-     if ((outputtype==IMAGEDSD) || (outputtype==IMAGESSD) ||
-        (outputtype==IMAGEDDD) || (outputtype==IMAGESDD) ) 
-     {
-        if(capturetype != DISKCAT) 
-	{
-             int diskstatus = 1;
-             printf("\nThe following sectors could not be read:\n");
-  	     for(side=0; side<sides;side++)
-	     {
-	        for(i=0; i<drivetracks/hw_stepping; i++) 
-	        {
-	           for(j=0; j<dfssectorspertrack; j++)
-		   {
-		      if(readstatus[side][i][j] == 0)
-		      {
-		         printf("%.2x, %.2x, %.2x\n", side, i, j);
-		         diskstatus =0;
-		      }
-
-		   }
-	        }
-
-	     }
-             if(diskstatus) 
-             {
-                 printf("100%% of sectors read successfully");
-             }
-             printf("\n");
-	}
-     }
-  }
 
   // Return the disk head to track 0 following disk imaging
   hw_seektotrackzero();
@@ -1091,7 +1068,9 @@ int main(int argc,char **argv)
             else
             {
               fwrite(blanksector, 1, DFS_SECTORSIZE, diskimage);
+	      if ((sec==NULL)) {
               missingsectors++;
+	      }
             }
           }
         }
@@ -1165,6 +1144,12 @@ int main(int argc,char **argv)
   {
     free(flippybuffer);
     flippybuffer=NULL;
+  }
+
+  if((csv) && (csvhandle != NULL))
+  {
+    diskstore_dumpbadsectors(csvhandle);
+    fclose(csvhandle);
   }
 
   // Dump a list of valid sectors
