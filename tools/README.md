@@ -57,14 +57,17 @@ If you have a broken index sensor, a hard sectored disk or you want to run some 
 
 Optionally it can count the number of tracks which can be stepped to by the hardware.
 
+Finally, you can move the drive head in or out by seeking to a specific track.
+
 ## Syntax :
 
-`[-tmax maxtracks] [-noindex]`
+`[-tmax maxtracks] [-noindex] [-seek track]`
 
 ## Where :
 
  * `-tmax` Specify the maximum track number you wish to try stepping to
  * `-noindex` Don't measure RPM and allow some tests to be carried out without a floppy
+ * `-seek` Specify the track number you wish to step to (zero based)
 
 ## Return codes :
 

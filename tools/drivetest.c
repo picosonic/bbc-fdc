@@ -29,8 +29,10 @@ int main(int argc,char **argv)
 {
   int argn=0;
   int counttracks=0;
+  int seektrack=-1;
   unsigned char drivestatus;
   int useindex=1;
+  int retval;
 
   // Check user permissions
   if (geteuid() != 0)
@@ -46,10 +48,16 @@ int main(int argc,char **argv)
       useindex=0;
     }
     else
+    if ((strcmp(argv[argn], "-seek")==0) && ((argn+1)<argc))
+    {
+      ++argn;
+
+      if (sscanf(argv[argn], "%3d", &retval)==1)
+        seektrack=retval;
+    }
+    else
     if ((strcmp(argv[argn], "-tmax")==0) && ((argn+1)<argc))
     {
-      int retval;
-
       ++argn;
 
       if (sscanf(argv[argn], "%3d", &retval)==1)
@@ -146,6 +154,16 @@ int main(int argc,char **argv)
     }
 
     printf("Counted %d track positions\n", numtracks);
+  }
+
+  // If requested, seek to a specific track
+  if (seektrack!=-1)
+  {
+    // Start from track zero
+    hw_seektotrackzero();
+
+    // Try seeking to the track
+    hw_seektotrack(seektrack);
   }
 
   hw_sleep(1);
