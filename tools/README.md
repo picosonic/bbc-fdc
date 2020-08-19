@@ -53,15 +53,18 @@ drivetest is intended for testing basic PCB interface hardware functionality bef
 
 It will check if the drive and disk are detected, check if read head is at track zero, determine if the disk is write-protected and calculate an approximate RPM.
 
+If you have a broken index sensor, a hard sectored disk or you want to run some tests without requiring a floppy to be inserted then you can specify `-noindex`.
+
 Optionally it can count the number of tracks which can be stepped to by the hardware.
 
 ## Syntax :
 
-`[-tmax maxtracks]`
+`[-tmax maxtracks] [-noindex]`
 
 ## Where :
 
  * `-tmax` Specify the maximum track number you wish to try stepping to
+ * `-noindex` Don't measure RPM and allow some tests to be carried out without a floppy
 
 ## Return codes :
 

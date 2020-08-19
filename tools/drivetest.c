@@ -30,6 +30,7 @@ int main(int argc,char **argv)
   int argn=0;
   int counttracks=0;
   unsigned char drivestatus;
+  int useindex=1;
 
   // Check user permissions
   if (geteuid() != 0)
@@ -40,6 +41,11 @@ int main(int argc,char **argv)
 
   while (argn<argc)
   {
+    if (strcmp(argv[argn], "-noindex")==0)
+    {
+      useindex=0;
+    }
+    else
     if ((strcmp(argv[argn], "-tmax")==0) && ((argn+1)<argc))
     {
       int retval;
@@ -82,7 +88,9 @@ int main(int argc,char **argv)
   if (drivestatus==HW_NODISK)
   {
     fprintf(stderr, "Failed to detect disk in drive\n");
-    return 3;
+
+    if (useindex)
+      return 3;
   }
 
   // Select drive, depending on jumper
@@ -106,7 +114,10 @@ int main(int argc,char **argv)
   else
     printf("Disk is writeable\n");
 
-  printf("Approximate RPM %.2f\n", hw_measurerpm());
+  if (useindex)
+    printf("Approximate RPM %.2f\n", hw_measurerpm());
+  else
+    printf("Not measuring RPM - index sensing disabled\n");
 
   // Determine the number of tracks we can seek to
   if (counttracks)
