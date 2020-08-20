@@ -8,7 +8,7 @@
 struct scp_header header;
 long scp_endofheader;
 
-void scp_processheader(FILE *scpfile)
+int scp_processheader(FILE *scpfile)
 {
   bzero(&header, sizeof(header));
   fread(&header, 1, sizeof(header), scpfile);
@@ -16,6 +16,7 @@ void scp_processheader(FILE *scpfile)
   if (strncmp((char *)&header.magic, SCP_MAGIC, strlen(SCP_MAGIC))!=0)
   {
     printf("Not an SCP file\n");
+    return 1;
   }
 
   printf("SCP magic detected\n");
@@ -301,6 +302,8 @@ void scp_processheader(FILE *scpfile)
   printf(")\n");
   printf("Resolution: %dns\n", (header.resolution+1)*SCP_BASE_NS);
   printf("Checksum: 0x%.8x\n", header.checksum);
+
+  return 0;
 }
 
 void scp_processtrack(FILE *scpfile, const unsigned char track)
@@ -329,7 +332,11 @@ int main(int argc, char **argv)
     return 2;
   }
 
-  scp_processheader(fp);
+  if (scp_processheader(fp)!=0)
+  {
+    fclose(fp);
+    return 1;
+  }
 
   scp_endofheader=ftell(fp);
 
