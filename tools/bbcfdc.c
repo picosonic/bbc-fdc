@@ -160,6 +160,20 @@ int main(int argc,char **argv)
 #endif
   title[0]=0;
 
+  printf("Compiled on hardware with ");
+#ifdef HAS_BCM2835
+  printf("BCM2835");
+#elif HAS_BCM2836
+  printf("BCM2836");
+#elif HAS_BCM2837
+  printf("BCM2837");
+#elif HAS_BCM2711
+  printf("BCM2711");
+#else
+  printf("UNKNOWN");
+#endif
+  printf(" processor\n");
+
   // Process command line arguments
   while (argn<argc)
   {
