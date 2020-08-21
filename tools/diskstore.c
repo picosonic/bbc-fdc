@@ -376,7 +376,7 @@ void diskstore_dumpbadsectors(FILE* fh)
 
   fprintf(fh, "Head, Track, Sector\n");
 
-  for (dhead=0; dhead<2; dhead++)
+  for (dhead=0; dhead<(diskstore_maxhead+1); dhead++)
   {
     for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack+=hw_stepping)
     {

@@ -64,6 +64,7 @@ unsigned long samplebuffsize;
 int flippy=0;
 int info=0;
 int layout=0;
+int sidetoread=-1;
 
 // Processing position within the SPI buffer
 unsigned long datapos=0;
@@ -222,10 +223,15 @@ int main(int argc,char **argv)
     else
     if (strcmp(argv[argn], "-ss")==0)
     {
+      unsigned int retval;
       printf("Forced single-sided capture\n");
 
       // Request single-sided
       sides=1;
+
+      ++argn;
+      if (sscanf(argv[argn], "%3d", &retval)==1)
+        sidetoread=retval;
     }
     else
     if (strcmp(argv[argn], "-csv")==0)
@@ -766,6 +772,11 @@ int main(int argc,char **argv)
     // Process all available disk sides (heads)
     for (side=0; side<sides; side++)
     {
+      // Read the correct side if in single side read mode
+      if(sidetoread != -1) 
+      {
+        side=sidetoread;
+      }
       // Select the correct side
       hw_sideselect(side);
 
@@ -1056,6 +1067,10 @@ int main(int argc,char **argv)
       {
         for (imgside=0; imgside<sides; imgside++)
         {
+	  if(sidetoread!=-1)
+	  {
+            imgside=sidetoread;
+	  }
           for (j=0; j<dfssectorspertrack; j++)
           {
             // Write
