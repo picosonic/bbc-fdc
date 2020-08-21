@@ -231,7 +231,13 @@ int main(int argc,char **argv)
 
       ++argn;
       if (sscanf(argv[argn], "%3d", &retval)==1)
+      {
         sidetoread=retval;
+      }
+      else
+      {
+        --argn;
+      }
     }
     else
     if (strcmp(argv[argn], "-csv")==0)
