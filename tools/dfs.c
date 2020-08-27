@@ -233,14 +233,14 @@ void dfs_showinfo(const int head, const unsigned int disktracks, const unsigned 
   calcsize=(disktracks*sectorspertrack*DFS_SECTORSIZE);
   printf("Disk tracks %d, sectors %d\n", disktracks, sectorspertrack);
 
-  if(calcsize>totalsize)
+  if (calcsize>totalsize)
   {
     printf("\nWARNING: Disk catalogue size %d is SMALLER than disk size %d\n", totalsize, calcsize);
     printf("WARNING: Catalogue sectors per track %d but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
     printf("WARNING: If you try and create a DFS image try using switch -sectors %d\n", sectorspertrack);
   }
   else
-  if (calcsize< totalsize)
+  if (calcsize<totalsize)
   {
     printf("\nWARNING: Disk catalogue size %d is BIGGER than disk size %d \n", totalsize, calcsize);
     printf("WARNING: Catalogue sectors per track %d but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
