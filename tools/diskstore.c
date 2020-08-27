@@ -377,19 +377,10 @@ void diskstore_dumpbadsectors(FILE* fh)
   fprintf(fh, "Head, Track, Sector\n");
 
   for (dhead=0; dhead<(diskstore_maxhead+1); dhead++)
-  {
     for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack+=hw_stepping)
-    {
       for(dsector=0; dsector<(diskstore_maxsectorid+1); dsector++)
-      {
          if(diskstore_findhybridsector(dtrack, dhead, dsector)==NULL)
-	 {
             fprintf(fh, "%.2X, %.2X, %.2X\n", dhead, dtrack, dsector);
-	 }
-      }
-    }
-  }
-
 }
 
 // Dump a layout map of where data was found on the disk surface

@@ -17,16 +17,16 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
  * `-i` Specify input **.rfi** file (when not being run on RPi hardware)
  * `-c` Catalogue the disk contents (DFS/ADFS/DOS only)
- * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .sdd, .ssd, .ddd, .dsd, .fsd, .td0, .img, .adf)
+ * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .ssd, .sdd, .dsd, .ddd, .fsd, .td0, .img, .adf)
  * `-spidiv` Specify SPI clock divider to adjust sample rate (one of 16,32,64)
  * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi, .dfi, .scp or .raw)
  * `-l` Show a layout diagram of where sectors were found upon the disk surface for each track/side
- * `-ss` Force single-sided capture - optionally adding a 0 or 1 afterwards chooses that side e.g. `-ss 0` or `-ss 1`
+ * `-ss` Force single-sided capture - optionally adding a 0 or 1 afterwards chooses that side (e.g. `-ss 0` or `-ss 1`)
  * `-ds` Force double-sided capture (unless output is to .ssd)
- * `-sectors` force DFS sectors e.g. 16 for Solidisk / Watford double density
+ * `-sectors` Expected sector count (e.g. 16 for Solidisk / Watford double density DFS)
  * `-sort` Sort sectors in diskstore prior to writing image
  * `-summary` Present a summary of operations once complete
- * `-csv` Create a csv of bad sectors named as <outputfile>.csv
+ * `-csv` Create a csv of bad sectors (named as <outputfile>.csv)
  * `-tmax` Specify the maximum track number you wish to try stepping to
  * `-title` Override the title used in metadata for disk formats which support it (.td0 / .fsd)
  * `-v` Verbose
@@ -122,8 +122,9 @@ It will check for the .td0 magic identifier, show the header details, decompress
  * `9` - Unable to allocate memory for decompression
  * `10` - Sector data CRC mismatch
 
-## BBC DFS Notes:
- * Using a `.ddd` or `.sdd` output file for BBC DFS disks will assume 16 sectors per track (i.e. double density)
+## BBC Micro DFS Notes :
+
+ * Using an `.sdd` or `.ddd` output file for BBC DFS disks will assume 16 sectors per track (i.e. double density)
  * Above can be overriden with the `-sectors` switch e.g. `-sectors 18`
  * Disks with different densities on different sides cannot currently be captured into `.ddd`
  * If a Solidisk chained catalogue is detected, it will notify during the catalogue operaton but not list it
