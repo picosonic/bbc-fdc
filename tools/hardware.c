@@ -51,47 +51,47 @@ int hw_init(const int spiclockdivider)
   switch (spiclockdivider)
   {
     case HW_SPIDIV1024:
-      // 244.140kHz on RPI1/2, 390.625kHz on RPI3
+      // 244.140kHz on RPI1/2, 390.625kHz on RPI3, 488.28125MHz on RPI4
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_1024);
       break;
 
     case HW_SPIDIV512:
-      // 488.281kHz on RPI1/2, 781.25kHz on RPI3
+      // 488.281kHz on RPI1/2, 781.25kHz on RPI3, 976.5625MHz on RPI4
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_512);
       break;
 
     case HW_SPIDIV256:
-      // 976.562kHz on RPI1/2, 1.562MHz on RPI3
+      // 976.562kHz on RPI1/2, 1.562MHz on RPI3, 1.953125MHz on RPI4
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256);
       break;
 
     case HW_SPIDIV128:
-      // 1.953MHz on RPI1/2, 3.125MHz on RPI3
+      // 1.953MHz on RPI1/2, 3.125MHz on RPI3, 3.90625MHz on RPI4
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128);
       break;
 
     case HW_SPIDIV64:
-      // 3.906MHz on RPI1/2, 6.250MHz on RPI3
+      // 3.906MHz on RPI1/2, 6.250MHz on RPI3, 7.8125MHz on RPI4
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_64);
       break;
 
     case HW_SPIDIV32:
-      // 7.812MHz on RPI1/2, 12.5MHz on RPI3 - ** WORKS **
+      // 7.812MHz on RPI1/2, 12.5MHz on RPI3, 15.625MHz on RPI4 - ** WORKS **
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_32);
       break;
 
     case HW_SPIDIV16:
-      // 15.625MHz on RPI1/2, 25MHz on RPI3 - ** WORKS **
+      // 15.625MHz on RPI1/2, 25MHz on RPI3, 31.25MHz on RPI4 - ** WORKS **
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_16);
       break;
 
     case HW_SPIDIV8:
-      // 31.25MHz on RPI1/2, 50MHz on RPI3 - ** LESS RELIABLE **
+      // 31.25MHz on RPI1/2, 50MHz on RPI3, 62.5MHz on RPI4 - ** LESS RELIABLE **
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_8);
       break;
 
     case HW_SPIDIV4:
-      // 62.5MHz on RPI1/2, 100MHz on RPI3 - ** UNRELIABLE, GIVES SPURIOUS VALUES  **
+      // 62.5MHz on RPI1/2, 100MHz on RPI3, 125MHz on RPI4 - ** UNRELIABLE, GIVES SPURIOUS VALUES  **
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_4);
       break;
 
