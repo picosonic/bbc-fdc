@@ -161,15 +161,19 @@ int main(int argc,char **argv)
   title[0]=0;
 
   printf("Compiled on hardware with ");
-#ifdef HAS_BCM2835
+#ifdef HW_BCM2835
   printf("BCM2835");
-#elif HAS_BCM2836
+#endif
+#ifdef HW_BCM2836
   printf("BCM2836");
-#elif HAS_BCM2837
+#endif
+#ifdef HW_BCM2837
   printf("BCM2837");
-#elif HAS_BCM2711
+#endif
+#ifdef HW_BCM2711
   printf("BCM2711");
-#else
+#endif
+#ifdef HW_UNKNOWN
   printf("UNKNOWN");
 #endif
   printf(" processor\n");
