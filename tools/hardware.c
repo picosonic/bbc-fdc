@@ -51,12 +51,12 @@ int hw_init(const int spiclockdivider)
   switch (spiclockdivider)
   {
     case HW_SPIDIV1024:
-      // 244.140kHz on RPI1/2, 390.625kHz on RPI3, 488.28125MHz on RPI4
+      // 244.140kHz on RPI1/2, 390.625kHz on RPI3, 488.28125kHz on RPI4
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_1024);
       break;
 
     case HW_SPIDIV512:
-      // 488.281kHz on RPI1/2, 781.25kHz on RPI3, 976.5625MHz on RPI4
+      // 488.281kHz on RPI1/2, 781.25kHz on RPI3, 976.5625kHz on RPI4
       bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_512);
       break;
 
