@@ -4,6 +4,7 @@
 // Acorn DFS geometry and layout
 #define DFS_SECTORSIZE 256
 #define DFS_SECTORSPERTRACK 10
+#define DFS_DDSECTORSPERTRACK 16
 #define DFS_TRACKSIZE (DFS_SECTORSIZE*DFS_SECTORSPERTRACK)
 
 #define DFS_MAXTRACKS 80
@@ -14,7 +15,7 @@
 #define DFS_MAXFILES 31
 
 extern void dfs_gettitle(const int head, char *title, const int titlelen);
-extern void dfs_showinfo(const int head);
-extern int dfs_validcatalogue(const int head);
+extern void dfs_showinfo(const int head, const unsigned int disktracks, const unsigned int sectorspertrack);
+extern int dfs_validcatalogue(const int head,unsigned int* sectorspertrack);
 
 #endif

@@ -8,7 +8,7 @@ REVISION = $(shell bash ./hw.sh Revision)
 DEBUGFLAGS = -g -W -Wall
 BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
 
-all: drivetest bbcfdc checkfsd checktd0 checkscp
+all: drivetest bbcfdc checkfsd checktd0 checkscp bbcfdc-nopi
 
 drivetest: drivetest.o hardware.o
 	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835
