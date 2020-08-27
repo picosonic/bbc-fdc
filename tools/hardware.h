@@ -45,6 +45,7 @@
 
 #define HW_250MHZ 250000000
 #define HW_400MHZ 400000000
+#define HW_500MHZ 500000000
 
 extern unsigned int hw_maxtracks;
 extern unsigned int hw_currenttrack;
