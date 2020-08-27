@@ -3,7 +3,7 @@ bbcfdc - Floppy disk raw flux capture and processor
 
 bbcfdc is intended for capturing raw **.rfi** flux data from floppy disk and optionally converting it into a **.ssd**, **.dsd**, **.fsd**, **.td0**, **.adf** or a generic **.img** file.
 
-It is designed to work with floppy disk interface PCB attached to GPIO of Raspberry Pi 2 or Raspberry Pi 3 running at 400Mhz (not overclocked). With some modifications the PCB and sample code can be made to work with the Raspberry Pi 1 running at 250Mhz.
+It is designed to work with floppy disk interface PCB attached to GPIO of Raspberry Pi 2 or Raspberry Pi 3 running at 400Mhz (not overclocked), it also works with Raspberry Pi 4 running at 500Mhz (not overclocked). With some modifications the PCB and sample code can be made to work with the Raspberry Pi 1 running at 250Mhz.
 
 Raw flux output is to **.rfi** files, these are raw capture data with JSON metadata, the format for these is detailed in [rfi.h](https://github.com/picosonic/bbc-fdc/blob/master/tools/rfi.h).
 
@@ -44,7 +44,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
  
  * bcm2835 library, available from [http://www.airspayce.com/mikem/bcm2835/](http://www.airspayce.com/mikem/bcm2835/)
 
-*NOTE : For bcm2835 library to work on Raspberry Pi 4 you should get the latest version (I've not tested it past Pi 3B+ yet)*
+*NOTE : For bcm2835 library to work on Raspberry Pi 4 you should get the latest version*
 
 # drivetest
 drivetest - Floppy disk drive testing tool
