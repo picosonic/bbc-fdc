@@ -762,6 +762,8 @@ int main(int argc,char **argv)
     }
   }
 
+  printf("Disktracks %d, drivetracks %d\n", disktracks, drivetracks);
+
   // Number of sides failed to autodetect and was not forced, so assume 2
   if (sides==AUTODETECT)
   {
@@ -877,7 +879,8 @@ int main(int argc,char **argv)
           if (dfs_validcatalogue(hw_currenthead, &totalsectors))
           {
             printf("\nDetected DFS, side : %d\n", hw_currenthead);
-            dfs_showinfo(hw_currenthead, drivetracks, sectorspertrack==-1?DFS_SECTORSPERTRACK:sectorspertrack);
+            printf("Disktracks %d, drivetracks %d\n", disktracks, drivetracks);
+            dfs_showinfo(hw_currenthead, disktracks, sectorspertrack==-1?DFS_SECTORSPERTRACK:sectorspertrack);
             info++;
             printf("\n");
           }
