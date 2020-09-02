@@ -5,7 +5,7 @@ bbcfdc
 bbcfdc-nopi
 checkfsd
 checkscp
-checktdo
+checktd0
 
 # Raw images
 *.raw
