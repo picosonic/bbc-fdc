@@ -64,7 +64,7 @@ unsigned long samplebuffsize;
 int flippy=0;
 int info=0;
 int layout=0;
-int sidetoread=-1;
+int sidetoread=AUTODETECT;
 
 // Processing position within the SPI buffer
 unsigned long datapos=0;
@@ -348,7 +348,7 @@ int main(int argc,char **argv)
           outputtype=IMAGESSD;
 
           // DFS sectors per track - standard density DFS is 10 sectors
-          if (sectorspertrack==AUTODETECT) 
+          if (sectorspertrack==AUTODETECT)
             sectorspertrack=DFS_SECTORSPERTRACK;
         }
         else
@@ -365,11 +365,11 @@ int main(int argc,char **argv)
         {
           capturetype=DISKIMG;
           outputtype=IMAGESDD;
-	  
-          // Double density DFS with e.g. Solidisk DDFS and Watford 
+
+          // Double density DFS with e.g. Solidisk DDFS and Watford
           // is 16 sectors per track. Opus went to 18.
 	  if (sectorspertrack==AUTODETECT)
-            sectorspertrack=DFS_DDSECTORSPERTRACK; 
+            sectorspertrack=DFS_DDSECTORSPERTRACK;
         }
         else
           printf("Unable to save sdd image\n");
@@ -384,7 +384,7 @@ int main(int argc,char **argv)
           outputtype=IMAGEDSD;
 
           // DFS sectors per track - standard density DFS is 10 sectors
-          if (sectorspertrack==AUTODETECT) 
+          if (sectorspertrack==AUTODETECT)
             sectorspertrack=DFS_SECTORSPERTRACK;
         }
         else
@@ -399,10 +399,10 @@ int main(int argc,char **argv)
           capturetype=DISKIMG;
           outputtype=IMAGEDDD;
 
-          // Double density DFS with e.g. Solidisk DDFS and Watford 
+          // Double density DFS with e.g. Solidisk DDFS and Watford
           // is 16 sectors per track. Opus went to 18.
-	  if (sectorspertrack==AUTODETECT) 
-            sectorspertrack=DFS_DDSECTORSPERTRACK; 
+	  if (sectorspertrack==AUTODETECT)
+            sectorspertrack=DFS_DDSECTORSPERTRACK;
         }
         else
           printf("Unable to save ddd image\n");
@@ -615,8 +615,13 @@ int main(int argc,char **argv)
   // Seek to track 2
   hw_seektotrack(2);
 
-  // Select lower side
-  hw_sideselect(0);
+  if (sidetoread==AUTODETECT)
+  {
+    // Select lower side
+    hw_sideselect(0);
+  }
+  else
+    hw_sideselect(sidetoread);
 
   // Wait for a bit after seek to allow drive speed to settle
   hw_sleep(1);
@@ -814,7 +819,7 @@ int main(int argc,char **argv)
     for (side=0; side<sides; side++)
     {
       // Read the specified side if in single side read mode
-      if(sidetoread!=-1) 
+      if(sidetoread!=AUTODETECT)
         side=sidetoread;
 
       // Select the correct side
@@ -853,7 +858,7 @@ int main(int argc,char **argv)
 #endif
 
           // Don't retry unless imaging DFS disks
-          if ((outputtype!=IMAGEDSD) && (outputtype!=IMAGESSD) && 
+          if ((outputtype!=IMAGEDSD) && (outputtype!=IMAGESSD) &&
               (outputtype!=IMAGEDDD) && (outputtype!=IMAGESDD) )
             break;
 	
@@ -865,7 +870,7 @@ int main(int argc,char **argv)
             if (diskstore_findhybridsector(hw_currenttrack, hw_currenthead, j)==NULL)
 	    {
               // Failed to read at least one track
-              trackstatus=0; 
+              trackstatus=0;
             }
 	  }
 
@@ -1094,7 +1099,7 @@ int main(int argc,char **argv)
       fsd_write(diskimage, disktracks, title);
     }
     else
-    if ((outputtype==IMAGEDSD) || (outputtype==IMAGESSD) || 
+    if ((outputtype==IMAGEDSD) || (outputtype==IMAGESSD) ||
         (outputtype==IMAGEDDD) || (outputtype==IMAGESDD))
     {
       Disk_Sector *sec;
@@ -1111,7 +1116,7 @@ int main(int argc,char **argv)
           for (j=0; j<sectorspertrack; j++)
           {
             // Write
-            sec=diskstore_findhybridsector(i, sidetoread!=-1?sidetoread:imgside, j);
+            sec=diskstore_findhybridsector(i, sidetoread!=AUTODETECT?sidetoread:imgside, j);
 
             if ((sec!=NULL) && (sec->data!=NULL))
             {
