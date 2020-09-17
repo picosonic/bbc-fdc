@@ -11,21 +11,21 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
 ## Syntax :
 
-`[-i input_rfi_file] [[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-summary] [-l] [-tmax maxtracks] [-title "Title"] [-v]`
+`[-i input_rfi_file] [-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-title "Title"] [-v]`
 
 ## Where :
 
  * `-i` Specify input **.rfi** file (when not being run on RPi hardware)
  * `-c` Catalogue the disk contents (DFS/ADFS/DOS only)
+ * `-ss` Force single-sided capture - optionally adding a 0 or 1 afterwards chooses that side (e.g. `-ss 0` or `-ss 1`)
+ * `-ds` Force double-sided capture (unless output is to .ssd or .sdd)
  * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .ssd, .sdd, .dsd, .ddd, .fsd, .td0, .img, .adf)
  * `-spidiv` Specify SPI clock divider to adjust sample rate (one of 16,32,64)
  * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi, .dfi, .scp or .raw)
- * `-l` Show a layout diagram of where sectors were found upon the disk surface for each track/side
- * `-ss` Force single-sided capture - optionally adding a 0 or 1 afterwards chooses that side (e.g. `-ss 0` or `-ss 1`)
- * `-ds` Force double-sided capture (unless output is to .ssd)
- * `-sectors` Expected sector count (e.g. 16 for Solidisk / Watford double density DFS)
  * `-sort` Sort sectors in diskstore prior to writing image
  * `-summary` Present a summary of operations once complete
+ * `-l` Show a layout diagram of where sectors were found upon the disk surface for each track/side
+ * `-sectors` Expected sector count (e.g. 16 for Solidisk / Watford double density DFS)
  * `-csv` Create a csv of bad sectors (named as <outputfile>.csv)
  * `-tmax` Specify the maximum track number you wish to try stepping to
  * `-title` Override the title used in metadata for disk formats which support it (.td0 / .fsd)

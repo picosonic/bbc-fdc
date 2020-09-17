@@ -136,7 +136,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[[-c] | [-o output_file]] [-spidiv spi_divider] [[-ss]|[-ds]] [-r retries] [-sort] [-sectors sectors_per_track] [-summary] [-csv] [-tmax maxtracks] [-l] [-title \"Title\"] [-v]\n");
+  fprintf(stderr, "[-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-title \"Title\"] [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -251,7 +251,14 @@ int main(int argc,char **argv)
         ++argn;
 
         if (sscanf(argv[argn], "%3d", &retval)==1)
+        {
           sidetoread=retval;
+
+          // Prevent invalid value for side to read
+          if (sidetoread>1) sidetoread=1;
+        }
+        else
+          --argn;
       }
     }
     else
@@ -259,7 +266,7 @@ int main(int argc,char **argv)
     {
       printf("Failed sector CSV report requested\n");
 
-      // Request single-sided
+      // Request CSV output
       csv=1;
     }
     else
@@ -408,6 +415,10 @@ int main(int argc,char **argv)
         {
           capturetype=DISKIMG;
           outputtype=IMAGEFSD;
+
+          // Default to single sided when dual sided not specified
+          if (sides==AUTODETECT)
+            sides=1;
         }
         else
           printf("Unable to save fsd image\n");
@@ -725,7 +736,7 @@ int main(int argc,char **argv)
           printf("Double-sided disk detected\n");
 
         // Only mark as double-sided when not using single-sided output
-        if ((outputtype!=IMAGESSD) && (outputtype!=IMAGESDD))
+        if ((outputtype!=IMAGESSD) && (outputtype!=IMAGESDD) && (outputtype!=IMAGEFSD))
           sides=2;
         else
           sides=1;
