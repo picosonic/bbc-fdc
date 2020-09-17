@@ -95,7 +95,7 @@ mfm.o: mfm.c crc.h diskstore.h hardware.h mfm.h mod.h
 mod.o: mod.c amigamfm.h fm.h mfm.h hardware.h
 	$(CC) $(BUILDFLAGS) -c -o mod.o mod.c
 
-fsd.o: fsd.c diskstore.h fsd.h
+fsd.o: fsd.c diskstore.h fsd.h hardware.h
 	$(CC) $(BUILDFLAGS) -c -o fsd.o fsd.c
 
 jsmn.o: jsmn.c jsmn.h
@@ -107,7 +107,7 @@ rfi.o: rfi.c hardware.h jsmn.h rfi.h
 scp.o: scp.c hardware.h mod.h scp.h
 	$(CC) $(BUILDFLAGS) -c -o scp.o scp.c
 
-teledisk.o: teledisk.c diskstore.h teledisk.h
+teledisk.o: teledisk.c diskstore.h hardware.h teledisk.h
 	$(CC) $(BUILDFLAGS) -c -o teledisk.o teledisk.c
 
 clean:

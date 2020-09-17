@@ -4,6 +4,7 @@
 #include <sys/time.h>
 
 #include "fsd.h"
+#include "hardware.h"
 #include "diskstore.h"
 
 /*
@@ -88,7 +89,7 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title)
   // Loop through tracks
   for (curtrack=0; curtrack<tracks; curtrack++)
   {
-    totalsectors=diskstore_countsectors(curtrack, 0)+diskstore_countsectors(curtrack, 1);
+    totalsectors=diskstore_countsectors(curtrack*hw_stepping, 0)+diskstore_countsectors(curtrack*hw_stepping, 1);
 
     // Track header
     buffer[0]=curtrack;
@@ -104,10 +105,10 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title)
 
       for (curhead=0; curhead<2; curhead++)
       {
-        numsectors=diskstore_countsectors(curtrack, curhead);
+        numsectors=diskstore_countsectors(curtrack*hw_stepping, curhead);
         for (cursector=0; cursector<numsectors; cursector++)
         {
-          sec=diskstore_findnthsector(curtrack, curhead, cursector);
+          sec=diskstore_findnthsector(curtrack*hw_stepping, curhead, cursector);
 
           if (sec!=NULL)
           {

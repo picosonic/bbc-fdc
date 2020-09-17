@@ -6,6 +6,7 @@
 
 #include "crc.h"
 #include "teledisk.h"
+#include "hardware.h"
 #include "diskstore.h"
 
 int td0_checkrepeats(uint8_t *buf, uint16_t buflen)
@@ -87,14 +88,14 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title)
   // Loop through the tracks
   for (curtrack=0; curtrack<tracks; curtrack++)
   {
-    totalsectors=diskstore_countsectors(curtrack, 0)+diskstore_countsectors(curtrack, 1);
+    totalsectors=diskstore_countsectors(curtrack*hw_stepping, 0)+diskstore_countsectors(curtrack*hw_stepping, 1);
  
     if (totalsectors>0)
     {
       // Loop through the heads
       for (curhead=0; curhead<2; curhead++)
       {
-        numsectors=diskstore_countsectors(curtrack, curhead);
+        numsectors=diskstore_countsectors(curtrack*hw_stepping, curhead);
 
         // Track header
         track.track=curtrack;
@@ -108,7 +109,7 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title)
           // Loop through the sectors
           for (cursector=0; cursector<numsectors; cursector++)
           {
-            sec=diskstore_findnthsector(curtrack, curhead, cursector);
+            sec=diskstore_findnthsector(curtrack*hw_stepping, curhead, cursector);
 
             if (sec!=NULL)
             {
