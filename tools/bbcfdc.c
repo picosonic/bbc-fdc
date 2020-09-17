@@ -1098,7 +1098,7 @@ int main(int argc,char **argv)
         (outputtype==IMAGEDDD) || (outputtype==IMAGESDD))
     {
       Disk_Sector *sec;
-      unsigned char blanksector[sectorspertrack];
+      unsigned char blanksector[DFS_SECTORSIZE];
       int imgside;
 
       // Prepare a blank sector when no sector is found in store
