@@ -349,7 +349,7 @@ void diskstore_dumpsectorlist()
   {
     fprintf(stderr, "TRACK %.2d: ", dtrack/hw_stepping);
 
-    for (dhead=0; dhead<2; dhead++)
+    for (dhead=(diskstore_minhead==-1?0:diskstore_minhead); dhead<(diskstore_maxhead==-1?2:diskstore_maxhead+1); dhead++)
     {
       n=0;
       do
@@ -391,10 +391,7 @@ void diskstore_dumplayoutmap(const int rotations)
   char cyldata[100+1];
   int i, n, ppos, ppos2;
   unsigned long samplesperrotation;
-  int mhead, mtrack;
-
-  if ((diskstore_maxhead>-1) && (diskstore_maxhead<2))
-    mhead=diskstore_maxhead+1;
+  int mtrack;
 
   if ((diskstore_maxtrack>-1) && (diskstore_maxtrack<(int)hw_maxtracks))
     mtrack=diskstore_maxtrack+1;
@@ -405,7 +402,7 @@ void diskstore_dumplayoutmap(const int rotations)
   fprintf(stderr, "TRACK[HEAD]\n");
   for (dtrack=0; dtrack<mtrack; dtrack+=hw_stepping)
   {
-    for (dhead=0; dhead<mhead; dhead++)
+    for (dhead=(diskstore_minhead==-1?0:diskstore_minhead); dhead<(diskstore_maxhead==-1?2:diskstore_maxhead+1); dhead++)
     {
       // Clear cylinder data
       for (i=0; i<(100+1); i++)
