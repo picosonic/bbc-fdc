@@ -124,7 +124,7 @@ void dfs_gettitle(const int head, char *title, const int titlelen)
   }
 }
 
-void dfs_showinfo(const int head, const unsigned int disktracks, const unsigned int sectorspertrack)
+void dfs_showinfo(const int head, const unsigned int disktracks, const int sectorspertrack)
 {
   int i;
   int numfiles;
@@ -235,21 +235,21 @@ void dfs_showinfo(const int head, const unsigned int disktracks, const unsigned 
 
   if (calcsize>totalsize)
   {
-    printf("\nWARNING: Disk catalogue size %d is SMALLER than disk size %d\n", totalsize, calcsize);
-    printf("WARNING: Catalogue sectors per track %d but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
+    printf("\nWARNING: Disk catalogue size %ld is SMALLER than disk size %ld\n", totalsize, calcsize);
+    printf("WARNING: Catalogue sectors per track %ld but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
     printf("WARNING: If you try and create a DFS image try using switch -sectors %d\n", sectorspertrack);
   }
   else
   if (calcsize<totalsize)
   {
-    printf("\nWARNING: Disk catalogue size %d is BIGGER than disk size %d \n", totalsize, calcsize);
-    printf("WARNING: Catalogue sectors per track %d but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
-    printf("WARNING: If you try and create a DFS image try using switch -sectors %d\n", totalsectors/disktracks);
+    printf("\nWARNING: Disk catalogue size %ld is BIGGER than disk size %ld \n", totalsize, calcsize);
+    printf("WARNING: Catalogue sectors per track %ld but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
+    printf("WARNING: If you try and create a DFS image try using switch -sectors %ld\n", totalsectors/disktracks);
   }
 }
 
 // Test for valid DFS catalogue, checks from http://beebwiki.mdfs.net/Acorn_DFS_disc_format
-int dfs_validcatalogue(const int head, unsigned int* totalsectors)
+int dfs_validcatalogue(const int head, int *totalsectors)
 {
   Disk_Sector *sector0;
   Disk_Sector *sector1;

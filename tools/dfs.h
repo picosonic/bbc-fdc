@@ -15,7 +15,7 @@
 #define DFS_MAXFILES 31
 
 extern void dfs_gettitle(const int head, char *title, const int titlelen);
-extern void dfs_showinfo(const int head, const unsigned int disktracks, const unsigned int sectorspertrack);
-extern int dfs_validcatalogue(const int head,unsigned int* sectorspertrack);
+extern void dfs_showinfo(const int head, const unsigned int disktracks, const int sectorspertrack);
+extern int dfs_validcatalogue(const int head, int *sectorspertrack);
 
 #endif
