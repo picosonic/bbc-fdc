@@ -748,16 +748,11 @@ int main(int argc,char **argv)
       }
     }
 
-    // If IDAM cylinder shows 2 then correct stepping
-    if (othertrack==2)
+    // Determine if double stepping is required
+    switch (othertrack)
     {
-      printf("Correct drive stepping for this disk and drive\n");
-    }
-    else
-    {
-      // If IDAM cylinder shows 1 then 40 track disk in 80 track drive
-      if (othertrack==1)
-      {
+      case 1:
+        // If IDAM cylinder shows 1 then 40 track disk in 80 track drive
         printf("40 track disk detected in 80 track drive, enabled double stepping\n");
 
         // Enable double stepping
@@ -765,16 +760,25 @@ int main(int argc,char **argv)
 
         disktracks=40;
         drivetracks=80;
-      }
+        break;
 
-      // If IDAM cylinder shows 4 then 80 track in 40 track drive
-      if (othertrack==4)
-      {
+      case 2:
+        // If IDAM cylinder shows 2 then correct stepping
+        printf("Correct drive stepping for this disk and drive\n");
+        break;
+
+      case 4:
+        // If IDAM cylinder shows 4 then 80 track in 40 track drive
         printf("80 track disk detected in 40 track drive\n*** Unable to fully image this disk in this drive ***\n");
 
         disktracks=80;
         drivetracks=40;
-      }
+        break;
+
+      default:
+        // Unexpected value for track in IDAM
+        printf("Unexpected track id %d\n*** Maybe copy protection ***\n", othertrack);
+        break;
     }
   }
 
