@@ -16,6 +16,9 @@ checktd0
 # BBC Micro DFS images
 *.ssd
 *.dsd
+*.sdd
+*.ddd
+*.fsd
 
 # ADFS images
 *.adf
@@ -28,5 +31,4 @@ checktd0
 
 # Generic images
 *.img
-*.fsd
 *.td0
