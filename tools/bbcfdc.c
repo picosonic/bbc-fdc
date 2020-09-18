@@ -1030,9 +1030,11 @@ int main(int argc,char **argv)
   if ((disktracks==80) && (diskstore_maxtrack<79))
     disktracks=(diskstore_maxtrack+1);
 
-  // Check if sectors have been requested to be sorted
+  // Check if sectors have been requested to be sorted logically by track/head/sectorid
   if (sortsectors)
-    diskstore_sortsectors();
+    diskstore_sortsectors(SORTBYID, ROTATIONS);
+  else
+    diskstore_sortsectors(SORTBYPOS, ROTATIONS);
 
   // Write the data to disk image file (if required)
   if (diskimage!=NULL)

@@ -9,6 +9,8 @@ Raw flux output is to **.rfi** files, these are raw capture data with JSON metad
 
 Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
 
+By default, sectors are sorted by their physical position on the disk regardless of which of the passes the data was found. The **-sort** option allows them to be sorted logically by their sector id. This only affects sectors in **.td0** and **.fsd** files.
+
 ## Syntax :
 
 `[-i input_rfi_file] [-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-title "Title"] [-v]`
@@ -22,7 +24,7 @@ Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
  * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .ssd, .sdd, .dsd, .ddd, .fsd, .td0, .img, .adf)
  * `-spidiv` Specify SPI clock divider to adjust sample rate (one of 16,32,64)
  * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi, .dfi, .scp or .raw)
- * `-sort` Sort sectors in diskstore prior to writing image
+ * `-sort` Sort sectors in diskstore by logical sector prior to writing image
  * `-summary` Present a summary of operations once complete
  * `-l` Show a layout diagram of where sectors were found upon the disk surface for each track/side
  * `-sectors` Expected sector count (e.g. 16 for Solidisk / Watford double density DFS)

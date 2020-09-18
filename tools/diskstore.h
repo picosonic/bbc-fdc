@@ -16,6 +16,10 @@
 #define SEQUENCED 0
 #define INTERLEAVED 1
 
+// Sector sorting criteria
+#define SORTBYID 0
+#define SORTBYPOS 1
+
 typedef struct DiskSector
 {
   // Physical position of sector on disk
@@ -71,7 +75,7 @@ extern Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, 
 // Processing of sectors
 extern unsigned char diskstore_countsectors(const unsigned char physical_track, const unsigned char physical_head);
 extern unsigned int diskstore_countsectormod(const unsigned char modulation);
-extern void diskstore_sortsectors();
+extern void diskstore_sortsectors(const int sortmethod, const int rotations);
 
 // Dump the contents of the disk storage for debug purposes
 extern void diskstore_dumpsectorlist();

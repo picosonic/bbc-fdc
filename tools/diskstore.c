@@ -158,7 +158,7 @@ unsigned int diskstore_countsectormod(const unsigned char modulation)
 }
 
 // Compare two sectors to determine if they should be swapped
-int diskstore_comparesectors(Disk_Sector *item1, Disk_Sector *item2)
+int diskstore_comparesectors(Disk_Sector *item1, Disk_Sector *item2, const int sortmethod, const int rotations)
 {
   if ((item1==NULL) || (item2==NULL))
     return 0;
@@ -177,19 +177,40 @@ int diskstore_comparesectors(Disk_Sector *item1, Disk_Sector *item2)
   if (item1->physical_head < item2->physical_head)
     return -1;
 
-  // Compare sectors, heads were the same
-  if (item1->logical_sector > item2->logical_sector)
-    return 1;
+  if (sortmethod==SORTBYID)
+  {
+    // Compare sectors, heads were the same
+    if (item1->logical_sector > item2->logical_sector)
+      return 1;
 
-  if (item1->logical_sector < item2->logical_sector)
-    return -1;
+    if (item1->logical_sector < item2->logical_sector)
+      return -1;
+  }
+  else
+  if (sortmethod==SORTBYPOS)
+  {
+    unsigned long samplesperrotation;
+    int item1dpos;
+    int item2dpos;
+
+    samplesperrotation=(mod_samplesize/rotations);
+
+    item1dpos=((item1->data_pos%samplesperrotation)*100)/samplesperrotation;
+    item2dpos=((item2->data_pos%samplesperrotation)*100)/samplesperrotation;
+
+    if (item1dpos > item2dpos)
+      return 1;
+
+    if (item1dpos < item2dpos)
+      return -1;
+  }
 
   // Everything was the same
   return 0;
 }
 
-// Bubble sort the sectors to be in TRACK/HEAD/SECTOR order rather than the order they were added
-void diskstore_sortsectors()
+// Bubble sort the sectors to one of the sort methods
+void diskstore_sortsectors(const int sortmethod, const int rotations)
 {
   int swaps;
   Disk_Sector *curr;
@@ -209,7 +230,7 @@ void diskstore_sortsectors()
     while ((curr!=NULL) && (curr->next!=NULL))
     {
       // Check if these two sectors need swapping
-      if (diskstore_comparesectors(curr, curr->next)==1)
+      if (diskstore_comparesectors(curr, curr->next, sortmethod, rotations)==1)
       {
         // Swap the pointers over in the linked list
         swap=curr->next;
@@ -396,7 +417,7 @@ void diskstore_dumplayoutmap(const int rotations)
   if ((diskstore_maxtrack>-1) && (diskstore_maxtrack<(int)hw_maxtracks))
     mtrack=diskstore_maxtrack+1;
 
-  fprintf(stderr, "Samples : %ld Rotations %d\n", mod_samplesize, rotations);
+  fprintf(stderr, "Samples : %ld  Rotations : %d\n", mod_samplesize, rotations);
   samplesperrotation=(mod_samplesize/rotations);
 
   fprintf(stderr, "TRACK[HEAD]\n");
