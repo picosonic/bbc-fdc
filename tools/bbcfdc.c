@@ -803,7 +803,7 @@ int main(int argc,char **argv)
         break;
 
       case IMAGESCP:
-        scp_writeheader(rawdata, ROTATIONS, 0, (drivetracks/hw_stepping)*sides, hw_measurerpm(), sides);
+        scp_writeheader(rawdata, ROTATIONS, 0, (drivetracks/hw_stepping)*sides, hw_measurerpm(), sides, sidetoread);
         break;
 
       default:

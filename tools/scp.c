@@ -263,7 +263,7 @@ From : https://www.cbmstuff.com/downloads/scp/scp_image_specs.txt
 uint32_t *scp_trackoffsets=NULL;
 long scp_endofheader=0;
 
-void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t starttrack, const uint8_t endtrack, const float rpm, const uint8_t sides)
+void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t starttrack, const uint8_t endtrack, const float rpm, const uint8_t sides, const int sidetoread)
 {
   unsigned int i;
   struct scp_header header;
@@ -291,7 +291,7 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   header.bitcellencoding=0x00;
 
   // Sides / Heads
-  header.heads=(sides==2)?0:1; // TODO return 2 when only top side is captured
+  header.heads=((sides==2)?0:((sidetoread==1)?2:1));
 
   // Capture resolution, default in .rfi files is 80ns, which has closest SCP multiplier of 2 (i.e. 75ns)
   header.resolution=2; // TODO determine programatically the best value for this based on rate
