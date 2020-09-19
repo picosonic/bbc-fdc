@@ -243,6 +243,7 @@ int main(int argc,char **argv)
 
       // Request single-sided
       sides=1;
+      sidetoread=0;
 
       if ((argn+1)<argc)
       {
@@ -340,6 +341,8 @@ int main(int argc,char **argv)
       {
         // .SSD is single sided
         sides=1;
+        if (sidetoread==AUTODETECT)
+          sidetoread=0;
 
         diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
@@ -359,6 +362,8 @@ int main(int argc,char **argv)
       {
         // .SDD is single sided
         sides=1;
+        if (sidetoread==AUTODETECT)
+          sidetoread=0;
 
         diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
@@ -418,7 +423,12 @@ int main(int argc,char **argv)
 
           // Default to single sided when dual sided not specified
           if (sides==AUTODETECT)
+          {
             sides=1;
+
+            if (sidetoread==AUTODETECT)
+              sidetoread=0;
+          }
         }
         else
           printf("Unable to save fsd image\n");
@@ -823,7 +833,7 @@ int main(int argc,char **argv)
     for (side=0; side<sides; side++)
     {
       // Read the specified side if in single side read mode
-      if(sidetoread!=AUTODETECT)
+      if ((sides==1) && (sidetoread!=AUTODETECT))
         side=sidetoread;
 
       // Select the correct side
