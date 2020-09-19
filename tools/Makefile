@@ -10,6 +10,8 @@ BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
 
 all: drivetest bbcfdc checkfsd checktd0 checkscp bbcfdc-nopi
 
+checktools: checkfsd checktd0 checkscp
+
 drivetest: drivetest.o hardware.o
 	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835
 
