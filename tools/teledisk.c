@@ -34,7 +34,7 @@ int td0_checkrepeats(uint8_t *buf, uint16_t buflen)
   return 0;
 }
 
-void td0_write(FILE *td0file, const unsigned char tracks, const char *title)
+void td0_write(FILE *td0file, const unsigned char tracks, const char *title, const uint8_t sides, const int sidetoread)
 {
   struct header_s header;
   struct comment_s comment;
@@ -66,7 +66,7 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title)
   header.drivetype=4; // TODO
   header.stepping=0|0x80; // TODO
   header.dosflag=0;
-  header.sides=diskstore_countsectors(diskstore_mintrack, 1)>0?2:1;
+  header.sides=sides;
   header.crc=calc_crc_stream((unsigned char *)&header, 10, 0x0000, TELEDISK_POLYNOMIAL);
   fwrite(&header, 1, sizeof(header), td0file);
 
@@ -88,13 +88,18 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title)
   // Loop through the tracks
   for (curtrack=0; curtrack<tracks; curtrack++)
   {
-    totalsectors=diskstore_countsectors(curtrack*hw_stepping, 0)+diskstore_countsectors(curtrack*hw_stepping, 1);
+    totalsectors=diskstore_countsectors(curtrack*hw_stepping, sidetoread);
+
+    if (sides==2)
+      totalsectors+=diskstore_countsectors(curtrack*hw_stepping, 1-sidetoread);
  
     if (totalsectors>0)
     {
       // Loop through the heads
-      for (curhead=0; curhead<2; curhead++)
+      for (curhead=0; curhead<sides; curhead++)
       {
+        if (sides==1) curhead=sidetoread;
+
         numsectors=diskstore_countsectors(curtrack*hw_stepping, curhead);
 
         // Track header

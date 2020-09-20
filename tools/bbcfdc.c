@@ -1079,7 +1079,7 @@ int main(int argc,char **argv)
       if (title[0]==0)
         strcpy(title, "NO TITLE");
 
-      td0_write(diskimage, disktracks, title);
+      td0_write(diskimage, disktracks, title, sides, sidetoread==AUTODETECT?0:sidetoread);
     }
     else
     if (outputtype==IMAGEFSD)

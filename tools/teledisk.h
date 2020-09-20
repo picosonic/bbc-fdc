@@ -75,6 +75,6 @@ struct datarepeat_s
 
 #pragma pack(pop)
 
-extern void td0_write(FILE *td0file, const unsigned char tracks, const char *title);
+extern void td0_write(FILE *td0file, const unsigned char tracks, const char *title, const uint8_t sides, const int sidetoread);
 
 #endif
