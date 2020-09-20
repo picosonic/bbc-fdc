@@ -813,7 +813,7 @@ int main(int argc,char **argv)
         break;
 
       case IMAGESCP:
-        scp_writeheader(rawdata, ROTATIONS, 0, (drivetracks/hw_stepping)*sides, hw_measurerpm(), sides, sidetoread);
+        scp_writeheader(rawdata, ROTATIONS, 0, (drivetracks/hw_stepping)*sides, hw_measurerpm(), sides, sidetoread==AUTODETECT?0:sidetoread);
         break;
 
       default:
@@ -1112,7 +1112,7 @@ int main(int argc,char **argv)
       if (title[0]==0)
         strcpy(title, "NO TITLE");
 
-      fsd_write(diskimage, disktracks, title);
+      fsd_write(diskimage, disktracks, title, sides, sidetoread==AUTODETECT?0:sidetoread);
     }
     else
     if ((outputtype==IMAGEDSD) || (outputtype==IMAGESSD) ||

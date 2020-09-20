@@ -2,6 +2,7 @@
 #include <strings.h>
 #include <time.h>
 #include <sys/time.h>
+#include <stdint.h>
 
 #include "fsd.h"
 #include "hardware.h"
@@ -56,7 +57,7 @@ Notes
 The &E1 error code represents a sector that is really &100 bytes long but declares itself as something longer, for example &200 bytes.  The FSD format stores the over-read data so both the reported and real sizes are &200 bytes, but the CRC is only correct for a read of &100 bytes.  The E0 and E2 codes work similarly.
 */
 
-void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title)
+void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title, const uint8_t sides, const int sidetoread)
 {
   unsigned char buffer[10];
   unsigned char curtrack, curhead, cursector;
@@ -89,7 +90,10 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title)
   // Loop through tracks
   for (curtrack=0; curtrack<tracks; curtrack++)
   {
-    totalsectors=diskstore_countsectors(curtrack*hw_stepping, 0)+diskstore_countsectors(curtrack*hw_stepping, 1);
+    totalsectors=diskstore_countsectors(curtrack*hw_stepping, sidetoread);
+
+    if (sides==2)
+      totalsectors+=diskstore_countsectors(curtrack*hw_stepping, 1-sidetoread);
 
     // Track header
     buffer[0]=curtrack;
@@ -103,8 +107,10 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title)
       buffer[0]=FSD_READABLE;
       fwrite(buffer, 1, 1, fsdfile);
 
-      for (curhead=0; curhead<2; curhead++)
+      for (curhead=0; curhead<sides; curhead++)
       {
+        if (sides==1) curhead=sidetoread;
+
         numsectors=diskstore_countsectors(curtrack*hw_stepping, curhead);
         for (cursector=0; cursector<numsectors; cursector++)
         {

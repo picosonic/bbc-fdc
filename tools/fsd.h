@@ -1,6 +1,8 @@
 #ifndef _FSD_H_
 #define _FSD_H_
 
+#include <stdint.h>
+
 #define FSD_UNFORMATTED 0x00
 #define FSD_UNREADABLE 0x00
 #define FSD_READABLE 0xff
@@ -19,6 +21,6 @@
 
 #define FSD_CREATORID 0x0a
 
-extern void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title);
+extern void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title, const uint8_t sides, const int sidetoread);
 
 #endif
