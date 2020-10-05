@@ -9,6 +9,9 @@ revision=$(cat /proc/cpuinfo | grep "Revision" | sed 's/.*: //')
 # Convert to decimal
 revision=$((16#$revision))
 
+# Strip off top 8 bits - Overvotage/OTP/Warranty
+revision=$(($revision & 0xffffff))
+
 case "$1" in
   Hardware)
     retval=$(cat /proc/cpuinfo | grep $1 | awk '{print $3}' | head -1)
