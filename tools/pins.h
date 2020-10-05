@@ -15,7 +15,7 @@
 #endif
 
 // Try to detect BCM2835
-#if defined (REV_900021) || defined(REV_900032) || defined(REV_900092) || defined(REV_920092) || defined(REV_900093) || defined(REV_9000c1) || defined(REV_920093)
+#if defined (REV_900021) || defined(REV_900032) || defined(REV_900092) || defined(REV_920092) || defined(REV_900093) || defined(REV_9000c1) || defined(REV_920093) || defined(REV_900061)
   #define HAS_BCM2835 1
 #endif
 
