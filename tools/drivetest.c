@@ -32,6 +32,7 @@ int main(int argc,char **argv)
   int seektrack=-1;
   unsigned char drivestatus;
   int useindex=1;
+  int cleaning=0;
   int retval;
 
   // Check user permissions
@@ -66,6 +67,12 @@ int main(int argc,char **argv)
         counttracks=1;
       }
     }
+    else
+    if (strcmp(argv[argn], "-clean")==0)
+    {
+      cleaning=1;
+      useindex=0;
+    }
 
     ++argn;
   }
@@ -85,27 +92,36 @@ int main(int argc,char **argv)
   signal(SIGSEGV, sig_handler); // Seg fault
   signal(SIGTERM, sig_handler); // Termination request
 
-  drivestatus=hw_detectdisk();
-
-  if (drivestatus==HW_NODRIVE)
+  // Only run standard checks when not cleaning heads
+  if (cleaning==0)
   {
-    fprintf(stderr, "Failed to detect drive\n");
-    return 2;
-  }
+    drivestatus=hw_detectdisk();
 
-  if (drivestatus==HW_NODISK)
+    if (drivestatus==HW_NODRIVE)
+    {
+      fprintf(stderr, "Failed to detect drive\n");
+      return 2;
+    }
+
+    if (drivestatus==HW_NODISK)
+    {
+      fprintf(stderr, "Failed to detect disk in drive\n");
+
+      if (useindex)
+        return 3;
+    }
+
+    // Select drive, depending on jumper
+    hw_driveselect();
+
+    // Start MOTOR
+    hw_startmotor();
+  }
+  else
   {
-    fprintf(stderr, "Failed to detect disk in drive\n");
-
-    if (useindex)
-      return 3;
+    // Select drive, depending on jumper
+    hw_driveselect();
   }
-
-  // Select drive, depending on jumper
-  hw_driveselect();
-
-  // Start MOTOR
-  hw_startmotor();
 
   // Wait for motor to get up to speed
   hw_sleep(1);
@@ -154,6 +170,27 @@ int main(int argc,char **argv)
     }
 
     printf("Counted %d track positions\n", numtracks);
+  }
+
+  // Run head cleaning cycle
+  if (cleaning==1)
+  {
+    int i;
+
+    // Start from track zero
+    hw_seektotrackzero();
+
+    for (i=0; i<5; i++)
+    {
+      // Try seeking to the requested maximum track
+      hw_seektotrack(hw_maxtracks-1);
+
+      // Wait a second
+      hw_sleep(1);
+
+      // Seek back to track 0
+      hw_seektotrackzero();
+    }
   }
 
   // If requested, seek to a specific track
