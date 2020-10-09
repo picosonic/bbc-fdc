@@ -8,30 +8,51 @@
 
 // All used inputs and outputs of 34 pin connector go through 74LS06
 
-// Try to detect RPi 1, based on information at https://elinux.org/RPi_HardwareHistory
-#if defined (REV_0002) || defined(REV_0003) || defined(REV_0004) || defined(REV_0005) || defined(REV_0006) || defined(REV_0007) || defined(REV_0008) || defined(REV_0009) || defined(REV_000d) || defined(REV_000e) || defined(REV_000f) 
+// Hardware detection uses info from the following websites
+//
+//   https://elinux.org/RPi_HardwareHistory
+//   https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
+//   https://www.raspberrypi.org/documentation/configuration/config-txt/overclocking.md
+
+// Try to detect Rpi Zero / Zero W
+#if defined(REV_900092) || defined(REV_920092) || defined(REV_900093) || defined(REV_9000c1) || defined(REV_920093)
+  #define RPI0 1
+  #define HAS_BCM2835 1
+  #define CLOCK_400 1
+#endif
+
+// Try to detect RPi 1
+#if defined (REV_0002) || defined(REV_0003) || defined(REV_0004) || defined(REV_0005) || defined(REV_0006) || defined(REV_0007) || defined(REV_0008) || defined(REV_0009) || defined(REV_000d) || defined(REV_000e) || defined(REV_000f) || defined(REV_0010) || defined(REV_0011) || defined(REV_0012) || defined(REV_0013) || defined(REV_0014) || defined(REV_0015) || defined(REV_900021) || defined(REV_900032) || defined(REV_900061)
   #define RPI1 1
   #define HAS_BCM2835 1
+  #define CLOCK_250 1
 #endif
 
-// Try to detect BCM2835
-#if defined (REV_900021) || defined(REV_900032) || defined(REV_900092) || defined(REV_920092) || defined(REV_900093) || defined(REV_9000c1) || defined(REV_920093) || defined(REV_900061)
-  #define HAS_BCM2835 1
-#endif
-
-// Try to detect BCM2836
+// Try to detect RPi 2
 #if defined (REV_a01040) || defined(REV_a01041) || defined(REV_a21041)
+  #define RPI2 1
   #define HAS_BCM2836 1
+  #define CLOCK_250 1
 #endif
 
-// Try to detect BCM2837, based on information at https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
-#if defined(REV_9020e0) || defined (REV_a02082) || defined(REV_a020a0) || defined(REV_a020d3) || defined(REV_a02042) || defined(REV_a22042) || defined(REV_a22082) || defined(REV_a220a0) || defined(REV_a32082) || defined(REV_a52082) || defined(REV_a22083) || defined(REV_a02100)
+#if defined (REV_a02042) || defined(REV_a22042)
+  #define RPI2 1
   #define HAS_BCM2837 1
+  #define CLOCK_250 1
 #endif
 
-// Try to detect BCM2711, based on information at https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
+// Try to detect RPi 3 / 3A+ / 3B+
+#if defined(REV_9020e0) || defined (REV_a02082) || defined(REV_a020a0) || defined(REV_a020d3) || defined(REV_a22082) || defined(REV_a220a0) || defined(REV_a32082) || defined(REV_a52082) || defined(REV_a22083) || defined(REV_a02100)
+  #define RPI3 1
+  #define HAS_BCM2837 1
+  #define CLOCK_400 1
+#endif
+
+// Try to detect Rpi 4
 #if defined (REV_a03111) || defined(REV_b03111) || defined(REV_b03112) || defined(REV_c03111) || defined(REV_c03112) || defined(REV_d03114)
+  #define RPI4 1
   #define HAS_BCM2711 1
+  #define CLOCK_500 1
 #endif
 
 #ifdef RPI1

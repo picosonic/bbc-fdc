@@ -100,9 +100,9 @@ int hw_init(const int spiclockdivider)
       break;
   }
 
-#if defined(HAS_BCM2837)
+#if defined(CLOCK_400)
   hw_samplerate=HW_400MHZ/spiclockdivider; // 400MHz core
-#elif defined(HAS_BCM2711)
+#elif defined(CLOCK_500)
   hw_samplerate=HW_500MHZ/spiclockdivider; // 500MHz core
 #else
   hw_samplerate=HW_250MHZ/spiclockdivider; // 250MHz core
