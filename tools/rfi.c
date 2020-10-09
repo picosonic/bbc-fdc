@@ -72,7 +72,7 @@ int rfi_readheader(FILE *rfifile)
 
       jsmn_init(&parser);
 
-      // Quick check for validty and to count the tokens
+      // Quick check for validity and to count the tokens
       numtokens=jsmn_parse(&parser, rfi_headerstring, rfi_headerlen, NULL, 0);
 
       if (numtokens>0)
@@ -371,6 +371,16 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
             metabuffer[tokens[i+1].end]=0;
 
             sscanf(&metabuffer[tokens[i+1].start], "%8lu", &rfi_trackdatalen);
+
+            metabuffer[tokens[i+1].end]=rfic;
+          }
+          else
+          if (strncmp(&metabuffer[tokens[i].start], "rpm", tokens[i].end-tokens[i].start)==0)
+          {
+            rfic=metabuffer[tokens[i+1].end];
+            metabuffer[tokens[i+1].end]=0;
+
+            sscanf(&metabuffer[tokens[i+1].start], "%f", &rfi_rpm);
 
             metabuffer[tokens[i+1].end]=rfic;
           }
