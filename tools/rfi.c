@@ -393,6 +393,11 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
       // Is this the track we want?
       if ((rfi_track==track) && (rfi_side==side) && (rfi_trackencoding[0]!=0) && (rfi_trackdatalen!=0))
       {
+        if (rfi_rpm!=-1)
+          hw_rpm=rfi_rpm;
+        else
+          hw_rpm=HW_DEFAULTRPM;
+
         if (strstr(rfi_trackencoding, "raw")!=NULL)
         {
           if (rfi_trackdatalen<=buflen)

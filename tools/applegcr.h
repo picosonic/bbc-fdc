@@ -12,6 +12,7 @@
 
 #define APPLEGCR_SECTORLEN 256
 
+// Ideal bitcell width at 300 RPM
 #define APPLEGCR_BITCELL 4
 
 extern int applegcr_idamtrack, applegcr_idamsector;

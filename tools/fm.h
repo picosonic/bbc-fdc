@@ -1,7 +1,7 @@
 #ifndef _FM_H_
 #define _FM_H_
 
-// Microseconds in a bitcell window for single-density FM
+// Microseconds in a bitcell window for single-density FM at 300 RPM
 #define FM_BITCELL 4
 
 // FM Block types

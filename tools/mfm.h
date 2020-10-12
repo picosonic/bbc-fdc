@@ -1,11 +1,11 @@
 #ifndef _MFM_H_
 #define _MFM_H_
 
-// Microseconds in a bitcell window for double density MFM
+// Microseconds in a bitcell window for double density MFM at 300 RPM
 #define MFM_BITCELLDD 4
-// Microseconds in a bitcell window for high density MFM
+// Microseconds in a bitcell window for high density MFM at 300 RPM
 #define MFM_BITCELLHD 2
-// Microseconds in a bitcell window for extra-high density MFM
+// Microseconds in a bitcell window for extra-high density MFM at 300 RPM
 #define MFM_BITCELLED 1
 
 // MFM Block types

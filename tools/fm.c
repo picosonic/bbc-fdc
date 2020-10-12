@@ -305,7 +305,7 @@ void fm_addsample(const unsigned long samples, const unsigned long datapos)
 // Initialise the FM parser
 void fm_init(const int debug, const char density)
 {
-  char bitcell=FM_BITCELL;
+  float bitcell=FM_BITCELL;
 
   fm_debug=debug;
 
@@ -314,8 +314,11 @@ void fm_init(const int debug, const char density)
     // TODO cope with different densities of FM
   }
 
+  // Adjust bitcell for RPM
+  bitcell=(bitcell/(float)HW_DEFAULTRPM)*hw_rpm;
+
   // Determine number of samples between "1" pulses (default window)
-  fm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)bitcell;
+  fm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*bitcell;
 
   // From default window, determine bucket sizes for assigning bits "1" or "01"
   fm_bucket1=fm_defaultwindow+(fm_defaultwindow/2);

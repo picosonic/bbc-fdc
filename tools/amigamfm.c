@@ -295,7 +295,7 @@ void amigamfm_addsample(const unsigned long samples, const unsigned long datapos
 
 void amigamfm_init(const int debug, const char density)
 {
-  char bitcell=MFM_BITCELLDD;
+  float bitcell=MFM_BITCELLDD;
   float diff;
 
   amigamfm_debug=debug;
@@ -306,8 +306,11 @@ void amigamfm_init(const int debug, const char density)
   if ((density&MOD_DENSITYMFMHD)!=0)
     bitcell=MFM_BITCELLHD;
 
+  // Adjust bitcell for RPM
+  bitcell=(bitcell/(float)HW_DEFAULTRPM)*hw_rpm;
+
   // Determine number of samples between "1" pulses (default window)
-  amigamfm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)bitcell;
+  amigamfm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*bitcell;
 
   // From default window, determine ideal sample times for assigning bits "01", "001" or "0001"
   amigamfm_bucket01=amigamfm_defaultwindow;

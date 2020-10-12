@@ -409,9 +409,14 @@ void applegcr_addsample(const unsigned long samples, const unsigned long datapos
 
 void applegcr_init(const int debug, const char density)
 {
+  float bitcell=APPLEGCR_BITCELL;
+
   applegcr_debug=debug;
 
-  applegcr_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*(float)APPLEGCR_BITCELL;
+  // Adjust bitcell for RPM
+  bitcell=(bitcell/(float)HW_DEFAULTRPM)*hw_rpm;
+
+  applegcr_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*bitcell;
   applegcr_threshold01=applegcr_defaultwindow*1.5;
   applegcr_threshold001=applegcr_defaultwindow*2.5;
 
