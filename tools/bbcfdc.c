@@ -663,9 +663,9 @@ int main(int argc,char **argv)
 
   if (modulation!=AUTODETECT)
   {
-    int othertrack;
-    int otherhead;
-    int othersector;
+    int othertrack=-1;
+    int otherhead=-1;
+    int othersector=-1;
 
     // Check if it was FM sectors found
     if ((fm_lasttrack!=-1) && (fm_lasthead!=-1) && (fm_lastsector!=-1) && (fm_lastlength!=-1))
@@ -787,7 +787,8 @@ int main(int argc,char **argv)
 
       default:
         // Unexpected value for track in IDAM
-        printf("Unexpected track id %d\n*** Maybe copy protection ***\n", othertrack);
+        if (othertrack!=-1)
+          printf("Unexpected track id %d\n*** Maybe copy protection ***\n", (char)othertrack);
         break;
     }
   }
