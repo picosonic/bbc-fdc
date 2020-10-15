@@ -321,7 +321,7 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   scp_endofheader=ftell(scpfile);
 
   // Blank offsets to tracks - to be filled in later
-  for (i=0; i<SCP_MAXTRACKS; i++)
+  for (i=0; i<(endtrack-starttrack+1); i++)
     fprintf(scpfile, "%c%c%c%c", 0, 0, 0, 0);
 }
 
