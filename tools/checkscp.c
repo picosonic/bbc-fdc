@@ -7,6 +7,7 @@
 
 struct scp_header header;
 long scp_endofheader;
+uint32_t *scp_trackoffsets;
 
 int scp_processheader(FILE *scpfile)
 {
@@ -306,8 +307,30 @@ int scp_processheader(FILE *scpfile)
   return 0;
 }
 
-void scp_processtrack(FILE *scpfile, const unsigned char track)
+void scp_processtrack(FILE *scpfile, const unsigned char track, const uint8_t revolutions)
 {
+  struct scp_tdh thdr;
+  struct scp_timings timings;
+  uint8_t i;
+
+  // Don't process empty tracks
+  if (scp_trackoffsets[track]==0) return;
+
+  // Seek to data for this track
+  fseek(scpfile, scp_trackoffsets[track], SEEK_SET);
+
+  // Verify track header
+  fread(&thdr, 1, sizeof(thdr), scpfile);
+  if (strncmp((char *)&thdr.magic, SCP_TRACK, strlen(SCP_TRACK))==0)
+  {
+    printf("Track %d.%d -> %d.%d\n", track/2, track%2, thdr.track/2, thdr.track%2);
+
+    for (i=0; i<revolutions; i++)
+    {
+      fread(&timings, 1, sizeof(timings), scpfile);
+      printf("  %d:%d / %d / %d\n", i, timings.indextime, timings.tracklen, timings.dataoffset);
+    }
+  }
 }
 
 int main(int argc, char **argv)
@@ -362,8 +385,17 @@ int main(int argc, char **argv)
   else
     printf("(OK) \n");
 
-  for (track=header.starttrack; track<header.endtrack; track++)
-    scp_processtrack(fp, track);
+  // Allocate memory to store track data offsets
+  scp_trackoffsets=malloc(sizeof(uint32_t) * SCP_MAXTRACKS);
+  if (scp_trackoffsets!=NULL)
+  {
+    fread(scp_trackoffsets, 1, (header.endtrack-header.starttrack+1)*sizeof(uint32_t), fp);
+
+    for (track=header.starttrack; track<header.endtrack; track++)
+      scp_processtrack(fp, track, header.revolutions);
+
+    free(scp_trackoffsets);
+  }
 
   fclose(fp);
 
