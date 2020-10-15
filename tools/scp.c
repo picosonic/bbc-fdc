@@ -382,7 +382,6 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
     numfluxes=0;
 
     scpdatapos=ftell(scpfile);
-    value=(uint32_t) scpdatapos;
 
     // Process each byte of the raw flux data
     for (fluxdatapos=(rotpoint*i); ((fluxdatapos<rotpoint*(i+1)) && (fluxdatapos<rawdatalength)); fluxdatapos++)
@@ -439,7 +438,7 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
     value=numfluxes;
     fwrite(&value, 1, sizeof(uint32_t), scpfile);
 
-    value=(uint32_t)scpdatapos;
+    value=(uint32_t)(scpdatapos-scppos);
     fwrite(&value, 1, sizeof(uint32_t), scpfile);
 
     // Reset back to where we were
