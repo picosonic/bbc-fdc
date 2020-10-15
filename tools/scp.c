@@ -294,7 +294,7 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
   header.heads=((sides==2)?0:((sidetoread==1)?2:1));
 
   // Capture resolution, default in .rfi files is 80ns, which has closest SCP multiplier of 2 (i.e. 75ns)
-  header.resolution=2; // TODO determine programatically the best value for this based on rate
+  header.resolution=0; // TODO determine programatically the best value for this based on rate
 
   // Blank checksum  - to be filled in later (calculated from next byte to EOF)
   header.checksum=0x0;
