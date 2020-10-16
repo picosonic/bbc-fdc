@@ -331,7 +331,7 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
   long scpdatapos;
   long trackpos;
   uint8_t i;
-  uint16_t fluxtime;
+  uint32_t fluxtime;
   uint32_t numfluxes;
   unsigned char c,j;
   char level,bi=0;
@@ -415,6 +415,13 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
 
             // Convert back from float to uint16_t
             fluxtime=roundf(celltime);
+
+            // Check for time overflow
+            while (fluxtime>65536)
+            {
+              fprintf(scpfile, "%c%c", 0, 0);
+              fluxtime-=65536;
+            }
 
             // Write sample between fluxes, big-endian
             fprintf(scpfile, "%c%c", (fluxtime>>8)&0xff, fluxtime&0xff);
