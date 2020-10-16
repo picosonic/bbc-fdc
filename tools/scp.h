@@ -10,6 +10,8 @@
 
 #define SCP_BASE_NS 25
 
+#define SCP_EXTFOOTER_MAGIC "FPCS"
+
 // Flags
 #define SCP_FLAGS_INDEX 0x01
 #define SCP_FLAGS_96TPI 0x02
@@ -114,6 +116,24 @@ struct scp_timings
   uint32_t indextime; // time in ns/25ns for one revolution
   uint32_t tracklen; // number of bitcells for this track
   uint32_t dataoffset; // offset to flux data from start of TDH
+};
+
+// Extension footer
+struct scp_extfooter
+{
+  uint32_t drivemanufacturer; // Drive manufacturer string offset
+  uint32_t drivemodel; // Drive model string offset
+  uint32_t driveserial; // Drive serial number string offset
+  uint32_t creator; // Creator string offset
+  uint32_t application; // Application name string offset
+  uint32_t comments; // Comments string offset
+  uint8_t creationtimestamp[8]; // Image creation timestamp
+  uint8_t modificationtimestamp[8]; // Image modification timestamp
+  uint8_t appver; // Application version (nibbles major/minor)
+  uint8_t scphwver; // SCP hardware version (nibbles major/minor)
+  uint8_t scpfwver; // SCP firmware version (nibbles major/minor)
+  uint8_t imgrevision; // Image format revision (nibbles major/minor)
+  uint8_t fpcs[4]; // "FPCS"
 };
 
 #pragma pack(pop)

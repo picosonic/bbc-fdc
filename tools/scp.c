@@ -416,7 +416,7 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
             // Convert back from float to uint16_t
             fluxtime=roundf(celltime);
 
-            // Write sample between fluxes
+            // Write sample between fluxes, big-endian
             fprintf(scpfile, "%c%c", (fluxtime>>8)&0xff, fluxtime&0xff);
 
             // Reset samples counter

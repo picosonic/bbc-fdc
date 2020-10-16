@@ -385,6 +385,10 @@ int main(int argc, char **argv)
   else
     printf("(OK) \n");
 
+  // Skip over extended data if used
+  if ((header.flags & SCP_FLAGS_EXTENDED)!=0)
+    fseek(fp, 0x80, SEEK_SET);
+
   // Allocate memory to store track data offsets
   scp_trackoffsets=malloc(sizeof(uint32_t) * SCP_MAXTRACKS);
   if (scp_trackoffsets!=NULL)
@@ -393,6 +397,10 @@ int main(int argc, char **argv)
 
     for (track=header.starttrack; track<header.endtrack; track++)
       scp_processtrack(fp, track, header.revolutions);
+
+    // Look for ASCII timestamp
+    //   After all track data, if first byte is 0x30 to 0x5F
+    //   Otherwise this is the start of extension footer (when inidicated in header flags)
 
     free(scp_trackoffsets);
   }
