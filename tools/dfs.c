@@ -165,7 +165,7 @@ void dfs_showinfo(const int head, const unsigned int disktracks, const int secto
   // disk size instead of the standard Acorn DFS 10-bit disk size - Acorn DFS always
   // sets bit 3 to zero so extended this to bit 3 doesn't hurt Acorn DFS
   totalsectors=(((sector1->data[6]&0x07)<<8) | (sector1->data[7]));
-  
+
   totalsize=totalsectors*DFS_SECTORSIZE;
   printf("Disk size : %lu tracks (%u sectors, %lu bytes)\n", (unsigned long)disktracks, (unsigned int)totalsectors, (unsigned long)totalsize);
 

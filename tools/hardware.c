@@ -108,7 +108,7 @@ int hw_init(const int spiclockdivider)
   hw_samplerate=HW_250MHZ/spiclockdivider; // 250MHz core
 #endif
 
-  bcm2835_spi_setDataMode(BCM2835_SPI_MODE2); // CPOL (Clock Polarity) = 1, CPHA (Clock Phase) = 0 
+  bcm2835_spi_setDataMode(BCM2835_SPI_MODE2); // CPOL (Clock Polarity) = 1, CPHA (Clock Phase) = 0
 
   bcm2835_spi_begin(); // sets all correct pin modes
 

@@ -6,6 +6,7 @@
 #include "mod.h"
 #include "fm.h"
 #include "hardware.h"
+#include "pll.h"
 
 int fm_state=FM_SYNC; // state machine
 unsigned int fm_datacells=0; // 16 bit sliding buffer
@@ -27,6 +28,8 @@ unsigned int fm_bitlen=0;
 // FM timings
 float fm_defaultwindow;
 float fm_bucket1, fm_bucket01;
+
+struct PLL *fm_pll;
 
 int fm_debug=0;
 
@@ -280,8 +283,15 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
   }
 }
 
-void fm_addsample(const unsigned long samples, const unsigned long datapos)
+void fm_addsample(const unsigned long samples, const unsigned long datapos, const int usepll)
 {
+  if (usepll)
+  {
+    PLL_addsample(fm_pll, samples, datapos);
+
+    return;
+  }
+
   // Does number of samples fit within "1" bucket ..
   if (samples<=fm_bucket1)
   {
@@ -319,6 +329,11 @@ void fm_init(const int debug, const char density)
 
   // Determine number of samples between "1" pulses (default window)
   fm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*bitcell;
+
+  if (fm_pll!=NULL)
+    PLL_reset(fm_pll, fm_defaultwindow);
+  else
+    fm_pll=PLL_create(fm_defaultwindow, fm_addbit);
 
   // From default window, determine bucket sizes for assigning bits "1" or "01"
   fm_bucket1=fm_defaultwindow+(fm_defaultwindow/2);

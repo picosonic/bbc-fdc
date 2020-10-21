@@ -18,7 +18,7 @@
 extern int applegcr_idamtrack, applegcr_idamsector;
 extern int applegcr_lasttrack, applegcr_lastsector;
 
-extern void applegcr_addsample(const unsigned long samples, const unsigned long datapos);
+extern void applegcr_addsample(const unsigned long samples, const unsigned long datapos, const int usepll);
 
 extern void applegcr_init(const int debug, const char density);
 

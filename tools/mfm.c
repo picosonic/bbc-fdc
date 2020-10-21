@@ -5,6 +5,7 @@
 #include "diskstore.h"
 #include "mod.h"
 #include "mfm.h"
+#include "pll.h"
 
 int mfm_state=MFM_SYNC; // state machine
 unsigned int mfm_datacells=0; // 16 bit sliding buffer
@@ -26,6 +27,8 @@ unsigned int mfm_bitlen=0;
 // MFM timings
 float mfm_defaultwindow;
 float mfm_bucket01, mfm_bucket001, mfm_bucket0001;
+
+struct PLL *mfm_pll;
 
 int mfm_debug=0;
 
@@ -290,8 +293,15 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
   }
 }
 
-void mfm_addsample(const unsigned long samples, const unsigned long datapos)
+void mfm_addsample(const unsigned long samples, const unsigned long datapos, const int usepll)
 {
+  if (usepll)
+  {
+    PLL_addsample(mfm_pll, samples, datapos);
+
+    return;
+  }
+
   // Does number of samples fit within "01" bucket ..
   if (samples<=mfm_bucket01)
   {
@@ -342,6 +352,11 @@ void mfm_init(const int debug, const char density)
 
   // Determine number of samples between "1" pulses (default window)
   mfm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*bitcell;
+
+  if (mfm_pll!=NULL)
+    PLL_reset(mfm_pll, mfm_defaultwindow);
+  else
+    mfm_pll=PLL_create(mfm_defaultwindow, mfm_addbit);
 
   // From default window, determine ideal sample times for assigning bits "01", "001" or "0001"
   mfm_bucket01=mfm_defaultwindow;

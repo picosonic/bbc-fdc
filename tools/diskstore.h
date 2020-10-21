@@ -1,6 +1,8 @@
 #ifndef _DISKSTORE_H_
 #define _DISKSTORE_H_
 
+#include <stdint.h>
+
 // For sector status
 #define NODATA 0
 #define BADDATA 1
@@ -61,7 +63,7 @@ extern int diskstore_minsectorid;
 extern int diskstore_maxsectorid;
 
 // Initialise disk storage
-extern void diskstore_init();
+extern void diskstore_init(const int usepll);
 
 // Add a sector to the disk storage
 extern int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const long id_pos, const unsigned int idcrc, const long data_pos, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc);
@@ -86,5 +88,8 @@ extern void diskstore_dumplayoutmap(const int rotations);
 extern unsigned long diskstore_absoffset;
 extern void diskstore_absoluteseek(const unsigned long offset, const int interlacing, const int maxtracks);
 extern unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, const int interlacing, const int maxtracks);
+
+// Calculate disk CRCs
+extern uint32_t diskstore_calcdiskcrc(const unsigned char physical_head);
 
 #endif

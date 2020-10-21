@@ -7,6 +7,7 @@
 #include "mod.h"
 #include "mfm.h"
 #include "amigamfm.h"
+#include "pll.h"
 
 int amigamfm_state=MFM_SYNC; // state machine
 unsigned int amigamfm_datacells=0; // 16 bit sliding buffer
@@ -22,6 +23,8 @@ unsigned int amigamfm_bitlen=0;
 // MFM timings
 float amigamfm_defaultwindow;
 float amigamfm_bucket01, amigamfm_bucket001, amigamfm_bucket0001;
+
+struct PLL *amigamfm_pll;
 
 int amigamfm_debug=0;
 
@@ -259,8 +262,15 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
   }
 }
 
-void amigamfm_addsample(const unsigned long samples, const unsigned long datapos)
+void amigamfm_addsample(const unsigned long samples, const unsigned long datapos, const int usepll)
 {
+  if (usepll)
+  {
+    PLL_addsample(amigamfm_pll, samples, datapos);
+
+    return;
+  }
+
   // Does number of samples fit within "01" bucket ..
   if (samples<=amigamfm_bucket01)
   {
@@ -311,6 +321,11 @@ void amigamfm_init(const int debug, const char density)
 
   // Determine number of samples between "1" pulses (default window)
   amigamfm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*bitcell;
+
+  if (amigamfm_pll!=NULL)
+    PLL_reset(amigamfm_pll, amigamfm_defaultwindow);
+  else
+    amigamfm_pll=PLL_create(amigamfm_defaultwindow, amigamfm_addbit);
 
   // From default window, determine ideal sample times for assigning bits "01", "001" or "0001"
   amigamfm_bucket01=amigamfm_defaultwindow;

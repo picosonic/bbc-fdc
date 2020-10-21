@@ -11,7 +11,7 @@
 extern int gcr_idamtrack, gcr_idamsector;
 extern int gcr_lasttrack, gcr_lastsector;
 
-extern void gcr_addsample(const unsigned long samples, const unsigned long datapos);
+extern void gcr_addsample(const unsigned long samples, const unsigned long datapos, const int usepll);
 
 extern void gcr_init(const int debug, const char density);
 

@@ -23,7 +23,7 @@ unsigned char mod_getdata(const unsigned int datacells);
 
 extern float mod_samplestoms(const long samples);
 
-extern void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt);
+extern void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt, const int usepll);
 
 extern void mod_init(const int debug);
 

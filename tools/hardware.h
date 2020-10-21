@@ -34,7 +34,7 @@
 
 // For SPI clock dividers
 #define HW_SPIDIV1024 1024
-#define HW_SPIDIV512 512 
+#define HW_SPIDIV512 512
 #define HW_SPIDIV256 256
 #define HW_SPIDIV128 128
 #define HW_SPIDIV64 64

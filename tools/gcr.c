@@ -4,6 +4,7 @@
 #include "hardware.h"
 #include "diskstore.h"
 #include "gcr.h"
+#include "pll.h"
 
 // GCR for C64
 //
@@ -88,6 +89,8 @@ unsigned long gcr_idpos, gcr_blockpos;
 int gcr_idamtrack, gcr_idamsector; // IDAM values
 int gcr_lasttrack, gcr_lastsector; // last known good IDAM values
 unsigned int gcr_idblockcrc, gcr_datablockcrc;
+
+struct PLL *gcr_pll;
 
 int gcr_debug=0;
 
@@ -391,8 +394,15 @@ void gcr_addbit(const unsigned char bit, const unsigned long datapos)
   }
 }
 
-void gcr_addsample(const unsigned long samples, const unsigned long datapos)
+void gcr_addsample(const unsigned long samples, const unsigned long datapos, const int usepll)
 {
+  if (usepll)
+  {
+    PLL_addsample(gcr_pll, samples, datapos);
+
+    return;
+  }
+
   if (hw_currenttrack<=(17*2))
   {
     gcr_bucket1=63;
@@ -437,6 +447,11 @@ void gcr_addsample(const unsigned long samples, const unsigned long datapos)
 void gcr_init(const int debug, const char density)
 {
   gcr_debug=debug;
+
+  if (gcr_pll!=NULL)
+    PLL_reset(gcr_pll, 63);
+  else
+    gcr_pll=PLL_create(63, gcr_addbit);
 
   // Set up C64 GCR parser
   gcr_state=GCR_IDLE;

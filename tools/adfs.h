@@ -98,7 +98,7 @@ Bit Meaning
 6 Undefined
 7 The object is locked for others
 
-In ADFS, bits 4-7 are always identical to bits 0-3. In calls which write the attributes 
+In ADFS, bits 4-7 are always identical to bits 0-3. In calls which write the attributes
 of an object, all bits except 0, 1 and 3 are ignored. If the object is a directory, bits 0 and 1 are also ignored. Note that 'others' in the above context means other users of, say, the Econet filing system.
 */
 

@@ -45,7 +45,7 @@ static uint32_t crc32_table[256];
 int crc32_table_generated=0;
 
 /* CRC-32-IEEE 802.3 (V.42, Ethernet, SATA, MPEG-2, PNG, POSIX cksum) */
-uint32_t CRC32_CalcStream(const uint32_t currcrc, const char *buf, const int len)
+uint32_t CRC32_CalcStream(const uint32_t currcrc, const unsigned char *buf, const int len)
 {
   uint32_t crc;
   int locallen;
@@ -81,7 +81,7 @@ uint32_t CRC32_CalcStream(const uint32_t currcrc, const char *buf, const int len
   return crc^0xffffffff;
 }
 
-uint32_t CRC32_Calc(const char *buf, const int len)
+uint32_t CRC32_Calc(const unsigned char *buf, const int len)
 {
   return CRC32_CalcStream(0, buf, len);
 }

@@ -92,7 +92,7 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title, con
 
     if (sides==2)
       totalsectors+=diskstore_countsectors(curtrack*hw_stepping, 1-sidetoread);
- 
+
     if (totalsectors>0)
     {
       // Loop through the heads

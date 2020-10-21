@@ -13,7 +13,7 @@ By default, sectors are sorted by their physical position on the disk regardless
 
 ## Syntax :
 
-`[-i input_rfi_file] [-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-title "Title"] [-v]`
+`[-i input_rfi_file] [-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-title "Title"] [-pll [period] [phase]] [-v]`
 
 ## Where :
 
@@ -31,6 +31,7 @@ By default, sectors are sorted by their physical position on the disk regardless
  * `-csv` Create a csv of bad sectors (named as <outputfile>.csv)
  * `-tmax` Specify the maximum track number you wish to try stepping to
  * `-title` Override the title used in metadata for disk formats which support it (.td0 / .fsd)
+ * `-pll` Use PLL to decode flux data. Optionally specify period and phase adjustments (as percentages)
  * `-v` Verbose
 
 ## Return codes :

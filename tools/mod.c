@@ -237,65 +237,69 @@ unsigned char mod_getdata(const unsigned int datacells)
   return data;
 }
 
-void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt)
+void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt, const int usepll)
 {
   unsigned long count;
   unsigned char c, j;
   char level,bi=0;
+  int run;
 
-  mod_samplesize=samplesize;
-
-  mod_findpeaks(sampledata, samplesize);
-  mod_checkdensity();
-
-  fm_init(mod_debug, mod_density);
-  amigamfm_init(mod_debug, mod_density);
-  mfm_init(mod_debug, mod_density);
-  gcr_init(mod_debug, mod_density);
-  applegcr_init(mod_debug, mod_density);
-
-  // Set up the sampler
-  level=(sampledata[0]&0x80)>>7;
-  bi=level;
-  count=0;
-
-  // Process each byte of the raw flux data
-  for (mod_datapos=0; mod_datapos<samplesize; mod_datapos++)
+  for (run=0; run<(usepll==0?1:2); run++)
   {
-    // Extract byte from buffer
-    c=sampledata[mod_datapos];
+    mod_samplesize=samplesize;
 
-    // Process each bit of the extracted byte
-    for (j=0; j<BITSPERBYTE; j++)
+    mod_findpeaks(sampledata, samplesize);
+    mod_checkdensity();
+
+    fm_init(mod_debug, mod_density);
+    amigamfm_init(mod_debug, mod_density);
+    mfm_init(mod_debug, mod_density);
+    gcr_init(mod_debug, mod_density);
+    applegcr_init(mod_debug, mod_density);
+
+    // Set up the sampler
+    level=(sampledata[0]&0x80)>>7;
+    bi=level;
+    count=0;
+
+    // Process each byte of the raw flux data
+    for (mod_datapos=0; mod_datapos<samplesize; mod_datapos++)
     {
-      // Determine next level
-      bi=((c&0x80)>>7);
+      // Extract byte from buffer
+      c=sampledata[mod_datapos];
 
-      // Increment samples counter
-      count++;
-
-      // Look for level changes
-      if (bi!=level)
+      // Process each bit of the extracted byte
+      for (j=0; j<BITSPERBYTE; j++)
       {
-        // Flip level cache
-        level=1-level;
+        // Determine next level
+        bi=((c&0x80)>>7);
 
-        // Look for rising edge
-        if (level==1)
+        // Increment samples counter
+        count++;
+
+        // Look for level changes
+        if (bi!=level)
         {
-          fm_addsample(count, mod_datapos);
-          amigamfm_addsample(count, mod_datapos);
-          mfm_addsample(count, mod_datapos);
-          gcr_addsample(count, mod_datapos);
-          applegcr_addsample(count, mod_datapos);
+          // Flip level cache
+          level=1-level;
 
-          // Reset samples counter 
-          count=0;
+          // Look for rising edge
+          if (level==1)
+          {
+            fm_addsample(count, mod_datapos, run);
+            amigamfm_addsample(count, mod_datapos, run);
+            mfm_addsample(count, mod_datapos, run);
+            gcr_addsample(count, mod_datapos, run);
+            applegcr_addsample(count, mod_datapos, run);
+
+            // Reset samples counter
+            count=0;
+          }
         }
-      }
 
-      // Move on to next sample level (bit)
-      c=c<<1;
+        // Move on to next sample level (bit)
+        c=c<<1;
+      }
     }
   }
 }

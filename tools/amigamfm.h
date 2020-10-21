@@ -28,7 +28,7 @@ Block	sector	side	cylinder
 
 Order = increasing sectors, then increasing sides, then increasing cylinders.
 
-A DD disk has 11*2*80=1760 (0 to 1759) blocks, a HD disk has 22*2*80=3520 blocks. 
+A DD disk has 11*2*80=1760 (0 to 1759) blocks, a HD disk has 22*2*80=3520 blocks.
 
 -------------------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ A DD disk has 11*2*80=1760 (0 to 1759) blocks, a HD disk has 22*2*80=3520 blocks
 48/0x30	long	1	header checksum (odd)
 52/0x34	long	1	header checksum (even)
 			(computed on mfm longs,
-			longs between offsets 8 and 44 
+			longs between offsets 8 and 44
 			== 2*(1+4) longs)
 
 56/0x38	long	1	data checksum (odd)
@@ -118,7 +118,7 @@ extern void amigamfm_showinfo(const unsigned int disktracks, const int debug);
 
 extern int amigamfm_validate();
 
-extern void amigamfm_addsample(const unsigned long samples, const unsigned long datapos);
+extern void amigamfm_addsample(const unsigned long samples, const unsigned long datapos, const int usepll);
 
 extern void amigamfm_init(const int debug, const char density);
 

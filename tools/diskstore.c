@@ -6,6 +6,7 @@
 #include "diskstore.h"
 #include "hardware.h"
 #include "mod.h"
+#include "crc32.h"
 
 Disk_Sector *Disk_SectorsRoot;
 
@@ -25,6 +26,8 @@ int diskstore_abshead=-1;
 int diskstore_abssector=-1;
 int diskstore_abssecoffs=-1;
 unsigned long diskstore_absoffset=0;
+
+int diskstore_usepll=0;
 
 // Find sector in store to make sure there is no exact match when adding
 Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
@@ -585,7 +588,7 @@ unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, 
         hw_sideselect(diskstore_abshead);
         hw_sleep(1);
         hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
-        mod_process(samplebuffer, samplebuffsize, 99);
+        mod_process(samplebuffer, samplebuffsize, 99, diskstore_usepll);
 
         free(samplebuffer);
         samplebuffer=NULL;
@@ -616,9 +619,44 @@ unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, 
   return numread;
 }
 
-void diskstore_init()
+uint32_t diskstore_calctrackcrc(const uint32_t initial, const unsigned char physical_track, const unsigned char physical_head)
+{
+  Disk_Sector *curr;
+  uint32_t crc=initial;
+  int n;
+
+  n=0;
+  do
+  {
+    curr=diskstore_findnthsector(physical_track, physical_head, n++);
+
+    if (curr!=NULL)
+      if (curr->data!=NULL)
+        crc=CRC32_CalcStream(crc, curr->data, curr->datasize);
+//        crc=calc_crc32_stream(curr->data, curr->datasize, crc, CRC32_POLYNOMIAL);
+  } while (curr!=NULL);
+
+  return crc;
+}
+
+uint32_t diskstore_calcdiskcrc(const unsigned char physical_head)
+{
+  int dtrack, dhead;
+  //uint32_t crc=0xffffffff;
+  uint32_t crc=0x0;
+
+  for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack+=hw_stepping)
+    for (dhead=((physical_head!=1)?0:1); dhead<=((physical_head==2)?1:physical_head); dhead++)
+      crc=diskstore_calctrackcrc(crc, dtrack, dhead);
+
+  return crc;
+}
+
+void diskstore_init(const int usepll)
 {
   Disk_SectorsRoot=NULL;
+
+  diskstore_usepll=usepll;
 
   diskstore_mintrack=-1;
   diskstore_maxtrack=-1;

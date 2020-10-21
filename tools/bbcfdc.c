@@ -21,6 +21,7 @@
 #include "fm.h"
 #include "mfm.h"
 #include "gcr.h"
+#include "pll.h"
 
 // For type of capture
 #define DISKNONE 0
@@ -65,6 +66,7 @@ int flippy=0;
 int info=0;
 int layout=0;
 int sidetoread=AUTODETECT;
+int usepll=0;
 
 // Processing position within the SPI buffer
 unsigned long datapos=0;
@@ -269,6 +271,40 @@ int main(int argc,char **argv)
 
       // Request CSV output
       csv=1;
+    }
+    else
+    if (strcmp(argv[argn], "-pll")==0)
+    {
+      printf("Running with PLL processing\n");
+
+      // Request PLL processing
+      usepll=1;
+
+      // Check for further parameters
+      if ((argn+2)<argc)
+      {
+        float retval;
+
+        ++argn;
+
+        if (sscanf(argv[argn], "%f", &retval)==1)
+        {
+          pll_periodadjust=(retval/100);
+          printf("  PLL period adjustment %.0f%\n", retval);
+
+          ++argn;
+
+          if (sscanf(argv[argn], "%f", &retval)==1)
+          {
+            pll_phaseadjust=(retval/100);
+            printf("  PLL phase adjustment %.0f%\n", retval);
+          }
+          else
+            --argn;
+        }
+        else
+          --argn;
+      }
     }
     else
     if ((strcmp(argv[argn], "-r")==0) && ((argn+1)<argc))
@@ -544,9 +580,11 @@ int main(int argc,char **argv)
     return 1;
   }
 
-  diskstore_init();
+  diskstore_init(usepll);
 
   mod_init(debug);
+
+  PLL_init();
 
 #ifndef NOPI
   if (geteuid() != 0)
@@ -638,7 +676,7 @@ int main(int argc,char **argv)
 
   // Sample track
   hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
-  mod_process(samplebuffer, samplebuffsize, 99);
+  mod_process(samplebuffer, samplebuffsize, 99, usepll);
 
   // Check readability
   if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1))
@@ -708,7 +746,7 @@ int main(int argc,char **argv)
 
       // Sample track
       hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
-      mod_process(samplebuffer, samplebuffsize, 99);
+      mod_process(samplebuffer, samplebuffsize, 99, usepll);
 
       // Check for flippy disk
       if ((fm_lasttrack==-1) && (fm_lasthead==-1) && (fm_lastsector==-1) && (fm_lastlength==-1)
@@ -719,7 +757,7 @@ int main(int argc,char **argv)
         fillflippybuffer(samplebuffer, samplebuffsize);
 
         if (flippybuffer!=NULL)
-          mod_process(flippybuffer, samplebuffsize, 99);
+          mod_process(flippybuffer, samplebuffsize, 99, usepll);
 
         if ((fm_lasttrack!=-1) || (fm_lasthead!=-1) || (fm_lastsector!=-1) || (fm_lastlength!=-1)
            || (mfm_lasttrack!=-1) || (mfm_lasthead!=-1) || (mfm_lastsector!=-1) || (mfm_lastlength!=-1)
@@ -857,14 +895,14 @@ int main(int argc,char **argv)
         {
           if ((flippy==0) || (side==0))
           {
-            mod_process(samplebuffer, samplebuffsize, retry);
+            mod_process(samplebuffer, samplebuffsize, retry, usepll);
           }
           else
           {
             fillflippybuffer(samplebuffer, samplebuffsize);
 
             if (flippybuffer!=NULL)
-              mod_process(flippybuffer, samplebuffsize, retry);
+              mod_process(flippybuffer, samplebuffsize, retry, usepll);
           }
 
 #ifdef NOPI
@@ -1286,6 +1324,8 @@ int main(int argc,char **argv)
 
   if (missingsectors>0)
     printf("Missing %d sectors\n", missingsectors);
+
+  printf("CRC32 %.4X\n", diskstore_calcdiskcrc(2));
 
   return 0;
 }

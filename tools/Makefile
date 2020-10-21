@@ -36,18 +36,18 @@ checktd0: checktd0.o crc.o lzhuf.o
 checktd0.o: checktd0.c teledisk.h crc.h lzhuf.h
 	$(CC) $(BUILDFLAGS) -c -o checktd0.o checktd0.c
 
-bbcfdc: bbcfdc.o adfs.o amigamfm.o applegcr.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o rfi.o scp.o teledisk.o
-	$(CC) $(BUILDFLAGS) -o bbcfdc adfs.o amigamfm.o applegcr.o bbcfdc.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o rfi.o scp.o teledisk.o -lbcm2835 -lm
+bbcfdc: bbcfdc.o adfs.o amigamfm.o applegcr.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o pll.o rfi.o scp.o teledisk.o
+	$(CC) $(BUILDFLAGS) -o bbcfdc adfs.o amigamfm.o applegcr.o bbcfdc.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o pll.o rfi.o scp.o teledisk.o -lbcm2835 -lm
 
-bbcfdc.o: bbcfdc.c adfs.h amigamfm.h applegcr.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h jsmn.h mfm.h mod.h rfi.h scp.h teledisk.h
+bbcfdc.o: bbcfdc.c adfs.h amigamfm.h applegcr.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h jsmn.h mfm.h mod.h pll.h rfi.h scp.h teledisk.h
 	$(CC) $(BUILDFLAGS) -c -o bbcfdc.o bbcfdc.c
 
 ##########################
 
-bbcfdc-nopi: bbcfdc-nopi.o adfs.o amigamfm.o applegcr.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o jsmn.o mfm.o mod.o nopi.o rfi.o scp.o teledisk.o
-	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o adfs.o amigamfm.o applegcr.o crc.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o jsmn.o mfm.o mod.o nopi.o rfi.o scp.o teledisk.o -lm
+bbcfdc-nopi: bbcfdc-nopi.o adfs.o amigamfm.o applegcr.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o
+	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o adfs.o amigamfm.o applegcr.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o -lm
 
-bbcfdc-nopi.o: bbcfdc.c adfs.h applegcr.h amigamfm.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h jsmn.h mfm.h mod.h rfi.h scp.o teledisk.h
+bbcfdc-nopi.o: bbcfdc.c adfs.h applegcr.h amigamfm.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h jsmn.h mfm.h mod.h pll.h rfi.h scp.o teledisk.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o bbcfdc-nopi.o bbcfdc.c
 
 nopi.o: nopi.c hardware.h jsmn.h rfi.h
@@ -58,14 +58,17 @@ nopi.o: nopi.c hardware.h jsmn.h rfi.h
 adfs.o: adfs.c adfs.h diskstore.h
 	$(CC) $(BUILDFLAGS) -c -o adfs.o adfs.c
 
-amigamfm.o: amigamfm.c amigamfm.h diskstore.h hardware.h mod.h
+amigamfm.o: amigamfm.c amigamfm.h diskstore.h hardware.h mod.h pll.h
 	$(CC) $(BUILDFLAGS) -c -o amigamfm.o amigamfm.c
 
-applegcr.o: applegcr.c applegcr.h
+applegcr.o: applegcr.c applegcr.h pll.h
 	$(CC) $(BUILDFLAGS) -c -o applegcr.o applegcr.c
 
 crc.o: crc.c crc.h
 	$(CC) $(BUILDFLAGS) -c -o crc.o crc.c
+
+crc32.o: crc32.c crc32.h
+	$(CC) $(BUILDFLAGS) -c -o crc32.o crc32.c
 
 dfi.o: dfi.c dfi.h
 	$(CC) $(BUILDFLAGS) -c -o dfi.o dfi.c
@@ -76,32 +79,35 @@ dfs.o: dfs.c dfs.h diskstore.h
 dos.o: dos.c dos.h diskstore.h
 	$(CC) $(BUILDFLAGS) -c -o dos.o dos.c
 
-diskstore.o: diskstore.c diskstore.h hardware.h mod.h
+diskstore.o: diskstore.c crc32.h diskstore.h hardware.h mod.h
 	$(CC) $(BUILDFLAGS) -c -o diskstore.o diskstore.c
 
-fm.o: fm.c crc.h diskstore.h dfs.h fm.h hardware.h mod.h
+fm.o: fm.c crc.h diskstore.h dfs.h fm.h hardware.h mod.h pll.h
 	$(CC) $(BUILDFLAGS) -c -o fm.o fm.c
 
-gcr.o: gcr.c gcr.h
+fsd.o: fsd.c diskstore.h fsd.h hardware.h
+	$(CC) $(BUILDFLAGS) -c -o fsd.o fsd.c
+
+gcr.o: gcr.c gcr.h pll.h
 	$(CC) $(BUILDFLAGS) -c -o gcr.o gcr.c
 
 hardware.o: hardware.c hardware.h pins.h
 	$(CC) $(BUILDFLAGS) -c -o hardware.o hardware.c
 
+jsmn.o: jsmn.c jsmn.h
+	$(CC) $(BUILDFLAGS) -c -o jsmn.o jsmn.c
+
 lzhuf.o: lzhuf.c lzhuf.h
 	$(CC) $(BUILDFLAGS) -c -o lzhuf.o lzhuf.c
 
-mfm.o: mfm.c crc.h diskstore.h hardware.h mfm.h mod.h
+mfm.o: mfm.c crc.h diskstore.h hardware.h mfm.h mod.h pll.h
 	$(CC) $(BUILDFLAGS) -c -o mfm.o mfm.c
 
 mod.o: mod.c amigamfm.h fm.h mfm.h hardware.h
 	$(CC) $(BUILDFLAGS) -c -o mod.o mod.c
 
-fsd.o: fsd.c diskstore.h fsd.h hardware.h
-	$(CC) $(BUILDFLAGS) -c -o fsd.o fsd.c
-
-jsmn.o: jsmn.c jsmn.h
-	$(CC) $(BUILDFLAGS) -c -o jsmn.o jsmn.c
+pll.o: pll.c pll.h
+	$(CC) $(BUILDFLAGS) -c -o pll.o pll.c
 
 rfi.o: rfi.c hardware.h jsmn.h rfi.h
 	$(CC) $(BUILDFLAGS) -c -o rfi.o rfi.c

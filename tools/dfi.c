@@ -18,7 +18,7 @@ uint16_be head;
 uint16_be sector;
 uint32_be data_length;
 
-The cylinder number starts at zero and carrys up to the number of cylinders on the disk. The head number follows the same rule (starts at zero, increments for each additional head). The sector number is optional, and only used for hard-sectored discs. For soft-sectored discs, it is set to zero. Data_length indicates the number of bytes of data which follow. 
+The cylinder number starts at zero and carrys up to the number of cylinders on the disk. The head number follows the same rule (starts at zero, increments for each additional head). The sector number is optional, and only used for hard-sectored discs. For soft-sectored discs, it is set to zero. Data_length indicates the number of bytes of data which follow.
 
 Decoding data
 =============
@@ -56,7 +56,7 @@ For every byte in the stream:
 
 // emit()                 stores the timing delta for a data pulse
 // add_index_position()   stores the absolute timing position of an index pulse
-// 
+//
 
 From : https://www.discferret.com/wiki/DFI_image_format
 
@@ -166,7 +166,7 @@ void dfi_writetrack(FILE *dfifile, const int track, const int side, const unsign
     free(dfidata);
     return;
   }
- 
+
   // Data length
   trackheader[6]=(dfidatalength&0xff000000)>>24;
   trackheader[7]=(dfidatalength&0xff0000)>>16;

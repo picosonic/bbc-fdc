@@ -5,6 +5,7 @@
 #include "hardware.h"
 #include "diskstore.h"
 #include "applegcr.h"
+#include "pll.h"
 
 // GCR for Apple II
 //
@@ -90,6 +91,8 @@ unsigned char applegcr_bytebuff[1024];
 unsigned int applegcr_bytelen;
 
 unsigned char applegcr_decodebuff[1024];
+
+struct PLL *applegcr_pll;
 
 int applegcr_debug=0;
 
@@ -392,11 +395,18 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
     applegcr_bits=32;
 }
 
-void applegcr_addsample(const unsigned long samples, const unsigned long datapos)
+void applegcr_addsample(const unsigned long samples, const unsigned long datapos, const int usepll)
 {
   // 50,100,150
   //   4us, 8us and 12us
   //   1, 01, 001
+
+  if (usepll)
+  {
+    PLL_addsample(applegcr_pll, samples, datapos);
+
+    return;
+  }
 
   if (samples>applegcr_threshold001)
     applegcr_addbit(0, datapos);
@@ -419,6 +429,11 @@ void applegcr_init(const int debug, const char density)
   applegcr_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*bitcell;
   applegcr_threshold01=applegcr_defaultwindow*1.5;
   applegcr_threshold001=applegcr_defaultwindow*2.5;
+
+  if (applegcr_pll!=NULL)
+    PLL_reset(applegcr_pll, applegcr_defaultwindow);
+  else
+    applegcr_pll=PLL_create(applegcr_defaultwindow, applegcr_addbit);
 
   // Set up Apple GCR parser
   applegcr_state=APPLEGCR_IDLE;
