@@ -632,8 +632,12 @@ uint32_t diskstore_calctrackcrc(const uint32_t initial, const unsigned char phys
 
     if (curr!=NULL)
       if (curr->data!=NULL)
+      {
+        unsigned char dtype=curr->datatype;
+
+        crc=CRC32_CalcStream(crc, &dtype, 1);
         crc=CRC32_CalcStream(crc, curr->data, curr->datasize);
-//        crc=calc_crc32_stream(curr->data, curr->datasize, crc, CRC32_POLYNOMIAL);
+      }
   } while (curr!=NULL);
 
   return crc;
@@ -642,7 +646,6 @@ uint32_t diskstore_calctrackcrc(const uint32_t initial, const unsigned char phys
 uint32_t diskstore_calcdiskcrc(const unsigned char physical_head)
 {
   int dtrack, dhead;
-  //uint32_t crc=0xffffffff;
   uint32_t crc=0x0;
 
   for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack+=hw_stepping)
