@@ -290,14 +290,14 @@ int main(int argc,char **argv)
         if (sscanf(argv[argn], "%f", &retval)==1)
         {
           pll_periodadjust=(retval/100);
-          printf("  PLL period adjustment %.0f%\n", retval);
+          printf("  PLL period adjustment %.0f%%\n", retval);
 
           ++argn;
 
           if (sscanf(argv[argn], "%f", &retval)==1)
           {
             pll_phaseadjust=(retval/100);
-            printf("  PLL phase adjustment %.0f%\n", retval);
+            printf("  PLL phase adjustment %.0f%%\n", retval);
           }
           else
             --argn;
