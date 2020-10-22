@@ -890,7 +890,7 @@ int main(int argc,char **argv)
         // Sampling data
         hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
 
-        // Process the raw sample data to extract FM encoded data
+        // Process the raw sample data to extract encoded data
         if (capturetype!=DISKRAW)
         {
           if ((flippy==0) || (side==0))
@@ -1037,6 +1037,17 @@ int main(int argc,char **argv)
         // Write the raw sample data if required
         if (rawdata!=NULL)
         {
+          char *rawbuffer=samplebuffer;
+
+          // Handle flippy data
+          if ((flippy==1) && (side==1))
+          {
+            fillflippybuffer(samplebuffer, samplebuffsize);
+
+            if (flippybuffer!=NULL)
+              rawbuffer=flippybuffer;
+          }
+
           switch (outputtype)
           {
             case IMAGERAW:
@@ -1044,11 +1055,11 @@ int main(int argc,char **argv)
               break;
 
             case IMAGEDFI:
-              dfi_writetrack(rawdata, i, side, samplebuffer, samplebuffsize, ROTATIONS);
+              dfi_writetrack(rawdata, i, side, rawbuffer, samplebuffsize, ROTATIONS);
               break;
 
             case IMAGESCP:
-              scp_writetrack(rawdata, ((i/hw_stepping)*sides)+side, samplebuffer, samplebuffsize, ROTATIONS, hw_measurerpm());
+              scp_writetrack(rawdata, ((i/hw_stepping)*sides)+side, rawbuffer, samplebuffsize, ROTATIONS, hw_measurerpm());
               break;
 
             default:
