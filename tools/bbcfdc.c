@@ -1037,7 +1037,7 @@ int main(int argc,char **argv)
         // Write the raw sample data if required
         if (rawdata!=NULL)
         {
-          char *rawbuffer=samplebuffer;
+          unsigned char *rawbuffer=samplebuffer;
 
           // Handle flippy data
           if ((flippy==1) && (side==1))
