@@ -635,7 +635,7 @@ uint32_t diskstore_calctrackcrc(const uint32_t initial, const unsigned char phys
       {
         unsigned char dtype=curr->datatype;
 
-        crc=CRC32_CalcStream(crc, &dtype, 1);
+        crc=CRC32_CalcStream(crc, &dtype, sizeof(dtype));
         crc=CRC32_CalcStream(crc, curr->data, curr->datasize);
       }
   } while (curr!=NULL);
@@ -646,13 +646,21 @@ uint32_t diskstore_calctrackcrc(const uint32_t initial, const unsigned char phys
 uint32_t diskstore_calcdiskcrc(const unsigned char physical_head)
 {
   int dtrack, dhead;
-  uint32_t crc=0x0;
+  uint32_t diskcrc=0x0;
 
   for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack+=hw_stepping)
-    for (dhead=((physical_head!=1)?0:1); dhead<=((physical_head==2)?1:physical_head); dhead++)
-      crc=diskstore_calctrackcrc(crc, dtrack, dhead);
+    for (dhead=((physical_head!=1)?0:1); dhead<((physical_head==0)?1:2); dhead++)
+    {
+      uint32_t trackcrc=0x0;
 
-  return crc;
+      // Get track CRC32
+      trackcrc=diskstore_calctrackcrc(0, dtrack, dhead);
+
+      // Update disk CRC32
+      diskcrc=CRC32_CalcStream(diskcrc, (unsigned char *)&trackcrc, sizeof(uint32_t));
+    }
+
+  return diskcrc;
 }
 
 void diskstore_init(const int usepll)
