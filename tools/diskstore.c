@@ -365,7 +365,6 @@ void diskstore_dumpsectorlist()
 {
   Disk_Sector *curr;
   int dtrack, dhead;
-  int mtrack;
   int n;
   int totalsectors=0;
 
@@ -419,12 +418,14 @@ void diskstore_dumplayoutmap(const int rotations)
 
   if ((diskstore_maxtrack>-1) && (diskstore_maxtrack<(int)hw_maxtracks))
     mtrack=diskstore_maxtrack+1;
+  else
+    mtrack=hw_maxtracks+1;
 
   fprintf(stderr, "Samples : %ld  Rotations : %d\n", mod_samplesize, rotations);
   samplesperrotation=(mod_samplesize/rotations);
 
   fprintf(stderr, "TRACK[HEAD]\n");
-  for (dtrack=0; dtrack<mtrack; dtrack+=hw_stepping)
+  for (dtrack=0; ((dtrack<mtrack) && (dtrack<hw_maxtracks)); dtrack+=hw_stepping)
   {
     for (dhead=(diskstore_minhead==-1?0:diskstore_minhead); dhead<(diskstore_maxhead==-1?2:diskstore_maxhead+1); dhead++)
     {
