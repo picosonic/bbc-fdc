@@ -589,7 +589,10 @@ unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, 
         hw_sideselect(diskstore_abshead);
         hw_sleep(1);
         hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
-        mod_process(samplebuffer, samplebuffsize, 99, diskstore_usepll);
+        mod_process(samplebuffer, samplebuffsize, 99, 0);
+
+        if (diskstore_usepll)
+          mod_process(samplebuffer, samplebuffsize, 99, diskstore_usepll);
 
         free(samplebuffer);
         samplebuffer=NULL;
