@@ -7,10 +7,10 @@
 //   https://github.com/mamedev/mame/blob/master/src/lib/formats/flopimg.cpp
 
 // Tweaking PLL parameters
-float pll_periodadjust=(5/100);
-float pll_phaseadjust=(65/100);
-float pll_minperiod=(75/100);
-float pll_maxperiod=(125/100);
+float pll_periodadjust=(5.0/100.0);
+float pll_phaseadjust=(65.0/100.0);
+float pll_minperiod=(75.0/100.0);
+float pll_maxperiod=(125.0/100.0);
 
 // Linked list of all the assigned PLLs
 struct PLL *PLL_root=NULL;
@@ -28,7 +28,7 @@ void PLL_reset(struct PLL *pll, const float bitcell)
   pll->max_period=(bitcell*pll_maxperiod);
   pll->phase_adjust=0;
   pll->freq_hist=0;
-  pll->next=(pll->cur_pos+bitcell+pll->phase_adjust);
+  pll->next=(pll->cur_pos+pll->period+pll->phase_adjust);
   pll->num_bits=0;
 }
 
@@ -75,6 +75,7 @@ void PLL_addsample(struct PLL *pll, const unsigned long samples, const unsigned 
   {
     i--;
 
+    // Processing for rising edge
     if (i==0)
     {
       if (pll->cur_pos>=pll->next)
