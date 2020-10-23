@@ -1338,8 +1338,11 @@ int main(int argc,char **argv)
     printf("Missing %d sectors\n", missingsectors);
 
   // Calculate whole disk CRC32
-  diskstore_sortsectors(SORTBYPOS, ROTATIONS);
-  printf("CRC32 %.4X\n", diskstore_calcdiskcrc((sides==1)?sidetoread:2));
+  if (capturetype==DISKIMG)
+  {
+    diskstore_sortsectors(SORTBYPOS, ROTATIONS);
+    printf("\nCRC32 %.4X\n", diskstore_calcdiskcrc((sides==1)?sidetoread:2));
+  }
 
   return 0;
 }
