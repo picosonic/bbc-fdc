@@ -55,7 +55,8 @@ int debug=0;
 int summary=0;
 int catalogue=0;
 int sides=AUTODETECT;
-unsigned int disktracks, drivetracks;
+int disktracks=AUTODETECT;
+int drivetracks=AUTODETECT;
 int capturetype=DISKNONE; // Default to no output
 int outputtype=IMAGENONE; // Default to no image
 
@@ -138,7 +139,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_rfi_file] ");
 #endif
-  fprintf(stderr, "[-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-title \"Title\"] [-v]\n");
+  fprintf(stderr, "[-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-dblstep] [-title \"Title\"] [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -263,6 +264,17 @@ int main(int argc,char **argv)
         else
           --argn;
       }
+    }
+    else
+    if (strcmp(argv[argn], "-dblstep")==0)
+    {
+      printf("Forced double stepped capture\n");
+
+      // Request double stepping
+      hw_stepping=HW_DOUBLESTEPPING;
+
+      disktracks=40;
+      drivetracks=80;
     }
     else
     if (strcmp(argv[argn], "-csv")==0)
@@ -655,9 +667,12 @@ int main(int argc,char **argv)
   else
     printf("Disk is writeable\n");
 
-  // Start off assuming an 80 track disk in 80 track drive
-  disktracks=hw_maxtracks;
-  drivetracks=hw_maxtracks;
+  // Start off assuming an 80 track disk in 80 track drive, unless overridden
+  if (disktracks==AUTODETECT)
+    disktracks=hw_maxtracks;
+
+  if (drivetracks==AUTODETECT)
+    drivetracks=hw_maxtracks;
 
   // Try to determine what type of disk is in what type of drive
 
@@ -797,38 +812,41 @@ int main(int argc,char **argv)
       }
     }
 
-    // Determine if double stepping is required
-    switch (othertrack)
+    // Determine if double stepping is required, if not already forced
+    if (hw_stepping!=HW_DOUBLESTEPPING)
     {
-      case 1:
-        // If IDAM cylinder shows 1 then 40 track disk in 80 track drive
-        printf("40 track disk detected in 80 track drive, enabled double stepping\n");
+      switch (othertrack)
+      {
+        case 1:
+          // If IDAM cylinder shows 1 then 40 track disk in 80 track drive
+          printf("40 track disk detected in 80 track drive, enabled double stepping\n");
 
-        // Enable double stepping
-        hw_stepping=HW_DOUBLESTEPPING;
+          // Enable double stepping
+          hw_stepping=HW_DOUBLESTEPPING;
 
-        disktracks=40;
-        drivetracks=80;
-        break;
+          disktracks=40;
+          drivetracks=80;
+          break;
 
-      case 2:
-        // If IDAM cylinder shows 2 then correct stepping
-        printf("Correct drive stepping for this disk and drive\n");
-        break;
+        case 2:
+          // If IDAM cylinder shows 2 then correct stepping
+          printf("Correct drive stepping for this disk and drive\n");
+          break;
 
-      case 4:
-        // If IDAM cylinder shows 4 then 80 track in 40 track drive
-        printf("80 track disk detected in 40 track drive\n*** Unable to fully image this disk in this drive ***\n");
+        case 4:
+          // If IDAM cylinder shows 4 then 80 track in 40 track drive
+          printf("80 track disk detected in 40 track drive\n*** Unable to fully image this disk in this drive ***\n");
 
-        disktracks=80;
-        drivetracks=40;
-        break;
+          disktracks=80;
+          drivetracks=40;
+          break;
 
-      default:
-        // Unexpected value for track in IDAM
-        if (othertrack!=-1)
-          printf("Unexpected track id %d\n*** Maybe copy protection ***\n", (char)othertrack);
-        break;
+        default:
+          // Unexpected value for track in IDAM
+          if (othertrack!=-1)
+            printf("Unexpected track id %d\n*** Maybe copy protection ***\n", (char)othertrack);
+          break;
+      }
     }
   }
 
