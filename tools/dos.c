@@ -100,7 +100,8 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
 
   for (i=0; i<entries; i++)
   {
-    diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, disktracks);
+    if (diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, disktracks)<sizeof(de))
+      return;
 
     // Check for end of directory
     if (de.shortname[0]==DOS_DIRENTRYEND)
@@ -254,7 +255,11 @@ void dos_readfat(const unsigned long offset, const unsigned long length, const u
   if (wholefat==NULL) return;
 
   diskstore_absoluteseek(offset, INTERLEAVED, disktracks);
-  diskstore_absoluteread(wholefat, length, INTERLEAVED, disktracks);
+  if (diskstore_absoluteread(wholefat, length, INTERLEAVED, disktracks)<length)
+  {
+    free(wholefat);
+    return;
+  }
 
   clusterid=0;
 

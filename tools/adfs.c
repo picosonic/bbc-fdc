@@ -260,7 +260,8 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   int hasfiletype;
 
   diskstore_absoluteseek(offset, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
-  diskstore_absoluteread((char *)&dh, sizeof(dh), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
+  if (diskstore_absoluteread((char *)&dh, sizeof(dh), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80)<sizeof(dh))
+    return;
 
   if (adfs_debug)
     printf("['%s' @0x%lx MAP:%d DIR:%d SECSIZE:%u SEC/TRACK:%d]\n", folder, offset, maptype, dirtype, adfs_sectorsize, sectorspertrack);
@@ -290,7 +291,8 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
     struct timeval tv;
     uint32_t indirectaddr;
 
-    diskstore_absoluteread((char *)&de, sizeof(de), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
+    if (diskstore_absoluteread((char *)&de, sizeof(de), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80)<sizeof(de))
+      return;
 
     // Check for last entry, as per RiscOS PRM 2-211
     if (de.dirobname[0]==0) break;
@@ -456,7 +458,9 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   // Skip over unused entries
   while ((entry+1)<entries)
   {
-    diskstore_absoluteread((char *)&de, sizeof(de), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
+    if (diskstore_absoluteread((char *)&de, sizeof(de), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80)<sizeof(de))
+      return;
+
     entry++;
   }
 
@@ -465,7 +469,8 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   {
     struct adfs_newdirtail ndt;
 
-    diskstore_absoluteread((char *)&ndt, sizeof(ndt), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
+    if (diskstore_absoluteread((char *)&ndt, sizeof(ndt), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80)<sizeof(ndt))
+      return;
 
     if (adfs_debug)
     {
@@ -502,7 +507,8 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   {
     struct adfs_olddirtail odt;
 
-    diskstore_absoluteread((char *)&odt, sizeof(odt), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
+    if (diskstore_absoluteread((char *)&odt, sizeof(odt), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80)<sizeof(odt))
+      return;
 
     if (adfs_debug)
     {
@@ -603,7 +609,7 @@ void adfs_dumpdiscrecord(struct adfs_discrecord *dr)
   printf("\n");
 }
 
-void adfs_readnewmap(const unsigned char idlen, const unsigned int bytespermapbit, const unsigned char nzones, const unsigned long discsize, const unsigned long sectorsize, const unsigned long zonespare)
+int adfs_readnewmap(const unsigned char idlen, const unsigned int bytespermapbit, const unsigned char nzones, const unsigned long discsize, const unsigned long sectorsize, const unsigned long zonespare)
 {
   unsigned int fragid;
   unsigned char fragbits;
@@ -634,11 +640,12 @@ void adfs_readnewmap(const unsigned char idlen, const unsigned int bytespermapbi
   }
 
   fragstart=malloc(ADFS_MAXFRAG*sizeof(long));
-  if (fragstart==NULL) return;
+  if (fragstart==NULL) return 1;
 
   do
   {
-    diskstore_absoluteread((char *)&mapdata, 1, INTERLEAVED, 80);
+    if (diskstore_absoluteread((char *)&mapdata, 1, INTERLEAVED, 80)<1)
+      return 1;
 
     zoneread--;
     if (zoneread==0)
@@ -669,6 +676,13 @@ void adfs_readnewmap(const unsigned char idlen, const unsigned int bytespermapbi
           // TODO fix this
           if (bytespermapbit==64) start/=2;
 
+          // Sanity check fragment id
+          if (fragid>=ADFS_MAXFRAG)
+          {
+            printf("\nInvalid fragment id %.2x\n", fragid);
+            return 1;
+          }
+
           fragstart[fragid]=start;
 
           if (adfs_debug)
@@ -693,6 +707,8 @@ void adfs_readnewmap(const unsigned char idlen, const unsigned int bytespermapbi
 
   if (adfs_debug)
     printf("\n");
+
+  return 0;
 }
 
 void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const int debug)
@@ -852,24 +868,28 @@ void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const i
     if (adfs_format==ADFS_F)
     {
       diskstore_absoluteseek(ADFS_BOOTBLOCKOFFSET+ADFS_BOOTDROFFSET, dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
-      diskstore_absoluteread((char *)&dr, sizeof(dr), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
+      if (diskstore_absoluteread((char *)&dr, sizeof(dr), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks)<sizeof(dr))
+        return;
 
       diskstore_absoluteseek((dr.disc_size/2)-(adfs_sectorsize*2), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
     }
     else
       diskstore_absoluteseek(0, dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
 
-    diskstore_absoluteread((char *)&zh, sizeof(zh), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
+    if (diskstore_absoluteread((char *)&zh, sizeof(zh), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks)<sizeof(zh))
+      return;
 
     printf("ZoneCheck: %.2x\n", zh.zonecheck);
     printf("FreeLink: %.4x\n", zh.freelink);
     printf("CrossCheck: %.2x\n", zh.crosscheck);
 
-    diskstore_absoluteread((char *)&dr, sizeof(dr), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks);
+    if (diskstore_absoluteread((char *)&dr, sizeof(dr), dir==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, disktracks)<sizeof(dr))
+      return;
 
     adfs_dumpdiscrecord(&dr);
 
-    adfs_readnewmap(dr.idlen, rev_log2(dr.log2bpmb), dr.nzones, dr.disc_size, rev_log2(dr.log2secsize), dr.zone_spare);
+    if (adfs_readnewmap(dr.idlen, rev_log2(dr.log2bpmb), dr.nzones, dr.disc_size, rev_log2(dr.log2secsize), dr.zone_spare)!=0)
+      return;
 
     if (fragstart==NULL) return;
 
