@@ -28,6 +28,7 @@ int diskstore_abssecoffs=-1;
 unsigned long diskstore_absoffset=0;
 
 int diskstore_usepll=0;
+int diskstore_debug=0;
 
 // Find sector in store to make sure there is no exact match when adding
 Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
@@ -649,16 +650,23 @@ uint32_t diskstore_calctrackcrc(const uint32_t initial, const unsigned char phys
 
 uint32_t diskstore_calcdiskcrc(const unsigned char physical_head)
 {
-  int dtrack, dhead;
+  int dtracks, dtrack, dhead;
   uint32_t diskcrc=0x0;
 
-  for (dtrack=0; dtrack<(diskstore_maxtrack+1); dtrack+=hw_stepping)
+  if (diskstore_maxtrack>60)
+    dtracks=80;
+  else
+    dtracks=40;
+
+  for (dtrack=0; dtrack<(dtracks+1); dtrack+=hw_stepping)
     for (dhead=((physical_head!=1)?0:1); dhead<((physical_head==0)?1:2); dhead++)
     {
       uint32_t trackcrc=0x0;
 
       // Get track CRC32
       trackcrc=diskstore_calctrackcrc(0, dtrack, dhead);
+      if (diskstore_debug)
+        fprintf(stderr, "T%d.%d : CRC32 %.8X\n", dtrack/hw_stepping, dhead, trackcrc);
 
       // Update disk CRC32
       diskcrc=CRC32_CalcStream(diskcrc, (unsigned char *)&trackcrc, sizeof(uint32_t));
@@ -667,10 +675,11 @@ uint32_t diskstore_calcdiskcrc(const unsigned char physical_head)
   return diskcrc;
 }
 
-void diskstore_init(const int usepll)
+void diskstore_init(const int debug, const int usepll)
 {
   Disk_SectorsRoot=NULL;
 
+  diskstore_debug=debug;
   diskstore_usepll=usepll;
 
   diskstore_mintrack=-1;

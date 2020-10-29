@@ -63,7 +63,7 @@ extern int diskstore_minsectorid;
 extern int diskstore_maxsectorid;
 
 // Initialise disk storage
-extern void diskstore_init(const int usepll);
+extern void diskstore_init(const int debug, const int usepll);
 
 // Add a sector to the disk storage
 extern int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const long id_pos, const unsigned int idcrc, const long data_pos, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc);

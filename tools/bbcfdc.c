@@ -185,6 +185,9 @@ int main(int argc,char **argv)
 #ifdef HW_BCM2711
   printf("BCM2711");
 #endif
+#ifdef HW_BCM2709
+  printf("BCM2709");
+#endif
 #ifdef HW_UNKNOWN
   printf("UNKNOWN");
 #endif
@@ -593,7 +596,7 @@ int main(int argc,char **argv)
     return 1;
   }
 
-  diskstore_init(usepll);
+  diskstore_init(debug, usepll);
 
   mod_init(debug);
 
@@ -1359,7 +1362,7 @@ int main(int argc,char **argv)
   if (capturetype==DISKIMG)
   {
     diskstore_sortsectors(SORTBYPOS, ROTATIONS);
-    printf("\nCRC32 %.4X\n", diskstore_calcdiskcrc((sides==1)?sidetoread:2));
+    printf("\nCRC32 %.8X\n", diskstore_calcdiskcrc((sides==1)?sidetoread:2));
   }
 
   return 0;
