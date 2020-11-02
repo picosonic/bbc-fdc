@@ -424,7 +424,7 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
 
           if (rlebuff==NULL) return 0;
 
-          blen=0; s=0;
+          blen=0; s=0; b=0;
           fread(rlebuff, rfi_trackdatalen, 1, rfifile);
 
           for (i=0; (unsigned int)i<rfi_trackdatalen; i++)
