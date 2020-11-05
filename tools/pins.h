@@ -49,7 +49,7 @@
 #endif
 
 // Try to detect Rpi 4
-#if defined (REV_a03111) || defined(REV_b03111) || defined(REV_b03112) || defined(REV_c03111) || defined(REV_c03112) || defined(REV_d03114)
+#if defined (REV_a03111) || defined(REV_b03111) || defined(REV_b03112) || defined(REV_c03111) || defined(REV_c03112) || defined(REV_d03114) || defined(REV_a03140) || defined(REV_b03140) || defined(REV_c03140) || defined(REV_d03140) || defined(REV_c03130)
   #define RPI4 1
   #define HAS_BCM2711 1
   #define CLOCK_500 1
