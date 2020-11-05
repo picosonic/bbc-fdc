@@ -147,6 +147,12 @@ case "$1" in
       17)
         boardtype="4B"
         ;;
+      18)
+        boardtype="400"
+        ;;
+      19)
+        boardtype="CM4"
+        ;;
       *)
         boardtype="UNKNOWN"
         ;;
