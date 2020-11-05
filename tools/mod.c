@@ -17,7 +17,7 @@ int mod_peak[MOD_PEAKSIZE];
 int mod_peaks;
 char mod_density=MOD_DENSITYAUTO;
 
-float mod_samplestoms(const long samples)
+float mod_samplestous(const long samples)
 {
   return ((float)1/(((float)hw_samplerate)/(float)USINSECOND))*(float)samples;
 }
@@ -91,7 +91,7 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
       localmaxima=j;
 
   if (mod_debug)
-    fprintf(stderr, "Maximum peak on track %d, head %d at %ld samples, %.3fms\n", hw_currenttrack, hw_currenthead, localmaxima, mod_samplestoms(localmaxima));
+    fprintf(stderr, "Maximum peak on track %d, head %d at %ld samples, %.3fms\n", hw_currenttrack, hw_currenthead, localmaxima, mod_samplestous(localmaxima));
 
   // Set noise threshold at 5% of maximum
   threshold=mod_hist[localmaxima]/20;
@@ -122,7 +122,7 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
       if (inpeak==1)
       {
         if (mod_debug)
-          fprintf(stderr, "  Peak at %ld %.3fms\n", localmaxima, mod_samplestoms(localmaxima));
+          fprintf(stderr, "  Peak at %ld %.3fms\n", localmaxima, mod_samplestous(localmaxima));
 
         if (mod_peaks<MOD_PEAKSIZE)
           mod_peak[mod_peaks-1]=localmaxima;
@@ -147,7 +147,7 @@ int mod_haspeak(const float ms)
 
   for (i=0; i<mod_peaks; i++)
   {
-    peakms=mod_samplestoms(mod_peak[i]);
+    peakms=mod_samplestous(mod_peak[i]);
 
     // Look within 10% of nominal
     if ((ms>=(peakms*0.90)) && (ms<=(peakms*1.1)))

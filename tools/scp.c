@@ -411,7 +411,7 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
             numfluxes++;
 
             // Convert samples into nanoseconds/25
-            celltime=(mod_samplestoms(fluxtime)*NSINUS)/SCP_BASE_NS;
+            celltime=(mod_samplestous(fluxtime)*NSINUS)/SCP_BASE_NS;
 
             // Convert back from float to uint16_t
             fluxtime=roundf(celltime);

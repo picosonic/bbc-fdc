@@ -21,7 +21,7 @@ extern char mod_density;
 unsigned char mod_getclock(const unsigned int datacells);
 unsigned char mod_getdata(const unsigned int datacells);
 
-extern float mod_samplestoms(const long samples);
+extern float mod_samplestous(const long samples);
 
 extern void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt, const int usepll);
 
