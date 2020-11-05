@@ -4,6 +4,7 @@ CC = gcc
 
 HARDWARE = $(shell bash ./hw.sh Hardware)
 REVISION = $(shell bash ./hw.sh Revision)
+CPU = $(shell bash ./hw.sh CPU)
 
 DEBUGFLAGS = -g -W -Wall
 BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
