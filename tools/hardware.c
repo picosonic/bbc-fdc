@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <bcm2835.h>
 #include <sys/time.h>
+#include <sched.h>
 
 #include "hardware.h"
 #include "pins.h"
@@ -16,6 +17,12 @@ int hw_stepping = HW_NORMALSTEPPING;
 // Initialise GPIO and SPI
 int hw_init(const int spiclockdivider)
 {
+  struct sched_param priority;
+
+  // Request higher priority thread scheduling
+  priority.sched_priority=sched_get_priority_max(SCHED_FIFO);
+  sched_setscheduler(0, SCHED_FIFO, &priority);
+
   if (!bcm2835_init()) return 0;
 
   bcm2835_gpio_fsel(DS0_OUT, GPIO_OUT);
