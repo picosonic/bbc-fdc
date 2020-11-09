@@ -1088,6 +1088,9 @@ int main(int argc,char **argv)
               break;
           }
         }
+
+        // Flush raw track data before moving on to any further tracks
+        fflush(rawdata);
       }
     } // side loop
 
