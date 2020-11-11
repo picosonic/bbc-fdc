@@ -328,7 +328,7 @@ void scp_processtrack(FILE *scpfile, const unsigned char track, const uint8_t re
     for (i=0; i<revolutions; i++)
     {
       fread(&timings, 1, sizeof(timings), scpfile);
-      printf("  %d:%x (%.2f ms) / %d / %d\n", i, timings.indextime, ((double)timings.indextime*SCP_BASE_NS)/1000000, timings.tracklen, timings.dataoffset);
+      printf("  %d:%x (%.2f ms) / %d len / %d offs\n", i, timings.indextime, ((double)timings.indextime*SCP_BASE_NS)/1000000, timings.tracklen, timings.dataoffset);
     }
   }
 }

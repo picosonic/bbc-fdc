@@ -29,7 +29,7 @@ For each track
      ===============
            Track_ID: 1 byte **LOGICAL**
         Head_number: 1 byte
-          Sector_ID: 1 byte **LOGICAL*
+          Sector_ID: 1 byte **LOGICAL**
       reported_size: 1 byte (2^{7+x}; 0 ==>128, 1 ==> 256, 2==>512, 3==>1024 etc)
           real_size: 1 byte (2^{7+x})
          error_code: 1 byte (0==No Error, &20==Deleted Data; &0E = Data CRC Error)

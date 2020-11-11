@@ -440,7 +440,7 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
     trackpos=ftell(scpfile);
 
     // Go back to update table for this rotation
-    fseek(scpfile, scppos+4+(12*i)+4, SEEK_SET);
+    fseek(scpfile, scppos+4+(sizeof(timings)*i)+4, SEEK_SET);
 
     value=numfluxes;
     fwrite(&value, 1, sizeof(uint32_t), scpfile);
