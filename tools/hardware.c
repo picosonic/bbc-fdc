@@ -2,6 +2,8 @@
 #include <bcm2835.h>
 #include <sys/time.h>
 #include <sched.h>
+#include <strings.h>
+#include <stdio.h>
 
 #include "hardware.h"
 #include "pins.h"
