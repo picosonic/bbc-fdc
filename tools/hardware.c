@@ -14,6 +14,34 @@ float hw_rpm = HW_DEFAULTRPM;
 
 int hw_stepping = HW_NORMALSTEPPING;
 
+void hw_setscaling(const char *scale)
+{
+  const char governor_policy[]="/sys/devices/system/cpu/cpufreq/policy0/scaling_governor";
+  const char governor_cpu[]="/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor";
+  FILE *fp;
+
+  // Write the new scaling governor value to policy0 if available
+  fp=fopen(governor_policy, "r+");
+  if (fp!=NULL)
+  {
+    fprintf(fp, "%s\n", scale);
+
+    fclose(fp);
+  }
+
+  // Write the new scaling governor value to cpu0 if available
+  fp=fopen(governor_cpu, "r+");
+  if (fp!=NULL)
+  {
+    fprintf(fp, "%s\n", scale);
+
+    fclose(fp);
+  }
+
+  // Give it a chance to take effect
+  hw_sleep(2);
+}
+
 // Initialise GPIO and SPI
 int hw_init(const int spiclockdivider)
 {
@@ -119,6 +147,8 @@ int hw_init(const int spiclockdivider)
 
   bcm2835_spi_begin(); // sets all correct pin modes
 
+  hw_setscaling("performance");
+
   return 1;
 }
 
@@ -138,6 +168,8 @@ void hw_done()
   hw_stopmotor();
   bcm2835_spi_end();
   bcm2835_close();
+
+  hw_setscaling("ondemand");
 }
 
 // Determine if head is at track zero
