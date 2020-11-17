@@ -154,7 +154,7 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
 
           if (fm_debug)
           {
-            fprintf(stderr, "Track %d (%d) ", fm_bitstream[1], hw_currenttrack);
+            fprintf(stderr, "[%lx] FM Track %d (%d) ", datapos, fm_bitstream[1], hw_currenttrack);
             fprintf(stderr, "Head %d (%d) ", fm_bitstream[2], hw_currenthead);
             fprintf(stderr, "Sector %d ", fm_bitstream[3]);
             fprintf(stderr, "Data size %d ", fm_bitstream[4]);
