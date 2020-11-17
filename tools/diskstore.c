@@ -598,6 +598,8 @@ unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, 
         free(samplebuffer);
         samplebuffer=NULL;
       }
+      else
+        return numread;
 
       // Look again
       curr=diskstore_findhybridsector(diskstore_abstrack, diskstore_abshead, diskstore_abssector);
@@ -608,9 +610,13 @@ unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, 
       // Prevent reads beyond current sector memory
       if ((diskstore_abssecoffs+toread)>curr->datasize)
         toread=curr->datasize-diskstore_abssecoffs;
+      else
+        return numread;
 
       memcpy(&buffer[numread], &curr->data[diskstore_abssecoffs], toread);
     }
+    else
+      return numread;
 
     numread+=toread;
 
