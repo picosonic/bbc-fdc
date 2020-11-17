@@ -880,6 +880,9 @@ int main(int argc,char **argv)
       default:
         break;
     }
+
+    // Flush raw header data before moving on to capture
+    fflush(rawdata);
   }
 
   // Start at track 0
