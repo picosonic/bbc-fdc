@@ -1,9 +1,12 @@
+#define _GNU_SOURCE
+
 #include <unistd.h>
 #include <bcm2835.h>
 #include <sys/time.h>
 #include <sched.h>
 #include <strings.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "hardware.h"
 #include "pins.h"
@@ -48,13 +51,22 @@ void hw_setscaling(const char *scale)
 int hw_init(const int spiclockdivider)
 {
   struct sched_param priority;
+  int curCPU;
+  cpu_set_t CPUset;
+
+  if (!bcm2835_init()) return 0;
 
   // Request higher priority thread scheduling
   priority.sched_priority=sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &priority);
 
-  if (!bcm2835_init()) return 0;
+  // Request CPU scheduling affinity to stop program switching cores
+  curCPU=sched_getcpu();
+  CPU_ZERO(&CPUset);
+  CPU_SET(curCPU, &CPUset);
+  sched_setaffinity(0, sizeof(CPUset), &CPUset);
 
+  // Set up GPIO data direction and pull ups
   bcm2835_gpio_fsel(DS0_OUT, GPIO_OUT);
   bcm2835_gpio_clr(DS0_OUT);
 
