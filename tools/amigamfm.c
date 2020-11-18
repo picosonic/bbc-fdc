@@ -28,6 +28,13 @@ struct PLL *amigamfm_pll;
 
 int amigamfm_debug=0;
 
+// Validate clock bits
+void amigamfm_validateclock(const unsigned char clock, const unsigned char data)
+{
+  (void) clock;
+  (void) data;
+}
+
 // Extract a header long from MFM stream
 unsigned long amigamfm_getlong(const unsigned int longpos, const unsigned int data_size)
 {
@@ -156,6 +163,8 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
         break;
 
       case MFM_ADDR:
+        amigamfm_validateclock(clock, data);
+
         if (amigamfm_bitlen<(AMIGA_SECTOR_SIZE))
         {
           amigamfm_bitstream[amigamfm_bitlen++]=((amigamfm_datacells&0xff00)>>8);
@@ -354,6 +363,9 @@ void amigamfm_init(const int debug, const char density)
 
 void amigamfm_showinfo(const unsigned int disktracks, const int debug)
 {
+  (void) disktracks;
+  (void) debug;
+
   // TODO output some disk info
 }
 

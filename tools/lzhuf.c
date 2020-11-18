@@ -570,6 +570,7 @@ uint32_t lz_Encode(uint8_t *in, uint32_t inlen, uint8_t *out, uint32_t outlen)
   int32_t  i, c, r, s, last_match_length;
   uint32_t len;
   uint32_t offset=0;
+  (void) outlen;
 
   if (inlen==0)
     return 0;
