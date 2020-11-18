@@ -184,11 +184,7 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
     }
     else
     if (strstr(hw_samplefilename, ".rfi")!=NULL)
-    {
-      long status;
-
-      status=rfi_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
-    }
+      rfi_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
   }
 }
 

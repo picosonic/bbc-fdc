@@ -33,6 +33,12 @@ struct PLL *fm_pll;
 
 int fm_debug=0;
 
+// Validate clock bits
+int fm_validateclock(const unsigned char clock)
+{
+  return (clock==0xff);
+}
+
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
 void fm_addbit(const unsigned char bit, const unsigned long datapos)
 {
@@ -221,6 +227,10 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
         break;
 
       case FM_DATA:
+        // Validate clock bits
+        if (fm_debug)
+          fm_validateclock(clock);
+
         // Keep reading until we have the whole block in fm_bitstream[]
         fm_bitstream[fm_bitlen++]=data;
 

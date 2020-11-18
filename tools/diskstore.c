@@ -426,7 +426,7 @@ void diskstore_dumplayoutmap(const int rotations)
   samplesperrotation=(mod_samplesize/rotations);
 
   fprintf(stderr, "TRACK[HEAD]\n");
-  for (dtrack=0; ((dtrack<mtrack) && (dtrack<hw_maxtracks)); dtrack+=hw_stepping)
+  for (dtrack=0; ((dtrack<mtrack) && (dtrack<(int)hw_maxtracks)); dtrack+=hw_stepping)
   {
     for (dhead=(diskstore_minhead==-1?0:diskstore_minhead); dhead<(diskstore_maxhead==-1?2:diskstore_maxhead+1); dhead++)
     {

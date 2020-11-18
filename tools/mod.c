@@ -243,6 +243,7 @@ void mod_process(const unsigned char *sampledata, const unsigned long samplesize
   unsigned char c, j;
   char level,bi=0;
   int run;
+  (void) attempt;
 
   for (run=0; run<(usepll==0?1:2); run++)
   {

@@ -134,7 +134,6 @@ void dfs_showinfo(const int head, const unsigned int disktracks, const int secto
   char filename[10];
   Disk_Sector *sector0;
   Disk_Sector *sector1;
-  Disk_Sector *sectorn;
 
   // Search for sectors
   sector0=diskstore_findhybridsector(0, head, 0);

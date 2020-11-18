@@ -32,6 +32,15 @@ struct PLL *mfm_pll;
 
 int mfm_debug=0;
 
+// Validate clock bits against data bits
+void mfm_validateclock(const unsigned char clock, const unsigned char data)
+{
+  (void) clock;
+  (void) data;
+
+  // TODO
+}
+
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
 void mfm_addbit(const unsigned char bit, const unsigned long datapos)
 {
@@ -245,6 +254,10 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
         break;
 
       case MFM_DATA:
+        // Validate clock bits against this data byte
+        if (mfm_debug)
+          mfm_validateclock(data, clock);
+
         if (mfm_bitlen<mfm_blocksize)
         {
           mfm_bitstream[mfm_bitlen++]=data;

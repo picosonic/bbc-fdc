@@ -429,7 +429,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
     if (0!=(attrib&ADFS_DIRECTORY))
     {
       unsigned long curdiskoffs;
-      char newfolder[ADFS_MAXPATHLEN];
+      char newfolder[ADFS_MAXPATHLEN+1];
 
       sprintf(newfolder, "%s/%s", folder, filename);
 

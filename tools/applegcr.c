@@ -420,6 +420,7 @@ void applegcr_addsample(const unsigned long samples, const unsigned long datapos
 void applegcr_init(const int debug, const char density)
 {
   float bitcell=APPLEGCR_BITCELL;
+  (void) density;
 
   applegcr_debug=debug;
 

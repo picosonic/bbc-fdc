@@ -446,6 +446,8 @@ void gcr_addsample(const unsigned long samples, const unsigned long datapos, con
 
 void gcr_init(const int debug, const char density)
 {
+  (void) density;
+
   gcr_debug=debug;
 
   if (gcr_pll!=NULL)
