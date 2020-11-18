@@ -610,8 +610,6 @@ unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, 
       // Prevent reads beyond current sector memory
       if ((diskstore_abssecoffs+toread)>curr->datasize)
         toread=curr->datasize-diskstore_abssecoffs;
-      else
-        return numread;
 
       memcpy(&buffer[numread], &curr->data[diskstore_abssecoffs], toread);
     }
