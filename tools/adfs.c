@@ -259,6 +259,10 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   unsigned char attrib;
   int hasfiletype;
 
+  // Check for invalid offset
+  if (offset>(4*1024*1024))
+    return;
+
   diskstore_absoluteseek(offset, dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80);
   if (diskstore_absoluteread((char *)&dh, sizeof(dh), dirtype==ADFS_OLDDIR?SEQUENCED:INTERLEAVED, 80)<sizeof(dh))
     return;
