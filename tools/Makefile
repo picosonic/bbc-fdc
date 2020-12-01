@@ -37,18 +37,18 @@ checktd0: checktd0.o crc.o lzhuf.o
 checktd0.o: checktd0.c teledisk.h crc.h lzhuf.h
 	$(CC) $(BUILDFLAGS) -c -o checktd0.o checktd0.c
 
-bbcfdc: bbcfdc.o adfs.o amigamfm.o applegcr.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o pll.o rfi.o scp.o teledisk.o
-	$(CC) $(BUILDFLAGS) -o bbcfdc adfs.o amigamfm.o applegcr.o bbcfdc.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o pll.o rfi.o scp.o teledisk.o -lbcm2835 -lm
+bbcfdc: bbcfdc.o adfs.o amigamfm.o appledos.o applegcr.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o pll.o rfi.o scp.o teledisk.o
+	$(CC) $(BUILDFLAGS) -o bbcfdc adfs.o amigamfm.o appledos.o applegcr.o bbcfdc.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o pll.o rfi.o scp.o teledisk.o -lbcm2835 -lm
 
-bbcfdc.o: bbcfdc.c adfs.h amigamfm.h applegcr.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h jsmn.h mfm.h mod.h pll.h rfi.h scp.h teledisk.h
+bbcfdc.o: bbcfdc.c adfs.h amigamfm.h appledos.h applegcr.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h jsmn.h mfm.h mod.h pll.h rfi.h scp.h teledisk.h
 	$(CC) $(BUILDFLAGS) -c -o bbcfdc.o bbcfdc.c
 
 ##########################
 
-bbcfdc-nopi: bbcfdc-nopi.o adfs.o amigamfm.o applegcr.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o
-	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o adfs.o amigamfm.o applegcr.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o -lm
+bbcfdc-nopi: bbcfdc-nopi.o adfs.o amigamfm.o appledos.o applegcr.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o
+	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o adfs.o amigamfm.o appledos.o applegcr.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o -lm
 
-bbcfdc-nopi.o: bbcfdc.c adfs.h applegcr.h amigamfm.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h jsmn.h mfm.h mod.h pll.h rfi.h scp.o teledisk.h
+bbcfdc-nopi.o: bbcfdc.c adfs.h appledos.h applegcr.h amigamfm.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h jsmn.h mfm.h mod.h pll.h rfi.h scp.o teledisk.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o bbcfdc-nopi.o bbcfdc.c
 
 nopi.o: nopi.c hardware.h jsmn.h rfi.h
@@ -61,6 +61,9 @@ adfs.o: adfs.c adfs.h diskstore.h
 
 amigamfm.o: amigamfm.c amigamfm.h diskstore.h hardware.h mod.h pll.h
 	$(CC) $(BUILDFLAGS) -c -o amigamfm.o amigamfm.c
+
+appledos.o: appledos.c appledos.h
+	$(CC) $(BUILDFLAGS) -c -o appledos.o appledos.c
 
 applegcr.o: applegcr.c applegcr.h pll.h
 	$(CC) $(BUILDFLAGS) -c -o applegcr.o applegcr.c
