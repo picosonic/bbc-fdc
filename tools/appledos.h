@@ -4,6 +4,10 @@
 #pragma pack(push,1)
 
 #define APPLEDOS_UNKNOWN -1
+#define APPLEDOS_33 3
+
+#define APPLEDOS_MAXTRACK 34
+#define APPLEDOS_MAXSECTOR 15
 
 // From "Beneath Apple DOS" - Don Worth and Pieter Lechner, May 1982
 
