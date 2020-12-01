@@ -64,6 +64,24 @@ struct appledos_fileentry
   uint8_t filelen[2]; // Length of file in sectors (LO/HI format)
 };
 
+// Track/Sector list
+struct appledos_tracksector
+{
+  uint8_t unused00;
+  uint8_t nextsectorlisttrack; // Track number of next T/S list sector (or zero if no more used)
+  uint8_t nextsectorlistsector; // Sector number of next T/S list sector (if present)
+  uint8_t unused03[2];
+  uint8_t sectoroffset[2]; // Sector offset in file of the first sector described by this list
+  uint8_t unused07[5];
+};
+
+// T/S pair
+struct appledos_ts
+{
+  uint8_t track; // Track if this data sector (or zero)
+  uint8_t sector; // Sector of this data sector (or zero)
+};
+
 #pragma pack(pop)
 
 extern int appledos_validate();
