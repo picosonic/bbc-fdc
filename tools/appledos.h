@@ -37,6 +37,33 @@ struct appledos_alloc_bitmap
   uint8_t bitmap[4]; // Bitmap of free sectors in track n
 };
 
+// Catalog sector format
+struct appledos_catalog
+{
+  uint8_t unused00;
+  uint8_t nextcattrack; // Track number of next catalog sector (usually 17)
+  uint8_t nextcatsector; // Sector number of next catalog sector
+  uint8_t unused03[8];
+};
+
+// File descriptive entry
+struct appledos_fileentry
+{
+  uint8_t firstsectorlisttrack; // Track of first track/sector list sector (if it's a deleted file 0xFF, with original track moved to byte 0x20 | if it's 0x00 never used)
+  uint8_t firstsectorlistsector; // Sector of first track/sector list sector
+  uint8_t filetypeflags; // File type and flags (If top bit is set then file is locked)
+                         // 00 - TEXT file
+                         // 01 - INTEGER BASIC file
+                         // 02 - APPLESOFT BASIC file
+                         // 04 - BINARY file
+                         // 08 - S type file
+                         // 10 - RELOCATABLE object module file
+                         // 20 - A type file
+                         // 40 - B type file
+  uint8_t filename[30]; // 30 characters
+  uint8_t filelen[2]; // Length of file in sectors (LO/HI format)
+};
+
 #pragma pack(pop)
 
 extern int appledos_validate();
