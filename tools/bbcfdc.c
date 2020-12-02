@@ -1056,7 +1056,12 @@ int main(int argc,char **argv)
                     info++;
                   }
                   else
-                    printf("\nUnknown logical disk format\n\n");
+                  {
+                    if (diskstore_countsectormod(MODAPPLEGCR)>0)
+                      printf("\nDetected Apple format\n\n");
+                    else
+                      printf("\nUnknown logical disk format\n\n");
+                  }
               }
             }
           }
