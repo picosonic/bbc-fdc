@@ -151,6 +151,10 @@ int appledos_validate()
   if (diskstore_countsectormod(MODAPPLEGCR)==0)
     return format;
 
+  // Validate we have either 13 or 16 sectors/track
+  if ((diskstore_maxsectorid!=12) && (diskstore_maxsectorid!=15))
+    return format;
+
   // Search for VTOC sector
   sector0=diskstore_findhybridsector(17, 0, 0);
 
