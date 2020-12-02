@@ -132,7 +132,7 @@ void appledos_showinfo(const int debug)
         }
         printf(", %d sectors", (fentry->filelen[1]<<8)|fentry->filelen[0]);
 
-        printf("\n");
+        printf("\n\n");
       }
     }
   }
@@ -154,6 +154,24 @@ int appledos_validate()
   // Validate we have either 13 or 16 sectors/track
   if ((diskstore_maxsectorid!=12) && (diskstore_maxsectorid!=15))
     return format;
+
+  // Search for VTOC sector
+  sector0=diskstore_findhybridsector(17, 0, 0);
+
+  // Check we have VTOC sector
+  if (sector0==NULL)
+  {
+    unsigned long len;
+    char tmpbuff[APPLEGCR_SECTORLEN];
+
+    // We may not have read it yet, so have a go
+    diskstore_abstrack=17;
+    diskstore_abshead=0;
+    diskstore_abssector=0;
+    diskstore_abssecoffs=0;
+
+    len=diskstore_absoluteread(tmpbuff, APPLEGCR_SECTORLEN, 0, APPLEDOS_MAXTRACK);
+  }
 
   // Search for VTOC sector
   sector0=diskstore_findhybridsector(17, 0, 0);

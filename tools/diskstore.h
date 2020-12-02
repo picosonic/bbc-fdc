@@ -62,6 +62,13 @@ extern int diskstore_maxsectorsize;
 extern int diskstore_minsectorid;
 extern int diskstore_maxsectorid;
 
+// For absolute disk access
+extern int diskstore_abstrack;
+extern int diskstore_abshead;
+extern int diskstore_abssector;
+extern int diskstore_abssecoffs;
+extern unsigned long diskstore_absoffset;
+
 // Initialise disk storage
 extern void diskstore_init(const int debug, const int usepll);
 

@@ -11,6 +11,7 @@
 #include "scp.h"
 #include "adfs.h"
 #include "amigamfm.h"
+#include "appledos.h"
 #include "applegcr.h"
 #include "dfs.h"
 #include "dos.h"
@@ -1048,7 +1049,14 @@ int main(int argc,char **argv)
                   info++;
                 }
                 else
-                  printf("\nUnknown logical disk format\n\n");
+                  if (appledos_validate()!=APPLEDOS_UNKNOWN)
+                  {
+                    printf("\nDetected Apple DOS\n\n");
+                    appledos_showinfo(debug);
+                    info++;
+                  }
+                  else
+                    printf("\nUnknown logical disk format\n\n");
               }
             }
           }
