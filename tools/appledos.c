@@ -87,52 +87,70 @@ void appledos_showinfo(const int debug)
       struct appledos_catalog *cat;
       struct appledos_fileentry *fentry;
       int catno;
+      int catalogsectors;
       int i;
 
-      // Map catalog to sector buffer
-      cat=(struct appledos_catalog *)&sector1->data[0];
+      catalogsectors=0;
 
-      printf("Next catalogue: T%d S%d\n", cat->nextcattrack, cat->nextcatsector);
-
-      // Loop through file entries
-      for (catno=0; catno<7; catno++)
+      // Loop through all available linked catalog sectors
+      while ((sector1!=NULL) && (catalogsectors!=-1) && (catalogsectors<16))
       {
-        // Map file entry to sector buffer
-        fentry=(struct appledos_fileentry *)&sector1->data[0x0b+(catno*0x23)];
+        // Map catalog to sector buffer
+        cat=(struct appledos_catalog *)&sector1->data[0];
 
-        // Stop listing if sector out of range
-        if (fentry->firstsectorlisttrack>(APPLEDOS_MAXTRACK+1))
-          break;
+        printf("Next catalogue: T%d S%d\n", cat->nextcattrack, cat->nextcatsector);
 
-        // Stop listing if file length is zero
-        if (((fentry->filelen[1]<<8)|fentry->filelen[0])==0)
-          break;
-
-        printf("[T%.2d S%.2d] ", fentry->firstsectorlisttrack, fentry->firstsectorlistsector);
-        printf("%s", (fentry->filetypeflags&0x80)?"L ":" ");
-
-        printf("\"");
-        for (i=0; i<30; i++)
-          printf("%c", fentry->filename[i]&0x7f);
-        printf("\" [%.2x] ", fentry->filetypeflags&0x7f);
-
-        switch (fentry->filetypeflags&0x7f)
+        // Loop through file entries in this catalog sector
+        for (catno=0; catno<7; catno++)
         {
-          case 0x00: printf("TEXT"); break;
-          case 0x01: printf("INTEGER BASIC"); break;
-          case 0x02: printf("APPLESOFT BASIC"); break;
-          case 0x04: printf("BINARY"); break;
-          case 0x08: printf("S"); break;
-          case 0x10: printf("RELOCATABLE"); break;
-          case 0x20: printf("A"); break;
-          case 0x40: printf("B"); break;
+          // Map file entry to sector buffer
+          fentry=(struct appledos_fileentry *)&sector1->data[0x0b+(catno*0x23)];
 
-          default:
+          // Stop listing if sector out of range
+          if (fentry->firstsectorlisttrack>(APPLEDOS_MAXTRACK+1))
+          {
+            catalogsectors=-1;
             break;
-        }
-        printf(", %d sectors", (fentry->filelen[1]<<8)|fentry->filelen[0]);
+          }
 
-        printf("\n\n");
+          // Stop listing if file length is zero
+          if (((fentry->filelen[1]<<8)|fentry->filelen[0])==0)
+          {
+            catalogsectors=-1;
+            break;
+          }
+
+          printf("[T%.2d S%.2d] ", fentry->firstsectorlisttrack, fentry->firstsectorlistsector);
+          printf("%s", (fentry->filetypeflags&0x80)?"L ":" ");
+
+          printf("\"");
+          for (i=0; i<30; i++)
+            printf("%c", fentry->filename[i]&0x7f);
+          printf("\" [%.2x] ", fentry->filetypeflags&0x7f);
+
+          switch (fentry->filetypeflags&0x7f)
+          {
+            case 0x00: printf("TEXT"); break;
+            case 0x01: printf("INTEGER BASIC"); break;
+            case 0x02: printf("APPLESOFT BASIC"); break;
+            case 0x04: printf("BINARY"); break;
+            case 0x08: printf("S"); break;
+            case 0x10: printf("RELOCATABLE"); break;
+            case 0x20: printf("A"); break;
+            case 0x40: printf("B"); break;
+
+            default:
+              break;
+          }
+          printf(", %d sectors", (fentry->filelen[1]<<8)|fentry->filelen[0]);
+
+          printf("\n\n");
+
+          catalogsectors++;
+        }
+
+        // Search for next catalog sector
+        sector1=diskstore_findhybridsector(cat->nextcattrack, 0, cat->nextcatsector);
       }
     }
   }
