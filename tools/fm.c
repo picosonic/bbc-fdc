@@ -77,6 +77,7 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
             fm_state=FM_SYNC;
 
             // Clear IDAM cache, although I've not seen IAM on Acorn DFS
+            fm_idpos=0;
             fm_idamtrack=-1;
             fm_idamhead=-1;
             fm_idamsector=-1;
@@ -215,6 +216,7 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
             fm_blocksize=0;
 
             // Clear IDAM cache
+            fm_idpos=0;
             fm_idamtrack=-1;
             fm_idamhead=-1;
             fm_idamsector=-1;
@@ -266,6 +268,7 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
           }
 
           // Require subsequent data blocks to have a valid ID block first
+          fm_idpos=0;
           fm_idamtrack=-1;
           fm_idamhead=-1;
           fm_idamsector=-1;
