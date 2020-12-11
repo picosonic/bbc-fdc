@@ -9,23 +9,23 @@
 
 // GCR for Apple II
 //
-// Apple DOS 3.1 (Jul '78) / 3.2 (Feb '79) / 3.2.1 (Jul '79)
+// Apple DOS 3 (29 Jun '78) / 3.1 (20 Jul '78) / 3.2 (16 Feb '79) / 3.2.1 (31 Jul '79)
 //   Single side, soft sectored
-//   35 tracks, at 48tpi
+//   35 tracks, numbered 0 to 34, at 48tpi
 //   13 sectors, numbered 0 to 12
 //   256 bytes/sector
-//   Total sectors/disk 455
+//   Total sectors/disk 455 (usable 403)
 //   Total size 116,480 bytes (113.75k)
 //   GCR 5/3
 //
 //
-// Apple DOS 3.3 (Aug '80) / Apple Pascal (Aug '79)
+// Apple DOS 3.3 (25 Aug '80) / Apple Pascal (Aug '79)
 // ProDOS (Oct '83) / Apple Fortran / CP/M
 //   Single side, soft sectored
-//   35 tracks, at 48tpi
+//   35 tracks, numbered 0 to 34, at 48tpi
 //   16 sectors, numbered 0 to 15
 //   256 bytes/sector
-//   Total sectors/disk 560
+//   Total sectors/disk 560 (usable 496)
 //   Total size 143,360 bytes (140k)
 //   GCR 6/2
 //
