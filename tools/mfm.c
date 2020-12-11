@@ -248,6 +248,15 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
                 break;
             }
           }
+          else
+          {
+            // IDAM failed CRC, ignore following data block (for now)
+            mfm_idpos=0;
+            mfm_idamtrack=-1;
+            mfm_idamhead=-1;
+            mfm_idamsector=-1;
+            mfm_idamlength=-1;
+          }
 
           mfm_state=MFM_SYNC;
         }
@@ -288,6 +297,13 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
                 fprintf(stderr, "** MFM new sector T%d H%d - C%d H%d R%d N%d - IDCRC %.4x DATACRC %.4x **\n", hw_currenttrack, hw_currenthead, mfm_idamtrack, mfm_idamhead, mfm_idamsector, mfm_idamlength, mfm_idblockcrc, mfm_datablockcrc);
             }
           }
+
+          // Require subsequent data blocks to have a valid ID block first
+          mfm_idpos=0;
+          mfm_idamtrack=-1;
+          mfm_idamhead=-1;
+          mfm_idamsector=-1;
+          mfm_idamlength=-1;
 
           mfm_state=MFM_SYNC;
         }
