@@ -245,6 +245,11 @@ void gcr_decodegcr()
     }
     else
     {
+      // IDAM failed CRC, ignore following data block (for now)
+      gcr_idpos=0;
+      gcr_idamtrack=-1;
+      gcr_idamsector=-1;
+
       if (gcr_debug)
         printf("\n** INVALID ID EORSUM [%.2x] (%.2x)\n", gcr_bytebuffer[1], eorcalc);
     }
@@ -297,7 +302,8 @@ void gcr_decodegcr()
       }
     }
 
-    // Clear IDAM cache
+    // Require subsequent data blocks to have a valid ID block first
+    gcr_idpos=0;
     gcr_idamtrack=-1;
     gcr_idamsector=-1;
   }

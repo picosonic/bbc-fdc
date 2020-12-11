@@ -340,6 +340,8 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
         }
         else
         {
+          // IDAM failed CRC, ignore following data block (for now)
+          applegcr_idpos=0;
           applegcr_idamtrack=-1;
           applegcr_idamsector=-1;
         }
@@ -379,6 +381,11 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
           applegcr_process_data62();
         else
           applegcr_process_data53();
+
+        // Require subsequent data blocks to have a valid ID block first
+        applegcr_idpos=0;
+        applegcr_idamtrack=-1;
+        applegcr_idamsector=-1;
 
         applegcr_bits=0;
         applegcr_state=APPLEGCR_IDLE;
