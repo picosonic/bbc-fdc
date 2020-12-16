@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <strings.h>
 #include <string.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "hardware.h"
 #include "diskstore.h"
@@ -361,47 +363,139 @@ void amigamfm_init(const int debug, const char density)
   amigamfm_p3=0;
 }
 
+void amigamfm_decodedate(const uint32_t days, const uint32_t mins, const uint32_t ticks, struct tm *tim)
+{
+  struct timeval tv;
+
+  tv.tv_sec=AMIGA_EPOCH+(days*(24*60*60))+(mins*60)+(ticks/50);
+  tv.tv_usec=0;
+
+  localtime_r(&tv.tv_sec, tim);
+}
+
+uint32_t amigamfm_readlong(const uint32_t offset, const uint8_t *data)
+{
+  return ((data[offset+0]<<24) | (data[offset+1]<<16) | (data[offset+2]<<8) | (data[offset+3]));
+}
+
+// http://lclevy.free.fr/adflib/adf_info.html
 void amigamfm_showinfo(const unsigned int disktracks, const int debug)
 {
-  (void) disktracks;
+  int i;
   (void) debug;
 
-  // TODO output some disk info
+  Disk_Sector *sector0;
+
+  // Search for Root Block sector
+  sector0=diskstore_findhybridsector(40, 0, 0);
+
+  // Check we have sector
+  if (sector0==NULL)
+  {
+    unsigned long len;
+    char tmpbuff[AMIGA_DATASIZE];
+
+    // We may not have read it yet, so have a go
+    diskstore_abstrack=40;
+    diskstore_abshead=0;
+    diskstore_abssector=0;
+    diskstore_abssecoffs=0;
+
+    len=diskstore_absoluteread(tmpbuff, AMIGA_DATASIZE, 0, disktracks);
+
+    // Search again
+    sector0=diskstore_findhybridsector(40, 0, 0);
+  }
+
+  // Check we have sector
+  if (sector0==NULL)
+    return;
+
+  // Check we have data for sector
+  if (sector0->data==NULL)
+    return;
+
+  // Check sector is the right length
+  if (sector0->datasize==AMIGA_DATASIZE)
+  {
+    struct tm tim;
+
+    amigamfm_decodedate(amigamfm_readlong(AMIGA_DATASIZE-0x5c, sector0->data), amigamfm_readlong(AMIGA_DATASIZE-0x58, sector0->data), amigamfm_readlong(AMIGA_DATASIZE-0x54, sector0->data), &tim);
+    printf("Root dir changed : %.2d:%.2d:%.2d %.2d/%.2d/%d\n", tim.tm_hour, tim.tm_min, tim.tm_sec, tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900);
+
+    amigamfm_decodedate(amigamfm_readlong(AMIGA_DATASIZE-0x28, sector0->data), amigamfm_readlong(AMIGA_DATASIZE-0x24, sector0->data), amigamfm_readlong(AMIGA_DATASIZE-0x20, sector0->data), &tim);
+    printf("Volume changed : %.2d:%.2d:%.2d %.2d/%.2d/%d\n", tim.tm_hour, tim.tm_min, tim.tm_sec, tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900);
+
+    amigamfm_decodedate(amigamfm_readlong(AMIGA_DATASIZE-0x1c, sector0->data), amigamfm_readlong(AMIGA_DATASIZE-0x18, sector0->data), amigamfm_readlong(AMIGA_DATASIZE-0x14, sector0->data), &tim);
+    printf("Filesystem creation : %.2d:%.2d:%.2d %.2d/%.2d/%d\n", tim.tm_hour, tim.tm_min, tim.tm_sec, tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900);
+
+    printf("Volume name : \"");
+    for (i=0; i<sector0->data[AMIGA_DATASIZE-0x50]; i++)
+      printf("%c", sector0->data[(AMIGA_DATASIZE-0x4f)+i]);
+    printf("\"\n");
+
+    printf("\n");
+  }
+}
+
+uint32_t amigamfm_calcbootchecksum(const uint8_t *bootblock)
+{
+  uint32_t checksum;
+  uint32_t presum;
+  unsigned int i;
+
+  checksum=0;
+
+  for (i=0; i<AMIGA_BOOTBLOCKSIZE/4; i++)
+  {
+    presum=checksum;
+
+    checksum+=((bootblock[i*4]<<24) | (bootblock[i*4+1]<<16) | (bootblock[i*4+2]<<8) | (bootblock[i*4+3]));
+
+    if (checksum<presum)
+      ++checksum;
+  }
+
+  return ~(checksum);
 }
 
 int amigamfm_validate()
 {
   int format;
-  unsigned char sniff[AMIGA_DATASIZE];
+  uint8_t sniff[AMIGA_SECTOR_SIZE];
   Disk_Sector *sector0;
+  Disk_Sector *sector1;
 
   format=AMIGA_UNKNOWN;
 
-  // Search for first sector
+  // Search for sectors
   sector0=diskstore_findhybridsector(0, 0, 0);
+  sector1=diskstore_findhybridsector(0, 0, 1);
 
-  // Check we have sector
-  if (sector0==NULL) return format;
+  // Check we have sectors
+  if ((sector0==NULL) || (sector1==NULL))
+    return format;
 
-  // Check we have data for sector
-  if (sector0->data==NULL)
+  // Check we have data for sectors
+  if ((sector0->data==NULL) || (sector0->data==NULL))
     return format;
 
   // Check sector is 512 bytes long
-  if (sector0->datasize==AMIGA_DATASIZE)
+  if ((sector0->datasize==AMIGA_DATASIZE) && (sector1->datasize==AMIGA_DATASIZE))
   {
     // Copy sector data to sniff buffer
     bzero(sniff, sizeof(sniff));
 
     memcpy(sniff, sector0->data, sector0->datasize);
+    memcpy(&sniff[AMIGA_DATASIZE], sector1->data, sector1->datasize);
 
     // Test for "DOS"
     if ((sniff[0]=='D') &&
         (sniff[1]=='O') &&
         (sniff[2]=='S'))
     {
-      unsigned long checksum;
-      unsigned long rootblock;
+      uint32_t checksum;
+      uint32_t rootblock;
 
       checksum=sniff[4];
       checksum=(checksum<<8)|sniff[5];
@@ -413,13 +507,11 @@ int amigamfm_validate()
       rootblock=(rootblock<<8)|sniff[10];
       rootblock=(rootblock<<8)|sniff[11];
 
-      // TODO validate checksum
-
-      if (rootblock==AMIGA_ROOTBLOCK)
+      if (rootblock==AMIGA_DD_ROOTBLOCK)
       {
         format=AMIGA_DOS_FORMAT;
 
-        if (amigamfm_debug)
+        //if (amigamfm_debug)
         {
           printf("Amiga DOS found\n");
 
@@ -438,10 +530,21 @@ int amigamfm_validate()
           else
             printf("NO_DIRC&INTL\n");
 
-          printf("Checksum : %lx\n", checksum);
-          printf("Rootblock : %lx\n", rootblock);
+          // Clear old checksum
+          memset(&sniff[4], 0, 4);
+
+          printf("Checksum : %x, calculated %x\n", checksum, amigamfm_calcbootchecksum((uint8_t *)&sniff));
+          printf("Rootblock : %d\n", rootblock);
         }
       }
+    }
+    else if ((sniff[0]=='P') &&
+        (sniff[1]=='F') &&
+        (sniff[2]=='S'))
+    {
+      format=AMIGA_PFS_FORMAT;
+
+      printf("Amiga PFS (Professional File System) found\n");
     }
   }
 
