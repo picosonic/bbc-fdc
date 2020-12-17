@@ -1156,13 +1156,14 @@ int main(int argc,char **argv)
           dos_gettitle(title, sizeof(title));
         }
         else
+        if (adfs_validate()!=ADFS_UNKNOWN)
         {
-          int adfs_format;
-
-          adfs_format=adfs_validate();
-
-          if (adfs_format!=ADFS_UNKNOWN)
-            adfs_gettitle(adfs_format, title, sizeof(title));
+          adfs_gettitle(adfs_validate(), title, sizeof(title));
+        }
+        else
+        if (amigamfm_validate()!=AMIGA_UNKNOWN)
+        {
+          amigamfm_gettitle(title, sizeof(title));
         }
       }
 
@@ -1189,13 +1190,14 @@ int main(int argc,char **argv)
           dos_gettitle(title, sizeof(title));
         }
         else
+        if (adfs_validate()!=ADFS_UNKNOWN)
         {
-          int adfs_format;
-
-          adfs_format=adfs_validate();
-
-          if (adfs_format!=ADFS_UNKNOWN)
-            adfs_gettitle(adfs_format, title, sizeof(title));
+          adfs_gettitle(adfs_validate(), title, sizeof(title));
+        }
+        else
+        if (amigamfm_validate()!=AMIGA_UNKNOWN)
+        {
+          amigamfm_gettitle(title, sizeof(title));
         }
       }
 

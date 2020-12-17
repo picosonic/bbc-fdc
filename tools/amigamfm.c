@@ -378,6 +378,53 @@ uint32_t amigamfm_readlong(const uint32_t offset, const uint8_t *data)
   return ((data[offset+0]<<24) | (data[offset+1]<<16) | (data[offset+2]<<8) | (data[offset+3]));
 }
 
+void amigamfm_gettitle(char *title, const int titlelen)
+{
+  int i;
+
+  Disk_Sector *sector0;
+
+  // Search for Root Block sector
+  sector0=diskstore_findhybridsector(40, 0, 0);
+
+  // Check we have sector
+  if (sector0==NULL)
+  {
+    char tmpbuff[AMIGA_DATASIZE];
+
+    // We may not have read it yet, so have a go
+    diskstore_abstrack=40;
+    diskstore_abshead=0;
+    diskstore_abssector=0;
+    diskstore_abssecoffs=0;
+
+    diskstore_absoluteread(tmpbuff, AMIGA_DATASIZE, 0, 80);
+
+    // Search again
+    sector0=diskstore_findhybridsector(40, 0, 0);
+  }
+
+  // Check we have sector
+  if (sector0==NULL)
+    return;
+
+  // Check we have data for sector
+  if (sector0->data==NULL)
+    return;
+
+  // Check sector is the right length
+  if (sector0->datasize==AMIGA_DATASIZE)
+  {
+    if (titlelen>sector0->data[AMIGA_DATASIZE-0x50])
+    {
+      for (i=0; i<sector0->data[AMIGA_DATASIZE-0x50]; i++)
+        title[i]=sector0->data[(AMIGA_DATASIZE-0x4f)+i];
+
+      title[i]=0;
+    }
+  }
+}
+
 // http://lclevy.free.fr/adflib/adf_info.html
 void amigamfm_showinfo(const unsigned int disktracks, const int debug)
 {
@@ -392,7 +439,6 @@ void amigamfm_showinfo(const unsigned int disktracks, const int debug)
   // Check we have sector
   if (sector0==NULL)
   {
-    unsigned long len;
     char tmpbuff[AMIGA_DATASIZE];
 
     // We may not have read it yet, so have a go
@@ -401,7 +447,7 @@ void amigamfm_showinfo(const unsigned int disktracks, const int debug)
     diskstore_abssector=0;
     diskstore_abssecoffs=0;
 
-    len=diskstore_absoluteread(tmpbuff, AMIGA_DATASIZE, 0, disktracks);
+    diskstore_absoluteread(tmpbuff, AMIGA_DATASIZE, 0, disktracks);
 
     // Search again
     sector0=diskstore_findhybridsector(40, 0, 0);
