@@ -121,6 +121,9 @@ A DD disk has 11*2*80=1760 (0 to 1759) blocks, a HD disk has 22*2*80=3520 blocks
 // Offset from unix epoch to 1st Jan 1978
 #define AMIGA_EPOCH 252460800
 
+#define AMIGA_FILE 0xfffffffd
+#define AMIGA_DIR  2
+
 extern void amigamfm_gettitle(const unsigned int disktracks, char *title, const int titlelen);
 
 extern void amigamfm_showinfo(const unsigned int disktracks, const int debug);

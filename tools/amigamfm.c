@@ -380,6 +380,11 @@ uint32_t amigamfm_readlong(const uint32_t offset, const uint8_t *data)
   return ((data[offset+0]<<24) | (data[offset+1]<<16) | (data[offset+2]<<8) | (data[offset+3]));
 }
 
+uint16_t amigamfm_readshort(const uint32_t offset, const uint8_t *data)
+{
+  return ((data[offset+0]<<8) | (data[offset+1]));
+}
+
 void amigamfm_gettitle(const unsigned int disktracks, char *title, const int titlelen)
 {
   uint8_t tmpbuff[AMIGA_DATASIZE];
@@ -402,15 +407,97 @@ void amigamfm_gettitle(const unsigned int disktracks, char *title, const int tit
   }
 }
 
-void amigamfm_readfsentry(const unsigned int disktracks, const uint32_t fsblock)
+void amigamfm_readfsentry(const int level, const unsigned int disktracks, const uint32_t fsblock)
 {
+  uint32_t i;
+  uint32_t prot;
   uint8_t fsbuff[AMIGA_DATASIZE];
+  struct tm tim;
 
   // Absolute seek and read
   diskstore_absoluteseek(fsblock*AMIGA_DATASIZE, INTERLEAVED, disktracks);
 
   if (diskstore_absoluteread((char *)fsbuff, AMIGA_DATASIZE, INTERLEAVED, disktracks)<AMIGA_DATASIZE)
     return;
+
+  // Check type
+  if (amigamfm_readlong(0, fsbuff)!=2)
+    return;
+
+  // Check self pointer
+  if (amigamfm_readlong(4, fsbuff)!=fsblock)
+    return;
+
+  for (i=0; i<level; i++)
+    printf("  ");
+
+  // Filename
+  printf("  ");
+  for (i=0; i<fsbuff[AMIGA_DATASIZE-0x50]; i++)
+    printf("%c", fsbuff[(AMIGA_DATASIZE-0x4f)+i]);
+
+  for (; i<31; i++)
+    printf(" ");
+
+  // Check for Dir or File
+  if (amigamfm_readlong(AMIGA_DATASIZE-4, fsbuff)==AMIGA_DIR)
+  {
+    printf("    Dir");
+  }
+  else
+  {
+    // File size
+    printf(" %6d", amigamfm_readlong(AMIGA_DATASIZE-0xbc, fsbuff));
+  }
+
+  // Protection
+  prot=amigamfm_readlong(AMIGA_DATASIZE-0xc0, fsbuff);
+  printf(" ");
+
+  if (prot&0x800) printf("r"); else printf("-");
+  if (prot&0x400) printf("w"); else printf("-");
+  if (prot&0x200) printf("e"); else printf("-");
+  if (prot&0x100) printf("d"); else printf("-");
+
+  if (prot&0x8) printf("-"); else printf("r");
+  if (prot&0x4) printf("-"); else printf("w");
+  if (prot&0x2) printf("-"); else printf("e");
+  if (prot&0x1) printf("-"); else printf("d");
+
+  // Last change date
+  amigamfm_decodedate(amigamfm_readlong(AMIGA_DATASIZE-0x5c, fsbuff), amigamfm_readlong(AMIGA_DATASIZE-0x58, fsbuff), amigamfm_readlong(AMIGA_DATASIZE-0x54, fsbuff), &tim);
+  printf(" %.2d:%.2d:%.2d %.2d/%.2d/%d", tim.tm_hour, tim.tm_min, tim.tm_sec, tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900);
+
+  // Optional comment
+  if (amigamfm_readlong(AMIGA_DATASIZE-0xb8, fsbuff)>0)
+  {
+    printf("  (");
+    for (i=0; i<fsbuff[AMIGA_DATASIZE-0xb8]; i++)
+      printf("%c", fsbuff[(AMIGA_DATASIZE-0xb7)+i]);
+    printf(")");
+  }
+
+  printf("\n");
+
+  // If this is a directory process child entries
+  for (i=0; i<((AMIGA_DATASIZE/4)-56); i++)
+  {
+    uint32_t fsblock;
+
+    fsblock=amigamfm_readlong(0x18+(i*4), fsbuff);
+
+    if (fsblock!=0)
+    {
+      if (amigamfm_debug)
+        printf("  HT[%d] %.8x\n", i, fsblock);
+
+      amigamfm_readfsentry(level+1, disktracks, fsblock);
+    }
+  }
+
+  // Check for fs entries which share the same hash by following hash chain
+  if (amigamfm_readlong(AMIGA_DATASIZE-0x10, fsbuff)!=0)
+    amigamfm_readfsentry(level, disktracks, amigamfm_readlong(AMIGA_DATASIZE-0x10, fsbuff));
 }
 
 // http://lclevy.free.fr/adflib/adf_info.html
@@ -437,6 +524,8 @@ void amigamfm_showinfo(const unsigned int disktracks, const int debug)
   printf("Hash table size : %d\n", amigamfm_readlong(0xc, tmpbuff));
   printf("Checksum : %.8x\n", amigamfm_readlong(0x14, tmpbuff));
 
+  printf("\n");
+
   for (i=0; i<amigamfm_readlong(0xc, tmpbuff); i++)
   {
     uint32_t fsblock;
@@ -445,11 +534,14 @@ void amigamfm_showinfo(const unsigned int disktracks, const int debug)
 
     if (fsblock!=0)
     {
-      printf("  HT[%d] %.8x\n", i, fsblock);
+      if (amigamfm_debug)
+        printf("  HT[%d] %.8x\n", i, fsblock);
 
-      amigamfm_readfsentry(disktracks, fsblock);
+      amigamfm_readfsentry(0, disktracks, fsblock);
     }
   }
+
+  printf("\n");
 
   amigamfm_decodedate(amigamfm_readlong(AMIGA_DATASIZE-0x5c, tmpbuff), amigamfm_readlong(AMIGA_DATASIZE-0x58, tmpbuff), amigamfm_readlong(AMIGA_DATASIZE-0x54, tmpbuff), &tim);
   printf("Root dir changed : %.2d:%.2d:%.2d %.2d/%.2d/%d\n", tim.tm_hour, tim.tm_min, tim.tm_sec, tim.tm_mday, tim.tm_mon+1, tim.tm_year+1900);
