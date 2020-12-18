@@ -1163,7 +1163,7 @@ int main(int argc,char **argv)
         else
         if (amigamfm_validate()!=AMIGA_UNKNOWN)
         {
-          amigamfm_gettitle(title, sizeof(title));
+          amigamfm_gettitle(disktracks, title, sizeof(title));
         }
       }
 
@@ -1197,7 +1197,7 @@ int main(int argc,char **argv)
         else
         if (amigamfm_validate()!=AMIGA_UNKNOWN)
         {
-          amigamfm_gettitle(title, sizeof(title));
+          amigamfm_gettitle(disktracks, title, sizeof(title));
         }
       }
 
