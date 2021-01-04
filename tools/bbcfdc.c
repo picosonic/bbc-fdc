@@ -10,6 +10,7 @@
 #include "dfi.h"
 #include "scp.h"
 #include "adfs.h"
+#include "amigados.h"
 #include "amigamfm.h"
 #include "appledos.h"
 #include "applegcr.h"
@@ -1042,10 +1043,10 @@ int main(int argc,char **argv)
               }
               else
               {
-                if (amigamfm_validate()!=AMIGA_UNKNOWN)
+                if (amigados_validate()!=AMIGADOS_UNKNOWN)
                 {
                   printf("\nDetected Amiga DOS\n\n");
-                  amigamfm_showinfo(disktracks, debug);
+                  amigados_showinfo(disktracks, debug);
                   info++;
                 }
                 else
@@ -1161,9 +1162,9 @@ int main(int argc,char **argv)
           adfs_gettitle(adfs_validate(), title, sizeof(title));
         }
         else
-        if (amigamfm_validate()!=AMIGA_UNKNOWN)
+        if (amigados_validate()!=AMIGADOS_UNKNOWN)
         {
-          amigamfm_gettitle(disktracks, title, sizeof(title));
+          amigados_gettitle(disktracks, title, sizeof(title));
         }
       }
 
@@ -1195,9 +1196,9 @@ int main(int argc,char **argv)
           adfs_gettitle(adfs_validate(), title, sizeof(title));
         }
         else
-        if (amigamfm_validate()!=AMIGA_UNKNOWN)
+        if (amigados_validate()!=AMIGADOS_UNKNOWN)
         {
-          amigamfm_gettitle(disktracks, title, sizeof(title));
+          amigados_gettitle(disktracks, title, sizeof(title));
         }
       }
 
