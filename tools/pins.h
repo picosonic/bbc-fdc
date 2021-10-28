@@ -13,12 +13,20 @@
 //   https://elinux.org/RPi_HardwareHistory
 //   https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
 //   https://www.raspberrypi.org/documentation/configuration/config-txt/overclocking.md
+//   https://www.raspberrypi.com/documentation/computers/raspberry-pi.html
 
-// Try to detect Rpi Zero / Zero W
+// Try to detect RPi Zero / Zero W
 #if defined(REV_900092) || defined(REV_920092) || defined(REV_900093) || defined(REV_9000c1) || defined(REV_920093)
   #define RPI0 1
   #define HAS_BCM2835 1
   #define CLOCK_400 1
+#endif
+
+// Try to detect RPi Zero 2 W
+#if defined(REV_902120)
+   #define RPI0 1
+   #define HAS_BCM2837 1
+   #define CLOCK_400 1
 #endif
 
 // Try to detect RPi 1
