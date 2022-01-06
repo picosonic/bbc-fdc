@@ -64,15 +64,14 @@ unsigned long amigamfm_getlong(const unsigned int longpos, const unsigned int da
 unsigned long amigamfm_calchdrsum(const unsigned int longpos, const unsigned int data_size)
 {
   unsigned long checksum=0;
-
-  unsigned long odd;
-  unsigned long even;
-
   unsigned int count;
-  unsigned int longoffs;
 
   for (count=0; count<(data_size/4); count++)
   {
+    unsigned long odd;
+    unsigned long even;
+    unsigned int longoffs;
+
     longoffs=longpos+(count*4);
 
     odd=amigamfm_bitstream[longoffs+0];
