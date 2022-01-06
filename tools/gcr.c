@@ -149,7 +149,6 @@ unsigned char eorsum(int start, int end)
 void gcr_decodegcr()
 {
   int i, j;
-  unsigned char enc;
 
   unsigned char byteval;
   int n=0;
@@ -161,6 +160,8 @@ void gcr_decodegcr()
 
   for (i=0; i<gcr_gcrlen; i++)
   {
+    unsigned char enc;
+
     enc=gcr_gcrbuffer[i];
 
     for (j=0; j<8; j++)

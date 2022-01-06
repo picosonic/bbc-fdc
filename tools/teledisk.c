@@ -50,7 +50,7 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title, con
   struct timeval tv;
 
   unsigned char curtrack, curhead, cursector;
-  unsigned char numsectors, totalsectors;
+  unsigned char numsectors;
   Disk_Sector *sec;
 
   gettimeofday(&tv, NULL);
@@ -88,6 +88,8 @@ void td0_write(FILE *td0file, const unsigned char tracks, const char *title, con
   // Loop through the tracks
   for (curtrack=0; curtrack<tracks; curtrack++)
   {
+    unsigned char totalsectors;
+
     totalsectors=diskstore_countsectors(curtrack*hw_stepping, sidetoread);
 
     if (sides==2)

@@ -115,12 +115,14 @@ int hw_writeprotected()
 void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen)
 {
   long inpos, outpos;
-  unsigned char c, o, olen, bitpos;
+  unsigned char o, olen, bitpos;
 
   outpos=0; o=0; olen=0;
 
   for (inpos=0; inpos<inlen; inpos++)
   {
+    unsigned char c;
+
     c=inbuf[inpos];
 
     // Insert extra sample, this is due to SPI sampling leaving a 1 sample gap between each group of 8 samples
@@ -200,6 +202,7 @@ void hw_done()
   }
 }
 
+#ifdef NOPI
 // Initialisation
 int hw_init(const char *rawfile, const int spiclockdivider)
 {
@@ -225,6 +228,7 @@ int hw_init(const char *rawfile, const int spiclockdivider)
 
   return (hw_detectdisk()==HW_HAVEDISK);
 }
+#endif
 
 // Sleep for a number of seconds
 void hw_sleep(const unsigned int seconds)

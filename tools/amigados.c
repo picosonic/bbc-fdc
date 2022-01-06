@@ -137,7 +137,7 @@ void amigados_readfsentry(const int level, const unsigned int disktracks, const 
     if (fsblock!=0)
     {
       if (amigados_debug)
-        printf("  HT[%d] %.8x\n", i, fsblock);
+        printf("  HT[%u] %.8x\n", i, fsblock);
 
       amigados_readfsentry(level+1, disktracks, fsblock);
     }
@@ -158,7 +158,7 @@ void amigados_showinfo(const unsigned int disktracks, const int debug)
 
   if (amigados_rootblock==0) return;
 
-  printf("Rootblock @ %d\n", amigados_rootblock);
+  printf("Rootblock @ %u\n", amigados_rootblock);
 
   // Absolute seek and read
   diskstore_absoluteseek(amigados_rootblock*AMIGA_DATASIZE, INTERLEAVED, disktracks);
@@ -183,7 +183,7 @@ void amigados_showinfo(const unsigned int disktracks, const int debug)
     if (fsblock!=0)
     {
       if (amigados_debug)
-        printf("  HT[%d] %.8x\n", i, fsblock);
+        printf("  HT[%u] %.8x\n", i, fsblock);
 
       amigados_readfsentry(0, disktracks, fsblock);
     }
@@ -307,7 +307,7 @@ int amigados_validate()
           memset(&sniff[4], 0, 4);
 
           printf("Checksum : %x, calculated %x\n", checksum, amigados_calcbootchecksum((uint8_t *)&sniff));
-          printf("Rootblock : %d\n", amigados_rootblock);
+          printf("Rootblock : %u\n", amigados_rootblock);
         }
       }
     }

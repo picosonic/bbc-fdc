@@ -44,9 +44,6 @@ void mfm_validateclock(const unsigned char clock, const unsigned char data)
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
 void mfm_addbit(const unsigned char bit, const unsigned long datapos)
 {
-  unsigned char clock, data;
-  unsigned char dataCRC; // EDC
-
   // Maintain previous 48 bits of data
   mfm_p1=((mfm_p1<<1)|((mfm_p2&0x8000)>>15))&0xffff;
   mfm_p2=((mfm_p2<<1)|((mfm_p3&0x8000)>>15))&0xffff;
@@ -58,6 +55,9 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
 
   if (mfm_bits>=16)
   {
+    unsigned char clock, data;
+    unsigned char dataCRC; // EDC
+
     // Extract clock byte
     clock=mod_getclock(mfm_datacells);
 

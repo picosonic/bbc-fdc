@@ -162,7 +162,6 @@ int rfi_readheader(FILE *rfifile)
 unsigned long rfi_rleencode(unsigned char *rlebuffer, const unsigned long maxrlelen, const unsigned char *rawtrackdata, const unsigned long rawdatalength)
 {
   unsigned long rlelen=0;
-  unsigned char c;
   char state=0;
   unsigned int i, j;
   int count=0;
@@ -176,6 +175,8 @@ unsigned long rfi_rleencode(unsigned char *rlebuffer, const unsigned long maxrle
 
   for (i=0; i<rawdatalength; i++)
   {
+    unsigned char c;
+
     c=rawtrackdata[i];
 
     // Process each of the 8 sample bits looking for state change
@@ -226,13 +227,14 @@ void rfi_writetrack(FILE *rfifile, const int track, const int side, const float 
   else
   if (strstr(encoding, "rle")!=NULL)
   {
-    unsigned long rledatalength;
     unsigned char *rledata;
 
     rledata=malloc(rawdatalength);
 
     if (rledata!=NULL)
     {
+      unsigned long rledatalength;
+
       rledatalength=rfi_rleencode(rledata, rawdatalength, rawtrackdata, rawdatalength);
 
       fprintf(rfifile, "enc:\"%s\",len:%lu}", encoding, rledatalength);
@@ -330,10 +332,10 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
 
       for (i=0; i<numtokens; i++)
       {
-        char rfic;
-
         if ((tokens[i].type==JSMN_PRIMITIVE) && (tokens[i].size==1) && ((i+1)<=numtokens))
         {
+          char rfic;
+
           if (strncmp(&metabuffer[tokens[i].start], "enc", tokens[i].end-tokens[i].start)==0)
           {
             rfic=metabuffer[tokens[i+1].end];
@@ -416,7 +418,7 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
         else
         if (strstr(rfi_trackencoding, "rle")!=NULL)
         {
-          unsigned char c, b, blen, s;
+          unsigned char b, blen, s;
           long rlen=0;
           char *rlebuff;
 
@@ -429,6 +431,8 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
 
           for (i=0; (unsigned int)i<rfi_trackdatalen; i++)
           {
+            unsigned char c;
+
             // Extract next RLE value
             c=rlebuff[i];
 

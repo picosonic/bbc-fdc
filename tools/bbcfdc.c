@@ -566,7 +566,7 @@ int main(int argc,char **argv)
   // but with a .csv extension
   if ((csv!=0) && (outputfilename!=NULL))
   {
-     char *buffer=NULL;
+     char *buffer;
 
      buffer=malloc((strlen(outputfilename) + 5) * sizeof(char));
      if (buffer!=NULL)
@@ -1244,16 +1244,16 @@ int main(int argc,char **argv)
     else
     if (outputtype==IMAGEIMG)
     {
-      Disk_Sector *sec;
       unsigned char blanksector[16384];
-      int sectorsize;
-      int imgside;
 
       // Prepare a blank sector when no sector is found in store
       bzero(blanksector, sizeof(blanksector));
 
       if ((diskstore_minsectorid!=-1) && (diskstore_maxsectorid!=-1))
       {
+        int sectorsize;
+        int imgside;
+
         if ((diskstore_minsectorsize!=-1) && (diskstore_maxsectorsize!=-1) && (diskstore_minsectorsize==diskstore_maxsectorsize))
           sectorsize=diskstore_minsectorsize;
 
@@ -1264,6 +1264,8 @@ int main(int argc,char **argv)
             // Write sectors for this side
             for (j=(unsigned int)diskstore_minsectorid; j<=(unsigned int)diskstore_maxsectorid; j++)
             {
+              Disk_Sector *sec;
+
               sec=diskstore_findhybridsector(i, imgside, j);
 
               if ((sec!=NULL) && (sec->data!=NULL))
@@ -1333,7 +1335,7 @@ int main(int argc,char **argv)
     if ((diskstore_mintrack!=AUTODETECT) && (diskstore_maxtrack!=AUTODETECT))
       printf("Disk tracks with data range from %d to %d\n", diskstore_mintrack, diskstore_maxtrack);
 
-    printf("Drive tracks %u\n", drivetracks);
+    printf("Drive tracks %d\n", drivetracks);
 
     if (sides==1)
       printf("Single sided capture\n");

@@ -195,7 +195,7 @@ int main(int argc, char **argv)
         // Decompress data from lzdata to block
         blocksize=lz_Decode(lzdata, clen, block, LZ_UNCOMPRESSED);
 
-        printf("Decompressed to %ld bytes\n", blocksize);
+        printf("Decompressed to %zu bytes\n", blocksize);
       }
       else
       {

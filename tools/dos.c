@@ -91,7 +91,6 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
   unsigned int i;
   int j;
   char shortname[8+1+3+1]; // 8 dot 3
-  unsigned char shortlen;
   uint16_t longname[DOS_MAXLFNLENGTH+1]; // VFAT LFN
   uint8_t longchksum; // VFAT checksum of matching short name
   uint8_t lfnblocks; // VFAT LFN blocks used
@@ -100,6 +99,8 @@ void dos_readdir(const int level, const unsigned long offset, const unsigned int
 
   for (i=0; i<entries; i++)
   {
+    unsigned char shortlen;
+
     if (diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, disktracks)<sizeof(de))
       return;
 

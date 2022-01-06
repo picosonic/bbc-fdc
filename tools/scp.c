@@ -265,7 +265,7 @@ long scp_endofheader=0;
 
 void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t starttrack, const uint8_t endtrack, const float rpm, const uint8_t sides, const int sidetoread)
 {
-  unsigned int i;
+  uint8_t i;
   struct scp_header header;
 
   if (scpfile==NULL) return;
@@ -328,13 +328,8 @@ void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t start
 void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const uint8_t rotations, const float rpm)
 {
   long scppos;
-  long scpdatapos;
-  long trackpos;
   uint8_t i;
-  uint32_t fluxtime;
-  uint32_t numfluxes;
   unsigned char c,j;
-  char level,bi=0;
   unsigned long fluxdatapos;
   float celltime;
   uint32_t value;
@@ -375,6 +370,12 @@ void scp_writetrack(FILE *scpfile, const uint8_t track, const unsigned char *raw
   // Split raw data into rotations
   for (i=0; i<rotations; i++)
   {
+    long scpdatapos;
+    long trackpos;
+    uint32_t fluxtime;
+    uint32_t numfluxes;
+    char level,bi=0;
+
     // 16 bit big-endian time in nanoseconds/25 between fluxes
     level=(rawtrackdata[rotpoint*i]&0x80)>>7;
     bi=level;
@@ -459,7 +460,6 @@ void scp_finalise(FILE *scpfile, const uint8_t endtrack)
   struct timeval tv;
   uint32_t checksum;
   uint8_t block[256];
-  size_t blocklen;
   size_t i;
 
   if (scpfile==NULL) return;
@@ -485,6 +485,8 @@ void scp_finalise(FILE *scpfile, const uint8_t endtrack)
   checksum=0;
   while (!feof(scpfile))
   {
+    size_t blocklen;
+
     blocklen=fread(block, 1, sizeof(block), scpfile);
     if (blocklen>0)
       for (i=0; i<blocklen; i++)

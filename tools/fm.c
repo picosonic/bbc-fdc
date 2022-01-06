@@ -42,9 +42,6 @@ int fm_validateclock(const unsigned char clock)
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
 void fm_addbit(const unsigned char bit, const unsigned long datapos)
 {
-  unsigned char clock, data;
-  unsigned char dataCRC; // EDC
-
   // Maintain previous 48 bits of data
   fm_p1=(fm_p1<<1)|((fm_p2&0x8000)>>15);
   fm_p2=(fm_p2<<1)|((fm_p3&0x8000)>>15);
@@ -57,6 +54,8 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
   // Keep processing until we have 8 clock bits + 8 data bits
   if (fm_bits>=16)
   {
+    unsigned char clock, data;
+
     // Extract clock byte, for data this should be 0xff
     clock=mod_getclock(fm_datacells);
 
@@ -65,6 +64,8 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
 
     switch (fm_state)
     {
+      unsigned char dataCRC; // EDC
+
       case FM_SYNC:
         // Detect standard FM address marks
         switch (fm_datacells)

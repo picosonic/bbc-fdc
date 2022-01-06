@@ -61,7 +61,7 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title, con
 {
   unsigned char buffer[10];
   unsigned char curtrack, curhead, cursector;
-  unsigned char numsectors, totalsectors;
+  unsigned char numsectors;
   Disk_Sector *sec;
 
   struct tm tim;
@@ -90,6 +90,8 @@ void fsd_write(FILE *fsdfile, const unsigned char tracks, const char *title, con
   // Loop through tracks
   for (curtrack=0; curtrack<tracks; curtrack++)
   {
+    unsigned char totalsectors;
+
     totalsectors=diskstore_countsectors(curtrack*hw_stepping, sidetoread);
 
     if (sides==2)

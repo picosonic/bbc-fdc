@@ -31,7 +31,6 @@ void mod_buildhistogram(const unsigned char *sampledata, const unsigned long sam
 {
   int j;
   char level,bi=0;
-  unsigned char c;
   int count;
   unsigned long datapos;
 
@@ -48,6 +47,8 @@ void mod_buildhistogram(const unsigned char *sampledata, const unsigned long sam
 
   for (datapos=0; datapos<samplesize; datapos++)
   {
+    unsigned char c;
+
     c=sampledata[datapos];
 
     for (j=0; j<BITSPERBYTE; j++)
@@ -143,10 +144,11 @@ int mod_findpeaks(const unsigned char *sampledata, const unsigned long samplesiz
 int mod_haspeak(const float ms)
 {
   int i;
-  float peakms;
 
   for (i=0; i<mod_peaks; i++)
   {
+    float peakms;
+
     peakms=mod_samplestous(mod_peak[i]);
 
     // Look within 10% of nominal
@@ -239,14 +241,15 @@ unsigned char mod_getdata(const unsigned int datacells)
 
 void mod_process(const unsigned char *sampledata, const unsigned long samplesize, const int attempt, const int usepll)
 {
-  unsigned long count;
   unsigned char c, j;
-  char level,bi=0;
   int run;
   (void) attempt;
 
   for (run=0; run<(usepll==0?1:2); run++)
   {
+    unsigned long count;
+    char level,bi=0;
+
     mod_samplesize=samplesize;
 
     mod_findpeaks(sampledata, samplesize);
