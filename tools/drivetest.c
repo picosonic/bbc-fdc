@@ -30,7 +30,6 @@ int main(int argc,char **argv)
   int argn=0;
   int counttracks=0;
   int seektrack=-1;
-  unsigned char drivestatus;
   int useindex=1;
   int cleaning=0;
   int retval;
@@ -95,6 +94,8 @@ int main(int argc,char **argv)
   // Only run standard checks when not cleaning heads
   if (cleaning==0)
   {
+    unsigned char drivestatus;
+
     drivestatus=hw_detectdisk();
 
     if (drivestatus==HW_NODRIVE)
@@ -169,7 +170,7 @@ int main(int argc,char **argv)
         break;
     }
 
-    printf("Counted %d track positions\n", numtracks);
+    printf("Counted %u track positions\n", numtracks);
   }
 
   // Run head cleaning cycle
