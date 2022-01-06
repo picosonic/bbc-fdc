@@ -35,7 +35,6 @@ uint16_t amigados_readshort(const uint32_t offset, const uint8_t *data)
 void amigados_gettitle(const unsigned int disktracks, char *title, const int titlelen)
 {
   uint8_t tmpbuff[AMIGA_DATASIZE];
-  int i;
 
   if (amigados_rootblock==0) return;
 
@@ -47,6 +46,8 @@ void amigados_gettitle(const unsigned int disktracks, char *title, const int tit
 
   if (titlelen>tmpbuff[AMIGA_DATASIZE-0x50])
   {
+    int i;
+
     for (i=0; i<tmpbuff[AMIGA_DATASIZE-0x50]; i++)
       title[i]=tmpbuff[(AMIGA_DATASIZE-0x4f)+i];
 
@@ -213,13 +214,14 @@ void amigados_showinfo(const unsigned int disktracks, const int debug)
 uint32_t amigados_calcbootchecksum(const uint8_t *bootblock)
 {
   uint32_t checksum;
-  uint32_t presum;
   unsigned int i;
 
   checksum=0;
 
   for (i=0; i<AMIGADOS_BOOTBLOCKSIZE/4; i++)
   {
+    uint32_t presum;
+
     presum=checksum;
 
     checksum+=((bootblock[i*4]<<24) | (bootblock[i*4+1]<<16) | (bootblock[i*4+2]<<8) | (bootblock[i*4+3]));
@@ -249,7 +251,7 @@ int amigados_validate()
     return format;
 
   // Check we have data for sectors
-  if ((sector0->data==NULL) || (sector0->data==NULL))
+  if ((sector0->data==NULL) || (sector1->data==NULL))
     return format;
 
   // Check sector is 512 bytes long
