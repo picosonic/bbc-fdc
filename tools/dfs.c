@@ -128,7 +128,6 @@ void dfs_showinfo(const int head, const unsigned int disktracks, const int secto
 {
   int i;
   int numfiles;
-  int locked;
   unsigned char bootoption;
   size_t totalusage, totalsectors, totalsize, sectorusage, calcsize;
   char filename[10];
@@ -202,6 +201,8 @@ void dfs_showinfo(const int head, const unsigned int disktracks, const int secto
 
   for (i=1; ((i<=numfiles) && (i<DFS_MAXFILES)); i++)
   {
+    int locked;
+
     locked=dfs_getfilename(sector0, i, filename);
 
     printf("%-9s", filename);
@@ -230,20 +231,20 @@ void dfs_showinfo(const int head, const unsigned int disktracks, const int secto
   printf("Remaining catalogue space : %d files, %ld unused disk sectors\n", DFS_MAXFILES-numfiles, (((sector1->data[6]&0x07)<<8) | (sector1->data[7])) - sectorusage);
 
   calcsize=(disktracks*sectorspertrack*DFS_SECTORSIZE);
-  printf("Disk tracks %d, sectors %d\n", disktracks, sectorspertrack);
+  printf("Disk tracks %u, sectors %d\n", disktracks, sectorspertrack);
 
   if (calcsize>totalsize)
   {
-    printf("\nWARNING: Disk catalogue size %ld is SMALLER than disk size %ld\n", totalsize, calcsize);
-    printf("WARNING: Catalogue sectors per track %ld but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
+    printf("\nWARNING: Disk catalogue size %zu is SMALLER than disk size %zu\n", totalsize, calcsize);
+    printf("WARNING: Catalogue sectors per track %zu but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
     printf("WARNING: If you try and create a DFS image try using switch -sectors %d\n", sectorspertrack);
   }
   else
   if (calcsize<totalsize)
   {
-    printf("\nWARNING: Disk catalogue size %ld is BIGGER than disk size %ld \n", totalsize, calcsize);
-    printf("WARNING: Catalogue sectors per track %ld but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
-    printf("WARNING: If you try and create a DFS image try using switch -sectors %ld\n", totalsectors/disktracks);
+    printf("\nWARNING: Disk catalogue size %zu is BIGGER than disk size %zu \n", totalsize, calcsize);
+    printf("WARNING: Catalogue sectors per track %zu but bbcfdc sectors per track %d\n", totalsectors/disktracks, sectorspertrack);
+    printf("WARNING: If you try and create a DFS image try using switch -sectors %zu\n", totalsectors/disktracks);
   }
 }
 
