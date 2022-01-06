@@ -73,16 +73,16 @@ extern unsigned long diskstore_absoffset;
 extern void diskstore_init(const int debug, const int usepll);
 
 // Add a sector to the disk storage
-extern int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const long id_pos, const unsigned int idcrc, const long data_pos, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc);
+extern int diskstore_addsector(const unsigned char modulation, const uint8_t physical_track, const uint8_t physical_head, const uint8_t logical_track, const uint8_t logical_head, const uint8_t logical_sector, const uint8_t logical_size, const long id_pos, const unsigned int idcrc, const long data_pos, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc);
 
 // Search for a sector within the disk storage
-extern Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc);
-extern Disk_Sector *diskstore_findlogicalsector(const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector);
-extern Disk_Sector *diskstore_findhybridsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_sector);
-extern Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char nth_sector);
+extern Disk_Sector *diskstore_findexactsector(const uint8_t physical_track, const uint8_t physical_head, const uint8_t logical_track, const uint8_t logical_head, const uint8_t logical_sector, const uint8_t logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc);
+extern Disk_Sector *diskstore_findlogicalsector(const uint8_t logical_track, const uint8_t logical_head, const uint8_t logical_sector);
+extern Disk_Sector *diskstore_findhybridsector(const uint8_t physical_track, const uint8_t physical_head, const uint8_t logical_sector);
+extern Disk_Sector *diskstore_findnthsector(const uint8_t physical_track, const uint8_t physical_head, const unsigned char nth_sector);
 
 // Processing of sectors
-extern unsigned char diskstore_countsectors(const unsigned char physical_track, const unsigned char physical_head);
+extern unsigned char diskstore_countsectors(const uint8_t physical_track, const uint8_t physical_head);
 extern unsigned int diskstore_countsectormod(const unsigned char modulation);
 extern void diskstore_sortsectors(const int sortmethod, const int rotations);
 
@@ -97,6 +97,6 @@ extern void diskstore_absoluteseek(const unsigned long offset, const int interla
 extern unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, const int interlacing, const int maxtracks);
 
 // Calculate disk CRCs
-extern uint32_t diskstore_calcdiskcrc(const unsigned char physical_head);
+extern uint32_t diskstore_calcdiskcrc(const uint8_t physical_head);
 
 #endif
