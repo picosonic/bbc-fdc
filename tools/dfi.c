@@ -82,7 +82,6 @@ void dfi_writeheader(FILE *dfifile)
 unsigned long dfi_encodedata(unsigned char *buffer, const unsigned long maxdfilen, const unsigned char *rawtrackdata, const unsigned long rawdatalength, const unsigned int rotations)
 {
   unsigned long dfilen=0;
-  unsigned char c;
   char state=0;
   unsigned int i, j;
   unsigned char carry=0;
@@ -92,6 +91,8 @@ unsigned long dfi_encodedata(unsigned char *buffer, const unsigned long maxdfile
 
   for (i=0; i<rawdatalength; i++)
   {
+    unsigned char c;
+
     c=rawtrackdata[i];
 
     // Process each of the 8 sample bits looking for state change
