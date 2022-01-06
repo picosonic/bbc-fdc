@@ -311,7 +311,6 @@ void scp_processtrack(FILE *scpfile, const unsigned char track, const uint8_t re
 {
   struct scp_tdh thdr;
   struct scp_timings timings;
-  uint8_t i;
 
   // Don't process empty tracks
   if (scp_trackoffsets[track]==0) return;
@@ -323,22 +322,22 @@ void scp_processtrack(FILE *scpfile, const unsigned char track, const uint8_t re
   fread(&thdr, 1, sizeof(thdr), scpfile);
   if (strncmp((char *)&thdr.magic, SCP_TRACK, strlen(SCP_TRACK))==0)
   {
+    uint8_t i;
+
     printf("Track %d.%d -> %d.%d\n", track/2, track%2, thdr.track/2, thdr.track%2);
 
     for (i=0; i<revolutions; i++)
     {
       fread(&timings, 1, sizeof(timings), scpfile);
-      printf("  %d:%x (%.2f ms) / %d len / %d offs\n", i, timings.indextime, ((double)timings.indextime*SCP_BASE_NS)/1000000, timings.tracklen, timings.dataoffset);
+      printf("  %d:%x (%.2f ms) / %u len / %u offs\n", i, timings.indextime, ((double)timings.indextime*SCP_BASE_NS)/1000000, timings.tracklen, timings.dataoffset);
     }
   }
 }
 
 int main(int argc, char **argv)
 {
-  unsigned char track;
   uint32_t checksum;
   uint8_t block[256];
-  size_t blocklen;
   size_t i;
   FILE *fp;
 
@@ -367,6 +366,8 @@ int main(int argc, char **argv)
   checksum=0;
   while (!feof(fp))
   {
+    size_t blocklen;
+
     blocklen=fread(block, 1, sizeof(block), fp);
     if (blocklen>0)
       for (i=0; i<blocklen; i++)
@@ -393,6 +394,8 @@ int main(int argc, char **argv)
   scp_trackoffsets=malloc(sizeof(uint32_t) * SCP_MAXTRACKS);
   if (scp_trackoffsets!=NULL)
   {
+    unsigned char track;
+
     fread(scp_trackoffsets, 1, (header.endtrack-header.starttrack+1)*sizeof(uint32_t), fp);
 
     for (track=header.starttrack; track<header.endtrack; track++)
