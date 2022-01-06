@@ -36,7 +36,6 @@ void appledos_showinfo(const int debug)
   if (sector0->datasize==APPLEGCR_SECTORLEN)
   {
     struct appledos_vtoc *vtoc;
-    int track;
 
     // Map VTOC to sector buffer
     vtoc=(struct appledos_vtoc *)&sector0->data[0];
@@ -54,11 +53,13 @@ void appledos_showinfo(const int debug)
     // Loop through the allocation bitmaps (one per track)
     if ((debug) && (vtoc->tracksperdisk<=35))
     {
-      struct appledos_alloc_bitmap *alloc;
+      int track;
 
       printf("\nFree sector bit map\n");
       for (track=0; track<vtoc->tracksperdisk; track++)
       {
+        struct appledos_alloc_bitmap *alloc;
+
         // Map VTOC to sector buffer
         alloc=(struct appledos_alloc_bitmap *)&sector0->data[0x38+(track*4)];
 
@@ -84,7 +85,6 @@ void appledos_showinfo(const int debug)
     // Check sector is the right length
     if (sector1->datasize==APPLEGCR_SECTORLEN)
     {
-      struct appledos_catalog *cat;
       struct appledos_fileentry *fentry;
       int catno;
       int catalogsectors;
@@ -95,6 +95,8 @@ void appledos_showinfo(const int debug)
       // Loop through all available linked catalog sectors
       while ((sector1!=NULL) && (catalogsectors!=-1) && (catalogsectors<16))
       {
+        struct appledos_catalog *cat;
+
         // Map catalog to sector buffer
         cat=(struct appledos_catalog *)&sector1->data[0];
 
@@ -179,7 +181,6 @@ int appledos_validate()
   // Check we have VTOC sector
   if (sector0==NULL)
   {
-    unsigned long len;
     char tmpbuff[APPLEGCR_SECTORLEN];
 
     // We may not have read it yet, so have a go
@@ -188,7 +189,7 @@ int appledos_validate()
     diskstore_abssector=0;
     diskstore_abssecoffs=0;
 
-    len=diskstore_absoluteread(tmpbuff, APPLEGCR_SECTORLEN, 0, APPLEDOS_MAXTRACK);
+    diskstore_absoluteread(tmpbuff, APPLEGCR_SECTORLEN, 0, APPLEDOS_MAXTRACK);
   }
 
   // Search for VTOC sector
@@ -206,7 +207,6 @@ int appledos_validate()
   if (sector0->datasize==APPLEGCR_SECTORLEN)
   {
     struct appledos_vtoc *vtoc;
-    int track;
 
     // Map VTOC to sector buffer
     vtoc=(struct appledos_vtoc *)&sector0->data[0];
@@ -246,10 +246,12 @@ int appledos_validate()
     // Validate allocation bitmaps (one per track)
     if (vtoc->tracksperdisk<=35)
     {
-      struct appledos_alloc_bitmap *alloc;
+      int track;
 
       for (track=0; track<vtoc->tracksperdisk; track++)
       {
+        struct appledos_alloc_bitmap *alloc;
+
         // Map VTOC to sector buffer
         alloc=(struct appledos_alloc_bitmap *)&sector0->data[0x38+(track*4)];
 
