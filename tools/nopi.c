@@ -12,8 +12,8 @@
 #define HW_OLDRAWTRACKSIZE (1024*1024)
 
 unsigned int hw_maxtracks = HW_MAXTRACKS;
-unsigned int hw_currenttrack = 0;
-unsigned int hw_currenthead = 0;
+uint8_t hw_currenttrack = 0;
+uint8_t hw_currenthead = 0;
 unsigned long hw_samplerate = 0;
 float hw_rpm = HW_DEFAULTRPM;
 

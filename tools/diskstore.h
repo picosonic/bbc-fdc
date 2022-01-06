@@ -25,16 +25,16 @@
 typedef struct DiskSector
 {
   // Physical position of sector on disk
-  unsigned char physical_track;
-  unsigned char physical_head;
-  unsigned char physical_sector;
+  uint8_t physical_track;
+  uint8_t physical_head;
+  uint8_t physical_sector;
 
   // Logical position of sector from IDAM
   unsigned long id_pos;
-  unsigned char logical_track;
-  unsigned char logical_head;
-  unsigned char logical_sector;
-  unsigned char logical_size;
+  uint8_t logical_track;
+  uint8_t logical_head;
+  uint8_t logical_sector;
+  uint8_t logical_size;
   unsigned int idcrc;
 
   // Sector data

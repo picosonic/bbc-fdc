@@ -12,8 +12,8 @@
 #include "pins.h"
 
 unsigned int hw_maxtracks = HW_MAXTRACKS;
-unsigned int hw_currenttrack = 0;
-unsigned int hw_currenthead = 0;
+uint8_t hw_currenttrack = 0;
+uint8_t hw_currenthead = 0;
 unsigned long hw_samplerate = 0;
 float hw_rpm = HW_DEFAULTRPM;
 
@@ -65,6 +65,28 @@ int hw_init(const int spiclockdivider)
   CPU_ZERO(&CPUset);
   CPU_SET(curCPU, &CPUset);
   sched_setaffinity(0, sizeof(CPUset), &CPUset);
+
+/*
+  To test
+    see
+      https://wiki.linuxfoundation.org/realtime/documentation/technical_basics/sched_rt_throttling
+      https://github.com/sbelectronics/pi-fdc
+      https://access.redhat.com/solutions/1604133
+      https://github.com/sbelectronics/smb-pi-lib/blob/master/smbpi/realtime_ext.c
+
+    We may need to reserve a CPU core or two, then run code on those
+      - add this at kernel boot prompt, to reserve cores 2 and 3 (first core is #0): isolcpus=2,3
+      - start my bash script on core 2: /usr/bin/taskset -c 2 /root/ws2812-spi/ws2812.sh
+      - in this script, call the python API (the one that really performs the SPI calls) on core 3: taskset -c 3 nice -n -20 /root/ws2812-spi/ws2812.05.py
+
+  int rc;
+
+  // This permits realtime processes to use 100% of a CPU, but on a
+  // RPi that starves the kernel. Without this there are latencies
+  // up to 50 MILLISECONDS.
+  rc = system("echo -1 >/proc/sys/kernel/sched_rt_runtime_us");
+
+*/
 
   // Set up GPIO data direction and pull ups
   bcm2835_gpio_fsel(DS0_OUT, GPIO_OUT);
@@ -244,7 +266,7 @@ void hw_seektotrack(const int track)
     return;
 
   // Sanity check our "current" track is within range
-  if ((hw_currenttrack<0) || (hw_currenttrack>=hw_maxtracks))
+  if (hw_currenttrack>=hw_maxtracks)
     return;
 
   // For seek to track 00, seek until TRACK00 signal
@@ -401,12 +423,14 @@ void hw_sideselect(const int side)
 void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen)
 {
   long inpos, outpos;
-  unsigned char c, o, olen, bitpos;
+  unsigned char o, olen, bitpos;
 
   outpos=0; o=0; olen=0;
 
   for (inpos=0; inpos<inlen; inpos++)
   {
+    unsigned char c;
+
     c=inbuf[inpos];
 
     // Insert extra sample, this is due to SPI sampling leaving a 1 sample gap between each group of 8 samples

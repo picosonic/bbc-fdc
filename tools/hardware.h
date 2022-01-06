@@ -48,8 +48,8 @@
 #define HW_500MHZ 500000000
 
 extern unsigned int hw_maxtracks;
-extern unsigned int hw_currenttrack;
-extern unsigned int hw_currenthead;
+extern uint8_t hw_currenttrack;
+extern uint8_t hw_currenthead;
 extern unsigned long hw_samplerate;
 extern float hw_rpm;
 

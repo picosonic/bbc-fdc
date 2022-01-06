@@ -31,7 +31,7 @@ int diskstore_usepll=0;
 int diskstore_debug=0;
 
 // Find sector in store to make sure there is no exact match when adding
-Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
+Disk_Sector *diskstore_findexactsector(const uint8_t physical_track, const uint8_t physical_head, const uint8_t logical_track, const uint8_t logical_head, const uint8_t logical_sector, const uint8_t logical_size, const unsigned int idcrc, const unsigned int datatype, const unsigned int datasize, const unsigned int datacrc)
 {
   Disk_Sector *curr;
 
@@ -58,7 +58,7 @@ Disk_Sector *diskstore_findexactsector(const unsigned char physical_track, const
 }
 
 // Find sector by logical position
-Disk_Sector *diskstore_findlogicalsector(const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector)
+Disk_Sector *diskstore_findlogicalsector(const uint8_t logical_track, const uint8_t logical_head, const uint8_t logical_sector)
 {
   Disk_Sector *curr;
 
@@ -78,7 +78,7 @@ Disk_Sector *diskstore_findlogicalsector(const unsigned char logical_track, cons
 }
 
 // Find sector by hybrid physical/logical position
-Disk_Sector *diskstore_findhybridsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_sector)
+Disk_Sector *diskstore_findhybridsector(const uint8_t physical_track, const uint8_t physical_head, const uint8_t logical_sector)
 {
   Disk_Sector *curr;
 
@@ -98,7 +98,7 @@ Disk_Sector *diskstore_findhybridsector(const unsigned char physical_track, cons
 }
 
 // Find nth sector for given physical track/head
-Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, const unsigned char physical_head, const unsigned char nth_sector)
+Disk_Sector *diskstore_findnthsector(const uint8_t physical_track, const uint8_t physical_head, const uint8_t nth_sector)
 {
   Disk_Sector *curr;
   int n;
@@ -122,7 +122,7 @@ Disk_Sector *diskstore_findnthsector(const unsigned char physical_track, const u
 }
 
 // Count how many sectors we have for given physical track/head
-unsigned char diskstore_countsectors(const unsigned char physical_track, const unsigned char physical_head)
+unsigned char diskstore_countsectors(const uint8_t physical_track, const uint8_t physical_head)
 {
   Disk_Sector *curr;
   int n;
@@ -218,7 +218,6 @@ void diskstore_sortsectors(const int sortmethod, const int rotations)
 {
   int swaps;
   Disk_Sector *curr;
-  Disk_Sector *prev;
   Disk_Sector *swap;
 
   // Check for empty diskstore
@@ -227,6 +226,8 @@ void diskstore_sortsectors(const int sortmethod, const int rotations)
 
   do
   {
+    Disk_Sector *prev;
+
     swaps=0;
     curr=Disk_SectorsRoot;
     prev=NULL;
@@ -257,7 +258,7 @@ void diskstore_sortsectors(const int sortmethod, const int rotations)
 }
 
 // Add a sector to linked list
-int diskstore_addsector(const unsigned char modulation, const unsigned char physical_track, const unsigned char physical_head, const unsigned char logical_track, const unsigned char logical_head, const unsigned char logical_sector, const unsigned char logical_size, const long id_pos, const unsigned int idcrc, const long data_pos, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc)
+int diskstore_addsector(const unsigned char modulation, const uint8_t physical_track, const uint8_t physical_head, const uint8_t logical_track, const uint8_t logical_head, const uint8_t logical_sector, const uint8_t logical_size, const long id_pos, const unsigned int idcrc, const long data_pos, const unsigned int datatype, const unsigned int datasize, const unsigned char *data, const unsigned int datacrc)
 {
   Disk_Sector *curr;
   Disk_Sector *newitem;
@@ -342,12 +343,13 @@ int diskstore_addsector(const unsigned char modulation, const unsigned char phys
 void diskstore_clearallsectors()
 {
   Disk_Sector *curr;
-  void *prev;
 
   curr=Disk_SectorsRoot;
 
   while (curr!=NULL)
   {
+    void *prev;
+
     if (curr->data!=NULL)
       free(curr->data);
 
@@ -422,7 +424,7 @@ void diskstore_dumplayoutmap(const int rotations)
   else
     mtrack=hw_maxtracks+1;
 
-  fprintf(stderr, "Samples : %ld  Rotations : %d\n", mod_samplesize, rotations);
+  fprintf(stderr, "Samples : %lu  Rotations : %d\n", mod_samplesize, rotations);
   samplesperrotation=(mod_samplesize/rotations);
 
   fprintf(stderr, "TRACK[HEAD]\n");
@@ -559,7 +561,6 @@ unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, 
 {
   Disk_Sector *curr;
   unsigned long numread=0; // Total bytes returned so far
-  unsigned long toread=0; // Number of bytes to read from current sector
 
   // Start by blanking out the response buffer
   bzero(buffer, bufflen);
@@ -567,6 +568,8 @@ unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, 
   // Continue reading until requested length satisfied
   while (numread<bufflen)
   {
+    unsigned long toread=0; // Number of bytes to read from current sector
+
     // Determine how much to read from this sector
     toread=diskstore_minsectorsize-diskstore_abssecoffs;
     if ((numread+toread)>bufflen)
@@ -628,7 +631,7 @@ unsigned long diskstore_absoluteread(char *buffer, const unsigned long bufflen, 
   return numread;
 }
 
-uint32_t diskstore_calctrackcrc(const uint32_t initial, const unsigned char physical_track, const unsigned char physical_head)
+uint32_t diskstore_calctrackcrc(const uint32_t initial, const uint8_t physical_track, const uint8_t physical_head)
 {
   Disk_Sector *curr;
   uint32_t crc=initial;
@@ -652,7 +655,7 @@ uint32_t diskstore_calctrackcrc(const uint32_t initial, const unsigned char phys
   return crc;
 }
 
-uint32_t diskstore_calcdiskcrc(const unsigned char physical_head)
+uint32_t diskstore_calcdiskcrc(const uint8_t physical_head)
 {
   int dtracks, dtrack, dhead;
   uint32_t diskcrc=0x0;
