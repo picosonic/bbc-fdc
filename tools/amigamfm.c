@@ -139,7 +139,7 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
             ((amigamfm_p1&0x7fff)==0x2aaa)) // Should be 0xaaaa, but MFM encoding prior to 16th March 1990 had a bug
         {
           if (amigamfm_debug)
-            fprintf(stderr, "[%lx] ==AMIGA MFM IDAM/DAM SYNC AAAA AAAA 4489 4489==\n", datapos);
+            fprintf(stderr, "[%lx] ==AMIGA MFM IDAM/DAM SYNC [%X %X %X] %X==\n", datapos, amigamfm_p1, amigamfm_p2, amigamfm_p3, amigamfm_datacells);
 
           amigamfm_bits=0;
           amigamfm_bitlen=0; // Clear output buffer

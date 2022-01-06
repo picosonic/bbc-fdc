@@ -70,7 +70,7 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
         if (mfm_datacells==0x5224)
         {
           if (mfm_debug)
-            fprintf(stderr, "[%lx] ==MFM IAM SYNC 5224==\n", datapos);
+            fprintf(stderr, "[%lx] ==MFM IAM SYNC [%X %X %X] %X==\n", datapos, mfm_p1, mfm_p2, mfm_p3, mfm_datacells);
 
           mfm_bits=16; // Keep looking for sync (preventing overflow)
         }
@@ -78,7 +78,7 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
         if (mfm_datacells==0x4489)
         {
           if (mfm_debug)
-            fprintf(stderr, "[%lx] ==MFM IDAM/DAM SYNC 4489==\n", datapos);
+            fprintf(stderr, "[%lx] ==MFM IDAM/DAM SYNC [%X %X %X] %X==\n", datapos, mfm_p1, mfm_p2, mfm_p3, mfm_datacells);
 
           mfm_bits=0;
           mfm_bitlen=0; // Clear output buffer
