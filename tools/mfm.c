@@ -281,7 +281,7 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
           if (mfm_debug)
           {
             fprintf(stderr, "[%lx] MFM DATA block %.2x ", datapos, mfm_blocktype);
-            fprintf(stderr, "CRC %.2x%.2x ", mfm_bitstream[mfm_bitlen-2], mfm_bitstream[mfm_bitlen-2]);
+            fprintf(stderr, "CRC %.2x%.2x ", mfm_bitstream[mfm_bitlen-2], mfm_bitstream[mfm_bitlen-1]);
 
             if (dataCRC==GOODDATA)
               fprintf(stderr, "OK\n");
