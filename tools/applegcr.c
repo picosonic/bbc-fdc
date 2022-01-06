@@ -119,12 +119,13 @@ unsigned char applegcr_decode4and4(unsigned char b1, unsigned char b2)
 unsigned char applegcr_calc_eor(unsigned char *buff, unsigned int len)
 {
   unsigned char result;
-  unsigned char decoded;
   unsigned int i;
 
   result=0;
   for (i=0; i<(len/2); i++)
   {
+    unsigned char decoded;
+
     decoded=applegcr_decode4and4(buff[i*2], buff[(i*2)+1]);
     result=result^decoded;
   }
@@ -142,7 +143,6 @@ void applegcr_process_data62()
 {
   int i;
   unsigned char buff[512];
-  unsigned char value;
   unsigned char cx;
 
   bzero(buff, sizeof(buff));
@@ -168,6 +168,8 @@ void applegcr_process_data62()
     // Recombine bits
     for (i=0; i<86; i++)
     {
+      unsigned char value;
+
       value=applegcr_decodebuff[i];
 
       if (i<84)
@@ -375,7 +377,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
       if (applegcr_bytelen>=(applegcr_datamode+1))
       {
         if (applegcr_debug)
-          fprintf(stderr, "Processing data block [%d]\n", applegcr_datamode);
+          fprintf(stderr, "Processing data block [%u]\n", applegcr_datamode);
 
         if (applegcr_datamode==APPLEGCR_DATA_62)
           applegcr_process_data62();
