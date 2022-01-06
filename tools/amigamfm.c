@@ -111,8 +111,6 @@ unsigned char amigamfm_getbyte(const unsigned int bytepos, const unsigned int da
 // Add a bit to the 16-bit accumulator, when full - attempt to process (clock + data)
 void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
 {
-  unsigned char clock, data;
-
   // Maintain previous 48 bits of data
   amigamfm_p1=((amigamfm_p1<<1)|((amigamfm_p2&0x8000)>>15))&0xffff;
   amigamfm_p2=((amigamfm_p2<<1)|((amigamfm_p3&0x8000)>>15))&0xffff;
@@ -124,6 +122,8 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
 
   if (amigamfm_bits>=16)
   {
+    unsigned char clock, data;
+
     // Extract clock byte
     clock=mod_getclock(amigamfm_datacells);
 
@@ -182,8 +182,6 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
           unsigned char sectors_to_end=(info&0xff);
           unsigned long hdrsum=amigamfm_getlong(AMIGA_HEADER_CXSUM_OFFSET, 1);
           unsigned long datasum=amigamfm_getlong(AMIGA_DATA_CXSUM_OFFSET, 1);
-          unsigned long calchdrsum;
-          unsigned long calcdatasum;
 
           // Split off head bit from track number
           track=track>>1;
@@ -193,10 +191,10 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
 
           if (format==0xff)
           {
-            int bytepos;
-            unsigned char sbyte;
             unsigned char hdrCRC;
             unsigned char dataCRC;
+            unsigned long calchdrsum;
+            unsigned long calcdatasum;
 
             calchdrsum=amigamfm_calchdrsum(AMIGA_INFO_OFFSET, 4);
             calchdrsum^=amigamfm_calchdrsum(AMIGA_SECTOR_LABEL_OFFSET, 16);
@@ -219,6 +217,7 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
             if ((hdrCRC==GOODDATA) && (dataCRC==GOODDATA))
             {
               unsigned char outbuff[MFM_BLOCKSIZE];
+              int bytepos;
 
               // Record IDAM values
               mfm_idamtrack=track;
@@ -235,6 +234,8 @@ void amigamfm_addbit(const unsigned char bit, const unsigned long datapos)
               // Extract the sector data
               for (bytepos=0; bytepos<AMIGA_DATASIZE; bytepos++)
               {
+                unsigned char sbyte;
+
                 sbyte=amigamfm_getbyte(AMIGA_DATA_OFFSET+bytepos, AMIGA_DATASIZE);
                 outbuff[bytepos]=sbyte;
               }
