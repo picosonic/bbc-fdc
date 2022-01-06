@@ -119,7 +119,6 @@ void adfs_gettitle(const int adfs_format, char *title, const int titlelen)
   unsigned int adfs_sectorsize;
   Disk_Sector *sector0;
   Disk_Sector *sector1;
-  int i, j;
 
   // Blank out title
   title[0]=0;
@@ -168,6 +167,7 @@ void adfs_gettitle(const int adfs_format, char *title, const int titlelen)
   {
     unsigned char oldmapbuff[ADFS_8BITSECTORSIZE*2];
     struct adfs_oldmap *oldmap;
+    int i, j;
 
     // Check there is enough space in return string
     if (titlelen<11) return;
@@ -257,7 +257,6 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
   int entry;
   int entries;
   unsigned char attrib;
-  int hasfiletype;
 
   // Check for invalid offset
   if (offset>(4*1024*1024))
@@ -290,6 +289,7 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
 
   for (entry=0; entry<entries; entry++)
   {
+    int hasfiletype;
     unsigned int filetype;
     char filename[ADFS_MAXPATHLEN];
     struct timeval tv;
@@ -720,8 +720,6 @@ void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const i
   int map, dir;
   unsigned int adfs_sectorsize;
   unsigned char sectorspertrack;
-  Disk_Sector *sector0;
-  Disk_Sector *sector1;
 
   adfs_debug=debug;
 
@@ -770,6 +768,8 @@ void adfs_showinfo(const int adfs_format, const unsigned int disktracks, const i
     struct adfs_oldmap *oldmap;
     unsigned long discid;
     int i;
+    Disk_Sector *sector0;
+    Disk_Sector *sector1;
 
     // Search for sectors
     sector0=diskstore_findhybridsector(0, 0, 0);
