@@ -275,7 +275,7 @@ void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
 
           case 0xdeaaeb: // Epilogue
             if (applegcr_debug)
-              fprintf(stderr, "[%lx] Found a DE AA EB, EPILOGUE\n", datapos);
+              fprintf(stderr, "[%lx] Found a [%.2X] DE AA EB, EPILOGUE\n", datapos, (applegcr_datacells&0xff000000)>>24);
             break;
 
           case 0xd4aab7: // Address field / 13 sector / non-standard
