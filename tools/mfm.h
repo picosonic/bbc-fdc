@@ -33,7 +33,7 @@
 #define M2FM_HPBLOCKECC 0xd0
 
 // Maximum supported sector size
-#define MFM_BLOCKSIZE (16384+5)
+#define MFM_BLOCKSIZE (3+1+16384+2)
 
 // State machine
 #define MFM_SYNC 1
