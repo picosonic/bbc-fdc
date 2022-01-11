@@ -8,6 +8,11 @@
 // Microseconds in a bitcell window for extra-high density MFM at 300 RPM
 #define MFM_BITCELLED 1
 
+// MFM access marks
+#define MFM_ACCESS_SYNC 0x00
+#define MFM_ACCESS_INDEX 0xc2
+#define MFM_ACCESS_SECTOR 0xa1
+
 // MFM Block types
 #define MFM_BLOCKNULL 0x00
 #define MFM_BLOCKINDEX 0xfc

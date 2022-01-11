@@ -67,21 +67,27 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
     switch (mfm_state)
     {
       case MFM_SYNC:
-        if (mfm_datacells==0x5224)
+        if ((mfm_datacells==0x5224) && (mod_getdata(mfm_p1)==MFM_ACCESS_SYNC) && (mod_getdata(mfm_p2)==MFM_ACCESS_INDEX) && (mod_getdata(mfm_p3)==MFM_ACCESS_INDEX))
         {
           if (mfm_debug)
             fprintf(stderr, "[%lx] ==MFM IAM SYNC [%x %x %x] %x==\n", datapos, mfm_p1, mfm_p2, mfm_p3, mfm_datacells);
 
+          if (mfm_debug)
+            fprintf(stderr, "[%lx] ==  MFM access marks [%.2x %.2x %.2x] %.2x==\n", datapos, mod_getdata(mfm_p1), mod_getdata(mfm_p2), mod_getdata(mfm_p3), data);
+
           mfm_bits=16; // Keep looking for sync (preventing overflow)
         }
         else
-        if (mfm_datacells==0x4489)
+        if ((mfm_datacells==0x4489) && (mod_getdata(mfm_p1)==MFM_ACCESS_SYNC) && (mod_getdata(mfm_p2)==MFM_ACCESS_SECTOR) && (mod_getdata(mfm_p3)==MFM_ACCESS_SECTOR))
         {
           if (mfm_debug)
             fprintf(stderr, "[%lx] ==MFM IDAM/DAM SYNC [%x %x %x] %x==\n", datapos, mfm_p1, mfm_p2, mfm_p3, mfm_datacells);
 
           mfm_bits=0;
           mfm_bitlen=0; // Clear output buffer
+
+          if (mfm_debug)
+            fprintf(stderr, "[%lx] ==  MFM access marks [%.2x %.2x %.2x] %.2x==\n", datapos, mod_getdata(mfm_p1), mod_getdata(mfm_p2), mod_getdata(mfm_p3), data);
 
           mfm_state=MFM_MARK; // Move on to look for MFM address mark
         }
