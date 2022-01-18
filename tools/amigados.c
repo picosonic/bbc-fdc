@@ -95,7 +95,7 @@ void amigados_readfsentry(const int level, const unsigned int disktracks, const 
   else
   {
     // File size
-    printf(" %6d", amigados_readlong(AMIGA_DATASIZE-0xbc, fsbuff));
+    printf(" %6u", amigados_readlong(AMIGA_DATASIZE-0xbc, fsbuff));
   }
 
   // Protection
@@ -130,16 +130,16 @@ void amigados_readfsentry(const int level, const unsigned int disktracks, const 
   // If this is a directory process child entries
   for (i=0; i<((AMIGA_DATASIZE/4)-56); i++)
   {
-    uint32_t fsblock;
+    uint32_t fsdblock;
 
-    fsblock=amigados_readlong(0x18+(i*4), fsbuff);
+    fsdblock=amigados_readlong(0x18+(i*4), fsbuff);
 
-    if (fsblock!=0)
+    if (fsdblock!=0)
     {
       if (amigados_debug)
-        printf("  HT[%u] %.8x\n", i, fsblock);
+        printf("  HT[%u] %.8x\n", i, fsdblock);
 
-      amigados_readfsentry(level+1, disktracks, fsblock);
+      amigados_readfsentry(level+1, disktracks, fsdblock);
     }
   }
 
@@ -168,8 +168,8 @@ void amigados_showinfo(const unsigned int disktracks, const int debug)
 
   printf("Rootblock\n");
 
-  printf("Type : %d\n", amigados_readlong(0, tmpbuff));
-  printf("Hash table size : %d\n", amigados_readlong(0xc, tmpbuff));
+  printf("Type : %u\n", amigados_readlong(0, tmpbuff));
+  printf("Hash table size : %u\n", amigados_readlong(0xc, tmpbuff));
   printf("Checksum : %.8x\n", amigados_readlong(0x14, tmpbuff));
 
   printf("\n");
@@ -205,8 +205,8 @@ void amigados_showinfo(const unsigned int disktracks, const int debug)
     printf("%c", tmpbuff[(AMIGA_DATASIZE-0x4f)+i]);
   printf("\"\n");
 
-  printf("Extension : %d\n", amigados_readlong(AMIGA_DATASIZE-0x8, tmpbuff));
-  printf("Secondary type : %d\n", amigados_readlong(AMIGA_DATASIZE-0x4, tmpbuff));
+  printf("Extension : %u\n", amigados_readlong(AMIGA_DATASIZE-0x8, tmpbuff));
+  printf("Secondary type : %u\n", amigados_readlong(AMIGA_DATASIZE-0x4, tmpbuff));
 
   printf("\n");
 }
