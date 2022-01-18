@@ -267,11 +267,10 @@ void adfs_readdir(const int level, const char *folder, const int maptype, const 
     return;
 
   if (adfs_debug)
+  {
     printf("['%s' @0x%lx MAP:%d DIR:%d SECSIZE:%u SEC/TRACK:%d]\n", folder, offset, maptype, dirtype, adfs_sectorsize, sectorspertrack);
 
-  // Iterate through directory
-  if (adfs_debug)
-  {
+    // Iterate through directory
     printf("StartMasSeq: %.2x\n", dh.startmasseq);
     printf("StartName: \"");
     for (i=0; i<4; i++)
