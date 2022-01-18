@@ -70,10 +70,11 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
         if ((mfm_datacells==0x5224) && (mod_getdata(mfm_p1)==MFM_ACCESS_SYNC) && (mod_getdata(mfm_p2)==MFM_ACCESS_INDEX) && (mod_getdata(mfm_p3)==MFM_ACCESS_INDEX))
         {
           if (mfm_debug)
+          {
             fprintf(stderr, "[%lx] ==MFM IAM SYNC [%x %x %x] %x==\n", datapos, mfm_p1, mfm_p2, mfm_p3, mfm_datacells);
 
-          if (mfm_debug)
             fprintf(stderr, "[%lx] ==  MFM access marks [%.2x %.2x %.2x] %.2x==\n", datapos, mod_getdata(mfm_p1), mod_getdata(mfm_p2), mod_getdata(mfm_p3), data);
+          }
 
           mfm_bits=16; // Keep looking for sync (preventing overflow)
         }
@@ -249,8 +250,6 @@ void mfm_addbit(const unsigned char bit, const unsigned long datapos)
               default:
                 if (mfm_debug)
                   fprintf(stderr, "Invalid record length %.2x\n", mfm_idamlength);
-
-                mfm_state=MFM_SYNC;
                 break;
             }
           }
