@@ -46,6 +46,10 @@ int readsector(const int sector)
   // Determine which track this sector belongs to
   track=sector/SECTORSPERTRACK;
 
+  // Make sure track is within the bounds of the disk image
+  if ((track<0) || (track>=MAXTRACKS))
+    return 0;
+
   // Check if we need to read the sector from disk
   if (sectorstatus[sector]!=GOODDATA)
   {
@@ -240,7 +244,6 @@ static int dfs_read(const char *path, char *buf, size_t size, off_t offset,
   int entry;
   int startsector;
   int numsectors;
-  int i;
   (void) fi;
 
   // Make sure we have the catalogue loaded
@@ -262,6 +265,8 @@ static int dfs_read(const char *path, char *buf, size_t size, off_t offset,
   // Check read() offset falls within file boundary
   if (offset < len)
   {
+    int i;
+
     // If read() length is more than file length, then truncate to file length
     if (offset + size > len)
       size = len - offset;
@@ -385,7 +390,6 @@ static struct fuse_operations dfs_oper =
 int main(int argc, char **argv)
 {
   struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
-  FILE *fp;
 
   // Start with a blank SSD filename
   options.ssd_filename = strdup("");
@@ -403,6 +407,8 @@ int main(int argc, char **argv)
   // Check for a SSD filename on command line
   if (strlen(options.ssd_filename)!=0)
   {
+    FILE *fp;
+
     // Check file is readable
     fp=fopen(options.ssd_filename, "r");
     if (fp!=NULL)
