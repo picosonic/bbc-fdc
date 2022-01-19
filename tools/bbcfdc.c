@@ -1342,10 +1342,10 @@ int main(int argc,char **argv)
     else
       printf("Double sided capture\n");
 
-    printf("FM sectors found %u\n", fmsectors);
-    printf("MFM sectors found %u\n", mfmsectors);
-    printf("GCR sectors found %u\n", gcrsectors);
-    printf("Apple GCR sectors found %u\n", applegcrsectors);
+    if (fmsectors!=0) printf("FM sectors found %u\n", fmsectors);
+    if (mfmsectors!=0) printf("MFM sectors found %u\n", mfmsectors);
+    if (gcrsectors!=0) printf("GCR sectors found %u\n", gcrsectors);
+    if (applegcrsectors!=0) printf("Apple GCR sectors found %u\n", applegcrsectors);
 
     printf("Detected density : ");
     if ((mod_density&MOD_DENSITYFMSD)!=0) printf("SD ");
