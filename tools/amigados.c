@@ -55,7 +55,7 @@ void amigados_gettitle(const unsigned int disktracks, char *title, const int tit
   }
 }
 
-void amigados_readfsentry(const int level, const unsigned int disktracks, const uint32_t fsblock)
+void amigados_readfsentry(const unsigned int level, const unsigned int disktracks, const uint32_t fsblock)
 {
   uint32_t i;
   uint32_t prot;
