@@ -457,7 +457,7 @@ void dos_showinfo(const unsigned int disktracks, const unsigned int debug)
   if (dos_debug)
     printf("Root directory @ 0x%lx\n", rootdir);
 
-  dataregion=(biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies)+((biosparams->rootentries*DOS_DIRENTRYLEN)/biosparams->bytespersector))*biosparams->bytespersector, biosparams->smallsectors*biosparams->bytespersector;
+  dataregion=(biosparams->reservedsectors+(biosparams->sectorsperfat*biosparams->fatcopies)+((biosparams->rootentries*DOS_DIRENTRYLEN)/biosparams->bytespersector))*biosparams->bytespersector;
 
   if (dos_debug)
     printf("Data region @ 0x%lx .. 0x%lx\n", dataregion, (biosparams->smallsectors*biosparams->bytespersector)-dataregion);
