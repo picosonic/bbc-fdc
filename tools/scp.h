@@ -20,6 +20,7 @@
 #define SCP_FLAGS_RW 0x10
 #define SCP_FLAGS_FOOTER 0x20
 #define SCP_FLAGS_EXTENDED 0x40
+#define SCP_FLAGS_CREATOR 0x80
 
 // Disk types - manufacturer
 #define SCP_MAN_COMMODORE 0x00
@@ -35,6 +36,7 @@
 // CBM DISK TYPES
 #define SCP_DISK_C64 0x00
 #define SCP_DISK_Amiga 0x04
+#define SCP_DISK_AmigaHD 0x08
 
 // ATARI DISK TYPES
 #define SCP_DISK_AtariFMSS 0x00

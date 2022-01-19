@@ -41,6 +41,10 @@ int scp_processheader(FILE *scpfile)
           printf(" Amiga");
           break;
 
+        case SCP_DISK_AmigaHD:
+          printf(" AmigaHD");
+          break;
+
         default:
           break;
       }
@@ -276,6 +280,11 @@ int scp_processheader(FILE *scpfile)
 
   if ((header.flags & SCP_FLAGS_EXTENDED)!=0)
     printf(" Extended");
+
+  if ((header.flags & SCP_FLAGS_CREATOR)!=0)
+    printf(" 3rd_party");
+  else
+    printf(" SuperCard_Pro");
 
   printf(" ]\n");
 
