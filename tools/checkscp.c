@@ -316,6 +316,36 @@ int scp_processheader(FILE *scpfile)
   return 0;
 }
 
+void scp_processtimings(FILE *scpfile, const long dataoffset, const uint32_t datalen)
+{
+  long trackpos;
+  uint32_t sample;
+  uint16_t bitcell;
+  long ticks;
+
+  // Remember where file pointer was
+  trackpos=ftell(scpfile);
+
+  // Seek to start of data
+  fseek(scpfile, dataoffset, SEEK_SET);
+
+  for (sample=0; sample<datalen; sample++)
+  {
+    fread(&bitcell, 1, sizeof(bitcell), scpfile);
+
+    // Swap byte order (if required)
+    bitcell=be16toh(bitcell);
+
+    printf("  %.4x = %.3fus\n", bitcell, ((double)bitcell*((header.resolution+1)*SCP_BASE_NS))/1000);
+    for (ticks=0; ticks<(bitcell/2); ticks++)
+      printf("#");
+    printf("\n");
+  }
+
+  // Restore file pointer
+  fseek(scpfile, trackpos, SEEK_SET);
+}
+
 void scp_processtrack(FILE *scpfile, const unsigned char track, const uint8_t revolutions)
 {
   struct scp_tdh thdr;
@@ -339,6 +369,9 @@ void scp_processtrack(FILE *scpfile, const unsigned char track, const uint8_t re
     {
       fread(&timings, 1, sizeof(timings), scpfile);
       printf("  %d:%x (%.2f ms) / %u len / %u offs\n", i, timings.indextime, ((double)timings.indextime*SCP_BASE_NS)/1000000, timings.tracklen, timings.dataoffset);
+
+      // Process the track timings
+//      scp_processtimings(scpfile, scp_trackoffsets[track]+timings.dataoffset, timings.tracklen);
     }
   }
 }
@@ -412,7 +445,7 @@ int main(int argc, char **argv)
 
     // Look for ASCII timestamp
     //   After all track data, if first byte is 0x30 to 0x5F
-    //   Otherwise this is the start of extension footer (when inidicated in header flags)
+    //   Otherwise this is the start of extension footer (when indicated in header flags)
 
     free(scp_trackoffsets);
   }
