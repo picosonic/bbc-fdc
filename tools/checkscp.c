@@ -6,8 +6,8 @@
 #include "scp.h"
 
 struct scp_header header;
-long scp_endofheader;
-uint32_t *scp_trackoffsets;
+long scp_endofheader=0;
+uint32_t *scp_trackoffsets=NULL;
 
 int scp_processheader(FILE *scpfile)
 {
