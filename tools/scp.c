@@ -263,50 +263,205 @@ From : https://www.cbmstuff.com/downloads/scp/scp_image_specs.txt
 
 */
 
-uint32_t *scp_trackoffsets=NULL;
+struct scp_header scpheader;
 long scp_endofheader=0;
+uint32_t *scp_trackoffsets=NULL;
+long scprate=0;
+
+uint32_t scp_checksum(FILE *scpfile)
+{
+  uint32_t checksum;
+  uint8_t block[256];
+  size_t i;
+
+  if (scpfile==NULL) return 0;
+  if (scp_endofheader==0) return 0;
+
+  fseek(scpfile, scp_endofheader, SEEK_SET);
+
+  checksum=0;
+
+  while (!feof(scpfile))
+  {
+    size_t blocklen;
+
+    blocklen=fread(block, 1, sizeof(block), scpfile);
+    if (blocklen>0)
+      for (i=0; i<blocklen; i++)
+        checksum+=block[i];
+  }
+
+  fseek(scpfile, scp_endofheader, SEEK_SET);
+
+  return checksum;
+}
+
+int scp_readheader(FILE *scpfile)
+{
+  if (scpfile==NULL) return 0;
+
+  fread(&scpheader, 1, sizeof(scpheader), scpfile);
+
+  if (strncmp((char *)&scpheader.magic, SCP_MAGIC, strlen(SCP_MAGIC))!=0)
+  {
+    bzero(&scpheader, sizeof(scpheader));
+
+    return 0;
+  }
+
+  // Only support 16bit timings
+  if (scpheader.bitcellencoding!=0x00) return 0;
+
+  // Make a note of where the header ends
+  scp_endofheader=ftell(scpfile);
+
+  // Verify checksum
+  if (scp_checksum(scpfile)!=scpheader.checksum) return 0;
+
+  // Set RPM
+  if ((scpheader.flags & SCP_FLAGS_360RPM)!=0)
+    hw_rpm=360;
+  else
+    hw_rpm=300;
+
+  // Determine sample rate in Hz
+  scprate=(NSINUS/((scpheader.resolution+1)*SCP_BASE_NS))*USINSECOND;
+
+  // Skip over extended data if used
+  if ((scpheader.flags & SCP_FLAGS_EXTENDED)!=0)
+    fseek(scpfile, 0x80, SEEK_SET);
+
+  // Allocate memory to store track data offsets
+  scp_trackoffsets=malloc(sizeof(uint32_t) * SCP_MAXTRACKS);
+  if (scp_trackoffsets!=NULL)
+  {
+    fread(scp_trackoffsets, 1, (scpheader.endtrack-scpheader.starttrack+1)*sizeof(uint32_t), scpfile);
+  }
+  else
+  {
+    bzero(&scpheader, sizeof(scpheader));
+
+    return 0;
+  }
+
+  return 0;
+}
+
+long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, const uint32_t buflen)
+{
+  struct scp_tdh thdr;
+  struct scp_timings timings;
+  long trackpos;
+  double scalar=(double)scprate/(double)hw_samplerate;
+
+  if (scpfile==NULL) return 0;
+
+  // Don't process empty tracks
+  if (scp_trackoffsets[(track*2)+side]==0) return 0;
+
+  // Seek to data for this track
+  fseek(scpfile, scp_trackoffsets[(track*2)+side], SEEK_SET);
+
+  // Verify track header
+  fread(&thdr, 1, sizeof(thdr), scpfile);
+  if (strncmp((char *)&thdr.magic, SCP_TRACK, strlen(SCP_TRACK))==0)
+  {
+    uint8_t i;
+    uint32_t sample;
+    uint16_t bitcell;
+    uint32_t bufpos=0;
+
+    //printf("Track %d.%d -> %d.%d\n", track, side, thdr.track/2, thdr.track%2);
+
+    for (i=0; i<scpheader.revolutions; i++)
+    {
+      unsigned char b, blen;
+
+      fread(&timings, 1, sizeof(timings), scpfile);
+
+      trackpos=ftell(scpfile);
+
+      // Seek to start of flux data
+      fseek(scpfile, scp_trackoffsets[(track*2)+side]+timings.dataoffset, SEEK_SET);
+
+      blen=0; b=0;
+
+      for (sample=0; sample<timings.tracklen; sample++)
+      {
+        fread(&bitcell, 1, sizeof(bitcell), scpfile);
+
+        // Swap byte order (if required)
+        bitcell=be16toh(bitcell);
+
+        // Convert to hardware samplerate
+        bitcell=((double)bitcell/scalar);
+
+        while (bitcell>0)
+        {
+          bitcell--;
+
+          b=(b<<1)|((bitcell==0)?1:0);
+          blen++;
+
+          if (blen==BITSPERBYTE)
+          {
+            if (bufpos<buflen)
+              buf[bufpos++]=b;
+
+            b=0; blen=0;
+          }
+        }
+      }
+
+      fseek(scpfile, trackpos, SEEK_SET);
+    }
+  }
+
+  return 0;
+}
 
 void scp_writeheader(FILE *scpfile, const uint8_t rotations, const uint8_t starttrack, const uint8_t endtrack, const float rpm, const uint8_t sides, const int sidetoread)
 {
   uint8_t i;
-  struct scp_header header;
 
   if (scpfile==NULL) return;
 
+  bzero(&scpheader, sizeof(scpheader));
+
   // Magic and version
-  memcpy(header.magic, SCP_MAGIC, sizeof(header.magic));
-  header.version=SCP_VERSION; // Or 0x00 if footer used
+  memcpy(scpheader.magic, SCP_MAGIC, sizeof(scpheader.magic));
+  scpheader.version=SCP_VERSION; // Or 0x00 if footer used
 
   // Disk type ??
-  header.disktype=SCP_MAN_OTHER | SCP_DISK_144M;
+  scpheader.disktype=SCP_MAN_OTHER | SCP_DISK_144M;
 
   // Rotations captured
-  header.revolutions=rotations;
+  scpheader.revolutions=rotations;
 
   // Start and end tracks (multiplied by sides)
-  header.starttrack=starttrack;
-  header.endtrack=endtrack;
+  scpheader.starttrack=starttrack;
+  scpheader.endtrack=endtrack;
 
   // Flags
-  header.flags=SCP_FLAGS_CREATOR | ((rpm>330)?SCP_FLAGS_360RPM:0x0) | ((endtrack>44)?SCP_FLAGS_96TPI:0x0) | SCP_FLAGS_INDEX; // TODO add 0x20 if footer added
+  scpheader.flags=SCP_FLAGS_CREATOR | ((rpm>330)?SCP_FLAGS_360RPM:0x0) | ((endtrack>44)?SCP_FLAGS_96TPI:0x0) | SCP_FLAGS_INDEX; // TODO add 0x20 if footer added
 
   // Bit cell encoding - for future expansion, so always 0x00 for now
-  header.bitcellencoding=0x00;
+  scpheader.bitcellencoding=0x00;
 
   // Sides / Heads
-  header.heads=((sides==2)?0:((sidetoread==1)?2:1));
+  scpheader.heads=((sides==2)?0:((sidetoread==1)?2:1));
 
   // Capture resolution, default in .rfi files is 80ns, which has closest SCP multiplier of 2 (i.e. 75ns)
-  header.resolution=0; // TODO determine programatically the best value for this based on rate
+  scpheader.resolution=0; // TODO determine programatically the best value for this based on rate
 
   // Blank checksum  - to be filled in later (calculated from next byte to EOF)
-  header.checksum=0x0;
+  scpheader.checksum=0x0;
 
   // Write the header
-  fwrite(&header, 1, sizeof(header), scpfile);
+  fwrite(&scpheader, 1, sizeof(scpheader), scpfile);
 
   // If we're using extended mode, reserve some space for extended variables
-  if ((header.flags&SCP_FLAGS_EXTENDED)!=0)
+  if ((scpheader.flags&SCP_FLAGS_EXTENDED)!=0)
   {
     struct scp_extensions extensions;
 

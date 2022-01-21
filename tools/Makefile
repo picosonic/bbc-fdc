@@ -51,7 +51,7 @@ bbcfdc-nopi: bbcfdc-nopi.o adfs.o amigados.o amigamfm.o appledos.o applegcr.o cr
 bbcfdc-nopi.o: bbcfdc.c adfs.h appledos.h applegcr.h amigados.h amigamfm.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h jsmn.h mfm.h mod.h pll.h rfi.h scp.o teledisk.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o bbcfdc-nopi.o bbcfdc.c
 
-nopi.o: nopi.c hardware.h jsmn.h rfi.h
+nopi.o: nopi.c hardware.h jsmn.h rfi.h scp.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o nopi.o nopi.c
 
 ##########################

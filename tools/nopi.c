@@ -8,6 +8,7 @@
 
 #include "hardware.h"
 #include "rfi.h"
+#include "scp.h"
 
 #define HW_OLDRAWTRACKSIZE (1024*1024)
 
@@ -187,6 +188,9 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
     else
     if (strstr(hw_samplefilename, ".rfi")!=NULL)
       rfi_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
+    else
+    if (strstr(hw_samplefilename, ".scp")!=NULL)
+      scp_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
   }
 }
 
@@ -224,6 +228,13 @@ int hw_init(const char *rawfile, const int spiclockdivider)
   {
     rfi_readheader(hw_samplefile);
     if (rfi_tracks<=0) return 0;
+  }
+
+  // If SCP opened and valid, read header values to determine capture settings
+  if ((hw_samplefile!=NULL) && (strstr(hw_samplefilename, ".scp")!=NULL))
+  {
+    scp_readheader(hw_samplefile);
+    if ((scpheader.starttrack==0) && (scpheader.endtrack==0)) return 0;
   }
 
   return (hw_detectdisk()==HW_HAVEDISK);

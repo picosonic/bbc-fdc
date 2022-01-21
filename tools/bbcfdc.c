@@ -139,7 +139,7 @@ void showargs(const char *exename)
   fprintf(stderr, "%s - Floppy disk raw flux capture and processor\n\n", exename);
   fprintf(stderr, "Syntax : ");
 #ifdef NOPI
-  fprintf(stderr, "[-i input_rfi_file] ");
+  fprintf(stderr, "[-i input_file] ");
 #endif
   fprintf(stderr, "[-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-dblstep] [-title \"Title\"] [-v]\n");
 }
@@ -610,9 +610,7 @@ int main(int argc,char **argv)
     fprintf(stderr,"Must be run as root\n");
     return 2;
   }
-#endif
 
-#ifndef NOPI
   if (!hw_init(rate))
   {
     fprintf(stderr, "Failed hardware init\n");

@@ -13,11 +13,11 @@ By default, sectors are sorted by their physical position on the disk regardless
 
 ## Syntax :
 
-`[-i input_rfi_file] [-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-dblstep] [-title "Title"] [-pll [period] [phase]] [-v]`
+`[-i input_file] [-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-dblstep] [-title "Title"] [-pll [period] [phase]] [-v]`
 
 ## Where :
 
- * `-i` Specify input **.rfi** file (when not being run on RPi hardware)
+ * `-i` Specify input **.rfi** or **.scp** file (when not being run on RPi hardware)
  * `-c` Catalogue the disk contents (DFS/ADFS/DOS/APPLEII/AMIGA only)
  * `-ss` Force single-sided capture - optionally adding a 0 or 1 afterwards chooses that side (e.g. `-ss 0` or `-ss 1`)
  * `-ds` Force double-sided capture (unless output is to .ssd or .sdd)
@@ -132,7 +132,4 @@ It will check for the .td0 magic identifier, show the header details, decompress
  * Above can be overriden with the `-sectors` switch e.g. `-sectors 18`
  * Disks with different densities on different sides cannot currently be captured into `.ddd`
  * If a Solidisk chained catalogue is detected, it will notify during the catalogue operaton but not list it
-
- 
-
 
