@@ -141,6 +141,7 @@ struct scp_extfooter
 #pragma pack(pop)
 
 extern struct scp_header scpheader;
+extern uint32_t *scp_trackoffsets;
 
 extern long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, const uint32_t buflen);
 

@@ -122,6 +122,12 @@ void exitFunction()
     free(flippybuffer);
     flippybuffer=NULL;
   }
+
+  if (scp_trackoffsets!=NULL)
+  {
+    free(scp_trackoffsets);
+    scp_trackoffsets=NULL;
+  }
 }
 
 // Handle signals by stopping motor and tidying up
