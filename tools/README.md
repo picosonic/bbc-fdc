@@ -7,7 +7,7 @@ It is designed to work with floppy disk interface PCB attached to GPIO of Raspbe
 
 Raw flux output is to **.rfi** files, these are raw capture data with JSON metadata, the format for these is detailed in [rfi.h](https://github.com/picosonic/bbc-fdc/blob/master/tools/rfi.h).
 
-Also output to **.dfi** (DiscFerret flux dump) is possible (not tested).
+Also flux output to **.scp** ([SuperCard Pro](https://www.cbmstuff.com/index.php?route=product/product&product_id=52)) and **.dfi** ([DiscFerret](https://github.com/discferret) flux dump) is possible (not fully tested).
 
 By default, sectors are sorted by their physical position on the disk regardless of which of the passes the data was found. The **-sort** option allows them to be sorted logically by their sector id. This only affects sectors in **.td0** and **.fsd** files.
 
@@ -67,13 +67,14 @@ Finally, you can move the drive head in or out by seeking to a specific track.
 
 ## Syntax :
 
-`[-tmax maxtracks] [-noindex] [-seek track]`
+`[-tmax maxtracks] [-noindex] [-seek track] [-clean]`
 
 ## Where :
 
  * `-tmax` Specify the maximum track number you wish to try stepping to
  * `-noindex` Don't measure RPM and allow some tests to be carried out without a floppy
  * `-seek` Specify the track number you wish to step to (zero based)
+ * `-clean` Start cleaning cycle, ignore index, seek from track 0 to max and back 5 times
 
 ## Return codes :
 
