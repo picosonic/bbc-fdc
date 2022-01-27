@@ -13,10 +13,10 @@ The magic string is "DFER" for old-style DiscFerret images, or "DFE2" for new-st
 
 Each sample block has a header --
 
-uint16_be cylinder;
-uint16_be head;
-uint16_be sector;
-uint32_be data_length;
+  uint16_be cylinder;
+  uint16_be head;
+  uint16_be sector;
+  uint32_be data_length;
 
 The cylinder number starts at zero and carrys up to the number of cylinders on the disk. The head number follows the same rule (starts at zero, increments for each additional head). The sector number is optional, and only used for hard-sectored discs. For soft-sectored discs, it is set to zero. Data_length indicates the number of bytes of data which follow.
 

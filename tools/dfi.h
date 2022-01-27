@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+// Magic for new-style DiscFerret images
 #define DFI_MAGIC "DFE2"
 
 #define DFI_CARRY 0x7f
