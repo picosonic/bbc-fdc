@@ -14,6 +14,7 @@
 #include "amigamfm.h"
 #include "appledos.h"
 #include "applegcr.h"
+#include "atarist.h"
 #include "dfs.h"
 #include "dos.h"
 #include "fsd.h"
@@ -1062,10 +1063,17 @@ int main(int argc,char **argv)
                   }
                   else
                   {
-                    if (diskstore_countsectormod(MODAPPLEGCR)>0)
-                      printf("\nDetected Apple format\n\n");
+                    if (atarist_validate()!=ATARIST_UNKNOWN)
+                    {
+                      printf("\nDetected Atari ST format\n\n");
+                      atarist_showinfo(debug);
+                      info++;
+                    }
                     else
-                      printf("\nUnknown logical disk format\n\n");
+                      if (diskstore_countsectormod(MODAPPLEGCR)>0)
+                        printf("\nDetected Apple format\n\n");
+                      else
+                        printf("\nUnknown logical disk format\n\n");
                   }
               }
             }

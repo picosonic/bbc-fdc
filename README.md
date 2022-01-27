@@ -17,6 +17,6 @@ The BBC Micro Acorn DFS format used 40 or 80 tracks, 10 sectors per track (numbe
 
 More recently I've also been able to read 3.5 inch disks using a TEAC FD-235HG PC drive. Due to the drive being internally set to DS1 I've had to connect it to the 34 pin ribbon cable prior to the swap and by moving the drive select jumper on my board to DS1.
 
-I've so far been able to read and extract data from several 3.5 inch disks including Archimedes Acorn ADFS S/M/L/D/E/F, MS-DOS and Amiga.
+I've so far been able to read and extract data from several 3.5 inch disks including Archimedes Acorn ADFS S/M/L/D/E/F, MS-DOS, Amiga and Atari ST.
 
 ![Top of board](/circuit/top.jpg?raw=true "Top of board")
