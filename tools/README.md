@@ -18,7 +18,7 @@ By default, sectors are sorted by their physical position on the disk regardless
 ## Where :
 
  * `-i` Specify input **.rfi** or **.scp** file (when not being run on RPi hardware)
- * `-c` Catalogue the disk contents (DFS/ADFS/DOS/APPLEII/AMIGA only)
+ * `-c` Catalogue the disk contents (DFS/ADFS/DOS/APPLEII/AMIGA/ATARI ST only)
  * `-ss` Force single-sided capture - optionally adding a 0 or 1 afterwards chooses that side (e.g. `-ss 0` or `-ss 1`)
  * `-ds` Force double-sided capture (unless output is to .ssd or .sdd)
  * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .ssd, .sdd, .dsd, .ddd, .fsd, .td0, .img, .adf)
