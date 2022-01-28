@@ -13,6 +13,107 @@
 
 int atarist_debug=0;
 
+// Absolute disk offset from cluster id
+unsigned long atarist_clustertoabsolute(const unsigned long clusterid, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion)
+{
+  return (dataregion+(((clusterid-ATARIST_MINCLUSTER)*sectorspercluster)*bytespersector));
+}
+
+void atarist_readdir(const int level, const unsigned long offset, const unsigned int entries, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion, const unsigned long parent, unsigned int disktracks)
+{
+  struct atarist_direntry de;
+  unsigned int i;
+  int j;
+
+  diskstore_absoluteseek(offset, INTERLEAVED, 80);
+
+  // Loop through entries - TODO add sanity checks / entry subdirectories
+  while (1)
+  {
+    if (diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, 80)<sizeof(de))
+      return;
+
+    // Check for end of directory
+    if (de.fname[0]==ATARIST_DIRENTRYEND)
+      break;
+
+    // Check if filesize exceeds disk size
+    // TODO
+
+    // Indent
+    for (j=0; j<level; j++) printf("  ");
+
+    // Extract name
+    printf("'");
+    for (i=0; i<8; i++)
+    {
+      if (de.fname[i]==ATARIST_DIRPADDING) break;
+
+      if (i==0)
+      {
+        switch (de.fname[i])
+        {
+          case ATARIST_DIRENTRYE5: // Encoded 0xe5
+            printf("%c", 0xe5);
+            break;
+
+          case ATARIST_DIRENTRYDEL: // Deleted file
+            printf("?");
+            break;
+
+          case ATARIST_DIRENTRYALIAS: // . or ..
+            printf("%c", de.fname[i]);
+            break;
+
+          default:
+            printf("%c", de.fname[i]);
+            break;
+        }
+      }
+      else
+        printf("%c", de.fname[i]);
+    }
+    if (de.fext[0]!=ATARIST_DIRPADDING)
+      printf(".");
+
+    for (i=0; i<3; i++)
+    {
+      if (de.fext[i]==ATARIST_DIRPADDING) break;
+      printf("%c", de.fext[i]);
+    }
+    printf("'");
+
+    // Extract date/time
+    printf("  %.2d/%.2d/%d", de.fdate&0x1f, (de.fdate&0x1e0)>>5, ATARIST_EPOCHYEAR+((de.fdate&0xfe00)>>9));
+    printf("  %.2d:%.2d:%.2d", (de.ftime&0xf800)>>11, (de.ftime&0x7e0)>>5, (de.ftime&0x1f)*2);
+
+    // Extract attributes
+    printf("  %c%c%c%c%c%c", de.attrib&ATARIST_ATTRIB_READONLY?'r':'w', de.attrib&ATARIST_ATTRIB_HIDDEN?'h':'-', de.attrib&ATARIST_ATTRIB_SYSTEM?'s':'-', de.attrib&ATARIST_ATTRIB_VOLUME?'v':'-', de.attrib&ATARIST_ATTRIB_DIR?'d':'f', de.attrib&ATARIST_ATTRIB_NEWMOD?'n':'-');
+
+    printf("  (%d)", de.scluster);
+    if ((de.attrib&ATARIST_ATTRIB_DIR)!=0)
+      printf("  <dir>\n");
+    else
+      printf("  %d bytes\n", de.fsize);
+
+    // Recurse into subdirectories
+    if ((de.attrib&ATARIST_ATTRIB_DIR)!=0)
+    {
+      unsigned long subdir=atarist_clustertoabsolute(de.scluster, sectorspercluster, bytespersector, dataregion);
+
+      // Don't recurse into "." and ".."
+      if ((subdir!=parent) && (subdir!=offset))
+      {
+        unsigned long curdiskoffs=diskstore_absoffset;
+
+        atarist_readdir(level+1, subdir, entries, sectorspercluster, bytespersector, dataregion, offset, disktracks);
+
+        diskstore_absoluteseek(curdiskoffs, INTERLEAVED, disktracks);
+      }
+    }
+  }
+}
+
 void atarist_showinfo(const int debug)
 {
   Disk_Sector *sector1;
@@ -38,7 +139,7 @@ void atarist_showinfo(const int debug)
     uint32_t serial;
     uint16_t cxsum;
     uint16_t rootsector;
-    struct atarist_direntry direntry;
+    uint16_t dataregion;
     unsigned long offset;
 
     bootsector=(struct atarist_bootsector *)sector1->data;
@@ -110,41 +211,12 @@ void atarist_showinfo(const int debug)
     rootsector=bootsector->bpb.ressec+(bootsector->bpb.spf*bootsector->bpb.nfats);
     printf("Root sector : %d\n", rootsector);
 
-    // Load root directory
+    // Calculate dataregion absolute offset
+    dataregion=(bootsector->bpb.ressec+(bootsector->bpb.spf*bootsector->bpb.nfats)+((bootsector->bpb.ndirs*ATARIST_DIRENTRYLEN)/bootsector->bpb.bps))*bootsector->bpb.bps;
+
+    // Catalogue disk from root directory
     offset=bootsector->bpb.bps*rootsector;
-
-    diskstore_absoluteseek(offset, INTERLEAVED, 80);
-
-    // Loop through entries - TODO add sanity checks / entry subdirectories
-    while (1)
-    {
-      if (diskstore_absoluteread((char *)&direntry, sizeof(direntry), INTERLEAVED, 80)<sizeof(direntry)) return;
-      if (direntry.fname[0]==0x00) break;
-
-      printf("  '");
-      for (i=0; i<8; i++)
-      {
-        if (direntry.fname[i]==0x20) break;
-        printf("%c", direntry.fname[i]);
-      }
-      if (direntry.fext[0]!=0x20)
-        printf(".");
-
-      for (i=0; i<3; i++)
-      {
-        if (direntry.fext[i]==0x20) break;
-        printf("%c", direntry.fext[i]);
-      }
-      printf("'  ");
-
-      printf("%0.2d/%0.2d/%d  ", direntry.fdate&0x1f, (direntry.fdate&0x1e0)>>5, 1980+((direntry.fdate&0xfe00)>>9));
-      printf("%.02d:%.02d:%0.2d  ", (direntry.ftime&0xf800)>>11, (direntry.ftime&0x7e0)>>5, (direntry.ftime&0x1f)*2);
-
-      printf("%c%c%c%c%c%c  ", direntry.attrib&0x01?'r':'w', direntry.attrib&0x02?'h':'-', direntry.attrib&0x04?'s':'-', direntry.attrib&0x08?'v':'-', direntry.attrib&0x10?'d':'f', direntry.attrib&0x20?'n':'-');
-
-      printf("(%d)  ", direntry.scluster);
-      printf("%d bytes\n", direntry.fsize);
-    }
+    atarist_readdir(0, offset, bootsector->bpb.ndirs, bootsector->bpb.spc, bootsector->bpb.bps, dataregion, 0, 80);
   }
 }
 

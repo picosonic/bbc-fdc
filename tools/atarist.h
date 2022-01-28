@@ -7,6 +7,24 @@
 
 #define ATARIST_UNKNOWN -1
 
+#define ATARIST_MINCLUSTER 2
+
+#define ATARIST_DIRENTRYLEN   32
+#define ATARIST_DIRENTRYEND   0x00
+#define ATARIST_DIRENTRYE5    0x05
+#define ATARIST_DIRENTRYALIAS 0x2e
+#define ATARIST_DIRPADDING    0x20
+#define ATARIST_DIRENTRYDEL   0xe5
+
+#define ATARIST_EPOCHYEAR 1980
+
+#define ATARIST_ATTRIB_READONLY 0x01
+#define ATARIST_ATTRIB_HIDDEN   0x02
+#define ATARIST_ATTRIB_SYSTEM   0x04
+#define ATARIST_ATTRIB_VOLUME   0x08
+#define ATARIST_ATTRIB_DIR      0x10
+#define ATARIST_ATTRIB_NEWMOD   0x20
+
 /*
   https://www-user.tu-chemnitz.de/~heha/viewchm.php/basteln/PC/usbfloppy/floppy.chm/
   https://info-coach.fr/atari/software/FD-Soft.php
