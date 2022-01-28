@@ -636,6 +636,7 @@ void scp_finalise(FILE *scpfile, const uint8_t endtrack)
     fseek(scpfile, scp_endofheader, SEEK_SET);
     fwrite(scp_trackoffsets, 1, endtrack*sizeof(uint32_t), scpfile);
     free(scp_trackoffsets);
+    scp_trackoffsets=NULL;
   }
 
   // Calculate 32bit checksum
