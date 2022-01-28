@@ -23,12 +23,13 @@ void atarist_readdir(const int level, const unsigned long offset, const unsigned
 {
   struct atarist_direntry de;
   unsigned int i;
+  unsigned int e;
   int j;
 
   diskstore_absoluteseek(offset, INTERLEAVED, 80);
 
   // Loop through entries - TODO add sanity checks / entry subdirectories
-  while (1)
+  for (e=0; e<entries; e++)
   {
     if (diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, 80)<sizeof(de))
       return;
