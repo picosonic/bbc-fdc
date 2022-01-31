@@ -246,7 +246,7 @@ int atarist_validate()
     struct atarist_bootsector *bootsector;
     int i;
     uint16_t cxsum;
-    int calcsectors;
+    int calcval;
 
     bootsector=(struct atarist_bootsector *)sector1->data;
 
@@ -276,14 +276,18 @@ int atarist_validate()
     cxsum=ATARIST_CHECKSUMVALUE-cxsum;
 
     // Checksum matches, this is a bootable Atari ST image
-    if (be16toh(bootsector->checksum)!=cxsum) return 1;
+    if (be16toh(bootsector->checksum)==cxsum) return 1;
 
     // Validate number of heads
     if ((bootsector->bpb.nheads!=1) && (bootsector->bpb.nheads!=2)) return format;
 
-    // Validate number of sectors
-    calcsectors=ATARIST_TRACKS*bootsector->bpb.spt*bootsector->bpb.nheads;
-    if (bootsector->bpb.nsects!=calcsectors) return format;
+    // Validate total number of sectors
+    calcval=ATARIST_TRACKS*bootsector->bpb.spt*bootsector->bpb.nheads;
+    if (bootsector->bpb.nsects!=calcval) return format;
+
+    // Validate entries in root directory
+    calcval=(ATARIST_ROOTDIRSECTORS*bootsector->bpb.bps)/ATARIST_DIRENTRYLEN;
+    if (bootsector->bpb.ndirs!=calcval) return format;
 
     return 1;
   }
