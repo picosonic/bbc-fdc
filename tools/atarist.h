@@ -4,10 +4,13 @@
 #include "diskstore.h"
 
 #define ATARIST_SECTORSIZE 512
+#define ATARIST_TRACKS 80
 
 #define ATARIST_UNKNOWN -1
 
 #define ATARIST_MINCLUSTER 2
+#define ATARIST_FLOPPYRESSEC 1
+#define ATARIST_FLOPPYNUMFATS 2
 
 #define ATARIST_DIRENTRYLEN   32
 #define ATARIST_DIRENTRYEND   0x00
@@ -24,6 +27,8 @@
 #define ATARIST_ATTRIB_VOLUME   0x08
 #define ATARIST_ATTRIB_DIR      0x10
 #define ATARIST_ATTRIB_NEWMOD   0x20
+
+#define ATARIST_CHECKSUMVALUE   0x1234
 
 /*
   https://www-user.tu-chemnitz.de/~heha/viewchm.php/basteln/PC/usbfloppy/floppy.chm/

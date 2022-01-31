@@ -246,6 +246,7 @@ int atarist_validate()
     struct atarist_bootsector *bootsector;
     int i;
     uint16_t cxsum;
+    int calcsectors;
 
     bootsector=(struct atarist_bootsector *)sector1->data;
 
@@ -256,10 +257,10 @@ int atarist_validate()
     if ((bootsector->bpb.spc!=2) && (bootsector->bpb.spc!=4) && (bootsector->bpb.spc!=8)) return format;
 
     // Validate reserved sectors
-    if (bootsector->bpb.ressec!=1) return format;
+    if (bootsector->bpb.ressec!=ATARIST_FLOPPYRESSEC) return format;
 
     // Validate num FATs
-    if (bootsector->bpb.nfats!=2) return format;
+    if (bootsector->bpb.nfats!=ATARIST_FLOPPYNUMFATS) return format;
 
     // Validate heads value
     if ((bootsector->bpb.nheads!=1) && (bootsector->bpb.nheads!=2)) return format;
@@ -272,9 +273,17 @@ int atarist_validate()
       cxsum+=(sector1->data[(i*2)+1]);
     }
 
-    cxsum=0x1234-cxsum;
+    cxsum=ATARIST_CHECKSUMVALUE-cxsum;
 
-    if (be16toh(bootsector->checksum)!=cxsum) return format;
+    // Checksum matches, this is a bootable Atari ST image
+    if (be16toh(bootsector->checksum)!=cxsum) return 1;
+
+    // Validate number of heads
+    if ((bootsector->bpb.nheads!=1) && (bootsector->bpb.nheads!=2)) return format;
+
+    // Validate number of sectors
+    calcsectors=ATARIST_TRACKS*bootsector->bpb.spt*bootsector->bpb.nheads;
+    if (bootsector->bpb.nsects!=calcsectors) return format;
 
     return 1;
   }
