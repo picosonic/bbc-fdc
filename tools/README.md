@@ -1,7 +1,7 @@
 # bbcfdc
 bbcfdc - Floppy disk raw flux capture and processor
 
-bbcfdc is intended for capturing raw **.rfi** flux data from floppy disk and optionally converting it into a **.ssd**, **.dsd**, **.fsd**, **.td0**, **.adf** or a generic **.img** file.
+bbcfdc is intended for capturing raw **.rfi** flux data from floppy disk and optionally converting it into a **.ssd**, **.dsd**, **.fsd**, **.td0**, **.adf**, **.st** or a generic **.img** file.
 
 It is designed to work with floppy disk interface PCB attached to GPIO of Raspberry Pi 2 or Raspberry Pi 3 running at 400Mhz (not overclocked), it also works with Raspberry Pi 4 running at 500Mhz (not overclocked). With some modifications the PCB and sample code can be made to work with the Raspberry Pi 1 running at 250Mhz.
 
@@ -21,7 +21,7 @@ By default, sectors are sorted by their physical position on the disk regardless
  * `-c` Catalogue the disk contents (DFS/ADFS/DOS/APPLEII/AMIGA/ATARI ST only)
  * `-ss` Force single-sided capture - optionally adding a 0 or 1 afterwards chooses that side (e.g. `-ss 0` or `-ss 1`)
  * `-ds` Force double-sided capture (unless output is to .ssd or .sdd)
- * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .ssd, .sdd, .dsd, .ddd, .fsd, .td0, .img, .adf)
+ * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .ssd, .sdd, .dsd, .ddd, .fsd, .td0, .img, .adf, .st)
  * `-spidiv` Specify SPI clock divider to adjust sample rate (one of 16,32,64)
  * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi, .dfi, .scp or .raw)
  * `-sort` Sort sectors in diskstore by logical sector prior to writing image

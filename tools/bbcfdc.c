@@ -495,7 +495,7 @@ int main(int argc,char **argv)
           printf("Unable to save fsd image\n");
       }
       else
-      if ((strstr(argv[argn], ".img")!=NULL) || (strstr(argv[argn], ".adf")!=NULL))
+      if ((strstr(argv[argn], ".img")!=NULL) || (strstr(argv[argn], ".adf")!=NULL) || (strstr(argv[argn], ".st")!=NULL))
       {
         diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
