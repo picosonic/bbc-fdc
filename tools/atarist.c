@@ -19,7 +19,7 @@ unsigned long atarist_clustertoabsolute(const unsigned long clusterid, const uns
   return (dataregion+(((clusterid-ATARIST_MINCLUSTER)*sectorspercluster)*bytespersector));
 }
 
-void atarist_readdir(const int level, const unsigned long offset, const unsigned int entries, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion, const unsigned long parent, unsigned int disktracks)
+void atarist_readdir(const int level, const unsigned long offset, const unsigned int entries, const unsigned long sectorspercluster, const unsigned long bytespersector, const unsigned long dataregion, const unsigned long parent, const unsigned int disktracks, const uint16_t totalsectors)
 {
   struct atarist_direntry de;
   unsigned int i;
@@ -28,7 +28,7 @@ void atarist_readdir(const int level, const unsigned long offset, const unsigned
 
   diskstore_absoluteseek(offset, INTERLEAVED, 80);
 
-  // Loop through entries - TODO add sanity checks / entry subdirectories
+  // Loop through entries - TODO add sanity checks
   for (e=0; e<entries; e++)
   {
     if (diskstore_absoluteread((char *)&de, sizeof(de), INTERLEAVED, 80)<sizeof(de))
@@ -39,7 +39,8 @@ void atarist_readdir(const int level, const unsigned long offset, const unsigned
       break;
 
     // Check if filesize exceeds disk size
-    // TODO
+    if (((de.attrib&ATARIST_ATTRIB_DIR)==0) && (de.fsize>(bytespersector*totalsectors)))
+      break;
 
     // Indent
     for (j=0; j<level; j++) printf("  ");
@@ -107,7 +108,7 @@ void atarist_readdir(const int level, const unsigned long offset, const unsigned
       {
         unsigned long curdiskoffs=diskstore_absoffset;
 
-        atarist_readdir(level+1, subdir, entries, sectorspercluster, bytespersector, dataregion, offset, disktracks);
+        atarist_readdir(level+1, subdir, entries, sectorspercluster, bytespersector, dataregion, offset, disktracks, totalsectors);
 
         diskstore_absoluteseek(curdiskoffs, INTERLEAVED, disktracks);
       }
@@ -217,7 +218,7 @@ void atarist_showinfo(const int debug)
 
     // Catalogue disk from root directory
     offset=bootsector->bpb.bps*rootsector;
-    atarist_readdir(0, offset, bootsector->bpb.ndirs, bootsector->bpb.spc, bootsector->bpb.bps, dataregion, 0, 80);
+    atarist_readdir(0, offset, bootsector->bpb.ndirs, bootsector->bpb.spc, bootsector->bpb.bps, dataregion, 0, 80, bootsector->bpb.nsects);
   }
 }
 
