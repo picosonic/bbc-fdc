@@ -298,7 +298,7 @@ uint32_t scp_checksum(FILE *scpfile)
 
 int scp_readheader(FILE *scpfile)
 {
-  if (scpfile==NULL) return 0;
+  if (scpfile==NULL) return -1;
 
   fread(&scpheader, 1, sizeof(scpheader), scpfile);
 
@@ -306,17 +306,17 @@ int scp_readheader(FILE *scpfile)
   {
     bzero(&scpheader, sizeof(scpheader));
 
-    return 0;
+    return -1;
   }
 
   // Only support 16bit timings
-  if (scpheader.bitcellencoding!=0x00) return 0;
+  if (scpheader.bitcellencoding!=0x00) return -1;
 
   // Make a note of where the header ends
   scp_endofheader=ftell(scpfile);
 
   // Verify checksum
-  if (scp_checksum(scpfile)!=scpheader.checksum) return 0;
+  if (scp_checksum(scpfile)!=scpheader.checksum) return -1;
 
   // Set RPM
   if ((scpheader.flags & SCP_FLAGS_360RPM)!=0)
@@ -341,8 +341,10 @@ int scp_readheader(FILE *scpfile)
   {
     bzero(&scpheader, sizeof(scpheader));
 
-    return 0;
+    return -1;
   }
+
+  if ((scpheader.starttrack==0) && (scpheader.endtrack==0)) return -1;
 
   return 0;
 }

@@ -38,17 +38,17 @@ int rfi_readheader(FILE *rfifile)
 {
   unsigned char buff[4];
 
-  if (rfifile==NULL) return 0;
+  if (rfifile==NULL) return -1;
 
   // Check for rfi magic
   fseek(rfifile, 0, SEEK_SET);
   bzero(buff, sizeof(buff));
   fread(buff, 3, 1, rfifile);
-  if (strcmp((char *)buff, RFI_MAGIC)!=0) return 0;
+  if (strcmp((char *)buff, RFI_MAGIC)!=0) return -1;
 
   // Check for "{"
   fread(buff, 1, 1, rfifile);
-  if (buff[0]!='{') return 0;
+  if (buff[0]!='{') return -1;
 
   // Determine header JSON size by looking for "}"
   while (!feof(rfifile))
@@ -64,7 +64,7 @@ int rfi_readheader(FILE *rfifile)
 
       rfi_headerstring=malloc(rfi_headerlen+1);
       if (rfi_headerstring==NULL)
-        return 0;
+        return -1;
 
       fseek(rfifile, 3, SEEK_SET);
       fread(rfi_headerstring, rfi_headerlen, 1, rfifile);
@@ -85,7 +85,7 @@ int rfi_readheader(FILE *rfifile)
         if (tokens==0)
         {
           free(rfi_headerstring);
-          return 0;
+          return -1;
         }
 
         jsmn_init(&parser);
@@ -148,14 +148,18 @@ int rfi_readheader(FILE *rfifile)
         free(tokens);
         free(rfi_headerstring);
 
-        return 1;
+        if (rfi_tracks>0)
+          return 0;
+        else
+          return -1;
       }
 
       free(rfi_headerstring);
     }
   }
 
-  return 0;
+  // Got to end of file
+  return -1;
 }
 
 // RLE encode raw binary sample data

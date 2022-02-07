@@ -6,9 +6,11 @@
 #include <string.h>
 #include <strings.h>
 
+#include "common.h"
 #include "hardware.h"
 #include "rfi.h"
 #include "scp.h"
+#include "hfe.h"
 
 #define HW_OLDRAWTRACKSIZE (1024*1024)
 
@@ -169,7 +171,7 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
   if (hw_samplefile!=NULL)
   {
     // Obsolete .raw files were 8 megabits per track, sampled at 12.5Mhz, either 40 or 80 tracks, with second side (if any) folowing the whole of the first
-    if (strstr(hw_samplefilename, ".raw")!=NULL)
+    if (compare_extension(hw_samplefilename, ".raw"))
     {
       if (fseek(hw_samplefile, ((hw_maxtracks*hw_currenthead)+hw_currenttrack)*HW_OLDRAWTRACKSIZE, SEEK_SET)==0)
       {
@@ -186,11 +188,14 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
       }
     }
     else
-    if (strstr(hw_samplefilename, ".rfi")!=NULL)
+    if (compare_extension(hw_samplefilename, ".rfi"))
       rfi_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
     else
-    if (strstr(hw_samplefilename, ".scp")!=NULL)
+    if (compare_extension(hw_samplefilename, ".scp"))
       scp_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
+    else
+    if (compare_extension(hw_samplefilename, ".hfe"))
+      hfe_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
   }
 }
 
@@ -224,17 +229,24 @@ int hw_init(const char *rawfile, const int spiclockdivider)
   hw_samplefile=fopen(rawfile, "rb");
 
   // If RFI opened and valid, read header values to determine capture settings
-  if ((hw_samplefile!=NULL) && (strstr(hw_samplefilename, ".rfi")!=NULL))
+  if ((hw_samplefile!=NULL) && (compare_extension(hw_samplefilename, ".rfi")))
   {
-    rfi_readheader(hw_samplefile);
-    if (rfi_tracks<=0) return 0;
+    if (rfi_readheader(hw_samplefile)==-1)
+      return 0;
   }
 
   // If SCP opened and valid, read header values to determine capture settings
-  if ((hw_samplefile!=NULL) && (strstr(hw_samplefilename, ".scp")!=NULL))
+  if ((hw_samplefile!=NULL) && (compare_extension(hw_samplefilename, ".scp")))
   {
-    scp_readheader(hw_samplefile);
-    if ((scpheader.starttrack==0) && (scpheader.endtrack==0)) return 0;
+    if (scp_readheader(hw_samplefile)==-1)
+      return 0;
+  }
+
+  // If HFE opened and valid, read header values to determine capture settings
+  if ((hw_samplefile!=NULL) && (compare_extension(hw_samplefilename, ".hfe")))
+  {
+    if (hfe_readheader(hw_samplefile)==-1)
+      return 0;
   }
 
   return (hw_detectdisk()==HW_HAVEDISK);

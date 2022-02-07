@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <string.h>
 
+#include "common.h"
 #include "hardware.h"
 #include "diskstore.h"
 #include "dfi.h"
@@ -398,7 +399,7 @@ int main(int argc,char **argv)
       ++argn;
       outputfilename=argv[argn];
 
-      if (strstr(argv[argn], ".ssd")!=NULL)
+      if (compare_extension(argv[argn], ".ssd"))
       {
         // .SSD is single sided
         sides=1;
@@ -419,7 +420,7 @@ int main(int argc,char **argv)
           printf("Unable to save ssd image\n");
       }
       else
-      if (strstr(argv[argn], ".sdd")!=NULL)
+      if (compare_extension(argv[argn], ".sdd"))
       {
         // .SDD is single sided
         sides=1;
@@ -441,7 +442,7 @@ int main(int argc,char **argv)
           printf("Unable to save sdd image\n");
       }
       else
-      if (strstr(argv[argn], ".dsd")!=NULL)
+      if (compare_extension(argv[argn], ".dsd"))
       {
         diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
@@ -457,7 +458,7 @@ int main(int argc,char **argv)
           printf("Unable to save dsd image\n");
       }
       else
-      if (strstr(argv[argn], ".ddd")!=NULL)
+      if (compare_extension(argv[argn], ".ddd"))
       {
         diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
@@ -474,7 +475,7 @@ int main(int argc,char **argv)
           printf("Unable to save ddd image\n");
       }
       else
-      if (strstr(argv[argn], ".fsd")!=NULL)
+      if (compare_extension(argv[argn], ".fsd"))
       {
         diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
@@ -495,7 +496,7 @@ int main(int argc,char **argv)
           printf("Unable to save fsd image\n");
       }
       else
-      if ((strstr(argv[argn], ".img")!=NULL) || (strstr(argv[argn], ".adf")!=NULL) || (strstr(argv[argn], ".st")!=NULL))
+      if ((compare_extension(argv[argn], ".img")) || (compare_extension(argv[argn], ".adf")) || (compare_extension(argv[argn], ".st")))
       {
         diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
@@ -504,10 +505,10 @@ int main(int argc,char **argv)
           outputtype=IMAGEIMG;
         }
         else
-          printf("Unable to save img image\n");
+          printf("Unable to save image image\n");
       }
       else
-      if (strstr(argv[argn], ".td0")!=NULL)
+      if (compare_extension(argv[argn], ".td0"))
       {
         diskimage=fopen(argv[argn], "w+");
         if (diskimage!=NULL)
@@ -519,7 +520,7 @@ int main(int argc,char **argv)
           printf("Unable to save td0 image\n");
       }
       else
-      if (strstr(argv[argn], ".rfi")!=NULL)
+      if (compare_extension(argv[argn], ".rfi"))
       {
         rawdata=fopen(argv[argn], "w+");
         if (rawdata!=NULL)
@@ -531,7 +532,7 @@ int main(int argc,char **argv)
           printf("Unable to save rawdata\n");
       }
       else
-      if (strstr(argv[argn], ".dfi")!=NULL)
+      if (compare_extension(argv[argn], ".dfi"))
       {
         rawdata=fopen(argv[argn], "w+");
         if (rawdata!=NULL)
@@ -543,7 +544,7 @@ int main(int argc,char **argv)
           printf("Unable to save dfi image\n");
       }
       else
-      if (strstr(argv[argn], ".scp")!=NULL)
+      if (compare_extension(argv[argn], ".scp"))
       {
         rawdata=fopen(argv[argn], "w+");
         if (rawdata!=NULL)
