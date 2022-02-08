@@ -101,6 +101,24 @@ It will check for the fsd magic identifier, show the creation details (date stam
  * `1` - Error with command line arguments
  * `2` - Error opening fsd file
 
+# checkhfe
+
+checkhfe - Check the contents of a **.hfe** file for debug purposes
+
+checkhfe is intended for looking at the contents of **.hfe** files, its primary use is for debugging to make sure the file has been written correctly.
+
+It will check for the hfe magic identifier, show the metadata and number of tracks then iterate through the available tracks printing out the track information.
+
+## Syntax :
+
+`[input_hfe_file]`
+
+## Return codes :
+
+ * `0` - Success
+ * `1` - Error with command line arguments, or not an HFE file
+ * `2` - Error opening hfe file
+
 # checktd0
 
 checktd0 - Check the contents of a **.td0** file for debug purposes
