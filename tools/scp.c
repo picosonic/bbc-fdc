@@ -364,6 +364,9 @@ long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, c
   // Don't process empty tracks
   if (scp_trackoffsets[(track*2)+side]==0) return 0;
 
+  // Ensure requested track is in range
+  if ((track<0) || ((track*2)>=scpheader.endtrack)) return 0;
+
   // Seek to data for this track
   fseek(scpfile, scp_trackoffsets[(track*2)+side], SEEK_SET);
 

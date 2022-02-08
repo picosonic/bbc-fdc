@@ -189,7 +189,8 @@ long hfe_readtrack(FILE *hfefile, const int track, const int side, char* buf, co
 
   if (hfefile==NULL) return 0;
 
-  if (track>=hfeheader.number_of_track) return 0;
+  // Ensure requested track is in range
+  if ((track<0) || (track>=hfeheader.number_of_track)) return 0;
 
   // Seek to the offset for this track
   fseek(hfefile, (hfeheader.track_list_offset*HFE_BLOCKSIZE)+(track*(sizeof(curtrack))), SEEK_SET);
