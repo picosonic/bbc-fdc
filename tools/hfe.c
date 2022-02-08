@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>
 
 #include "hardware.h"
 #include "hfe.h"
@@ -71,6 +72,8 @@ void hfe_gettrackdata(FILE *hfefile, struct hfe_track *curtrack, const int side,
   uint32_t bufpos=0;
   uint8_t outb=0;
   uint8_t outblen=0;
+
+  bzero(buf, buflen);
 
   if (side>1) return;
   if (feof(hfefile)) return;
@@ -185,6 +188,8 @@ long hfe_readtrack(FILE *hfefile, const int track, const int side, char* buf, co
   struct hfe_track curtrack;
 
   if (hfefile==NULL) return 0;
+
+  if (track>=hfeheader.number_of_track) return 0;
 
   // Seek to the offset for this track
   fseek(hfefile, (hfeheader.track_list_offset*HFE_BLOCKSIZE)+(track*(sizeof(curtrack))), SEEK_SET);

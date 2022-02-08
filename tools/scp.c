@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 #include <sys/time.h>
 #include <math.h>
@@ -357,6 +358,8 @@ long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, c
   double scalar=(double)scprate/(double)hw_samplerate;
 
   if (scpfile==NULL) return 0;
+
+  bzero(buf, buflen);
 
   // Don't process empty tracks
   if (scp_trackoffsets[(track*2)+side]==0) return 0;
