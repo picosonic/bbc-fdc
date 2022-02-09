@@ -71,7 +71,7 @@ int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *fp)
   if (is525)
     printf("  Location: %.2f\n", (float)stream.location/4);
   else
-    printf("  Location: %d\n", stream.location);
+    printf("  Location: Track %d side %d\n", (stream.location>>1), stream.location&1);
 
   printf("  Capture type: %d (%s)\n", stream.type, (stream.type==1)?"Timing":(stream.type==2)?"Bits":(stream.type==3)?"Extended timing":"Unknown");
   printf("  Data length: %d bytes\n", stream.size);

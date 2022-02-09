@@ -1,7 +1,7 @@
 #ifndef _A2R_H_
 #define _A2R_H_
 
-// A2R v2.0 (Aug 12 2018)
+// A2R v2.0.1 (Dec 2, 2018)
 // All data is stored little-endian
 //
 // STRM
@@ -64,7 +64,7 @@ struct a2r_info
 
 struct a2r_strm
 {
-  uint8_t location; // Track where capture happened (5.25" in quarter tracks, 3.5" in tracks where 0-79 is side 0 and 80-159 is for side 1), 0xff indicates end of STRM
+  uint8_t location; // Track where capture happened (5.25" in quarter tracks, 3.5" in (track<<1)+side format), 0xff indicates end of STRM
   uint8_t type; // Capture type, 1=Timing, 2=Bits, 3=xtiming
   uint32_t size; // Size of data in bytes
   uint32_t loop; // Duration until sync sensor was triggered at loop point
