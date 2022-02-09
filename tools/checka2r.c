@@ -52,7 +52,7 @@ int main(int argc, char **argv)
   while (!feof(fp))
   {
     struct a2r_chunkheader chunkheader;
-    int i;
+    uint16_t i;
 
     if (fread(&chunkheader, 1, sizeof(chunkheader), fp)<=0)
       break;
@@ -65,22 +65,33 @@ int main(int argc, char **argv)
 
     if (strncmp((char *)&chunkheader.id, A2R_CHUNK_INFO, 4)==0)
     {
-      struct a2r_info info;
+      struct a2r_info *info;
 
-      fread(&info, 1, sizeof(info), fp);
+      info=malloc(chunkheader.size);
 
-      printf("  Version: %d\n", info.version);
+      if (info==NULL)
+      {
+        printf("Failed to allocate memory for INFO block\n");
+        fclose(fp);
+        return 1;
+      }
+
+      fread(info, 1, chunkheader.size, fp);
+
+      printf("  Version: %d\n", info->version);
 
       printf("  Creator: ");
-      for (i=0; i<sizeof(info.creator); i++)
-        printf("%c", info.creator[i]);
+      for (i=0; i<sizeof(info->creator); i++)
+        printf("%c", info->creator[i]);
       printf("\n");
 
-      printf("  Disk type: %d (%s)\n", info.disktype, info.disktype==1?"5.25\"":"3.5\"");
+      printf("  Disk type: %d (%s)\n", info->disktype, info->disktype==1?"5.25\"":"3.5\"");
 
-      printf("  Protection: Write%s\n", info.writeprotected==1?"able":" protected");
+      printf("  Protection: Write%s\n", info->writeprotected==1?"able":" protected");
 
-      printf("  Sync: %s\n", info.synchronised==1?"Cross track sync":"None");
+      printf("  Sync: %s\n", info->synchronised==1?"Cross track sync":"None");
+
+      free(info);
     }
     else
       fseek(fp, chunkheader.size, SEEK_CUR);
