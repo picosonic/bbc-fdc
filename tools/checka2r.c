@@ -6,14 +6,17 @@
 #include "a2r.h"
 
 struct a2r_header a2rheader;
-int is525=0; // Is the capture from a 5.25" disk
+int is525=0; // Is the capture from a 5.25" disk in SS 40t 0.25 step
 
 int a2r_processheader(FILE *fp)
 {
   fread(&a2rheader, 1, sizeof(a2rheader), fp);
 
-  if (strncmp((char *)&a2rheader.id, A2R_MAGIC, strlen(A2R_MAGIC))!=0)
-    return 1;
+  if (strncmp((char *)&a2rheader.id, A2R_MAGIC2, strlen(A2R_MAGIC2))!=0)
+  {
+    if (strncmp((char *)&a2rheader.id, A2R_MAGIC3, strlen(A2R_MAGIC3))!=0)
+      return 1;
+  }
 
   if (a2rheader.ff!=0xff)
     return 1;
@@ -64,20 +67,72 @@ int a2r_processmeta(struct a2r_chunkheader *chunkheader, FILE *fp)
 int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *fp)
 {
   struct a2r_strm stream;
+  uint32_t done;
 
-  if (fread(&stream, 1, sizeof(stream), fp)<=0)
+  done=0;
+
+  // Loop through all available stream data
+  while (done<chunkheader->size)
+  {
+    if (fread(&stream, 1, sizeof(stream), fp)<=0)
+      return 1;
+
+    // Detect end of stream data
+    if (stream.location==0xff)
+    {
+      fseek(fp, 1-sizeof(stream), SEEK_CUR);
+      break;
+    }
+
+    printf("  Track ");
+    if (is525)
+      printf("%.2f", (float)stream.location/4);
+    else
+      printf("%d side %d", (stream.location>>1), stream.location&1);
+
+    printf(", type %d (%s)", stream.type, (stream.type==1)?"Timing":(stream.type==2)?"Bits":(stream.type==3)?"Extended timing":"Unknown");
+    printf(", length %d bytes", stream.size);
+    printf(", loop %d\n", stream.loop);
+
+    // Skip over the actual data
+    fseek(fp, stream.size, SEEK_CUR);
+
+    done+=(sizeof(stream)+stream.size);
+  }
+
+  return 0;
+}
+
+int a2r_processrawcapture(struct a2r_chunkheader *chunkheader, FILE *fp)
+{
+  struct a2r_rwcp rwcp;
+
+  if (fread(&rwcp, 1, sizeof(rwcp), fp)<=0)
     return 1;
 
-  if (is525)
-    printf("  Location: %.2f\n", (float)stream.location/4);
-  else
-    printf("  Location: Track %d side %d\n", (stream.location>>1), stream.location&1);
+  printf("  Version: %d\n", rwcp.version);
+  printf("  Resolution: %d picoseconds/tick\n", rwcp.resolution);
 
-  printf("  Capture type: %d (%s)\n", stream.type, (stream.type==1)?"Timing":(stream.type==2)?"Bits":(stream.type==3)?"Extended timing":"Unknown");
-  printf("  Data length: %d bytes\n", stream.size);
-  printf("  Loop point: %d\n", stream.loop);
+  // TODO list stream capture entries
 
-  fseek(fp, chunkheader->size-sizeof(stream), SEEK_CUR);
+  fseek(fp, chunkheader->size-sizeof(rwcp), SEEK_CUR);
+
+  return 0;
+}
+
+int a2r_processsolved(struct a2r_chunkheader *chunkheader, FILE *fp)
+{
+  struct a2r_slvd slvd;
+
+  if (fread(&slvd, 1, sizeof(slvd), fp)<=0)
+    return 1;
+
+  printf("  Version: %d\n", slvd.version);
+  printf("  Resolution: %d picoseconds/tick\n", slvd.resolution);
+
+  // TODO list solved track entries
+
+  fseek(fp, chunkheader->size-sizeof(slvd), SEEK_CUR);
 
   return 0;
 }
@@ -105,13 +160,54 @@ int a2r_processinfo(struct a2r_chunkheader *chunkheader, FILE *fp)
     printf("%c", info->creator[i]);
   printf("\n");
 
-  printf("  Disk type: %d (%s)\n", info->disktype, info->disktype==1?"5.25\"":"3.5\"");
+  printf("  Disk type: %d (", info->disktype);
+  switch (info->disktype)
+  {
+    case 1:
+      printf("5.25\" SS 40trk 0.25 step");
+      break;
+
+    case 2:
+      printf("3.5\" DS 80trk Apple CLV");
+      break;
+
+    case 3:
+      printf("5.25\" DS 80trk");
+      break;
+
+    case 4:
+      printf("5.25\" DS 40trk");
+      break;
+
+    case 5:
+      printf("3.5\" DS 80trk");
+      break;
+
+    case 6:
+      printf("8\" DS");
+      break;
+
+    default:
+      printf("Unknown");
+      break;
+  }
+  printf(")\n");
+
   if (info->disktype==1)
     is525=1;
 
   printf("  Protection: Write%s\n", info->writeprotected==1?"able":" protected");
 
   printf("  Sync: %s\n", info->synchronised==1?"Cross track sync":"None");
+
+  if (a2rheader.id[3]>='3')
+  {
+    printf("  Sector type: ");
+    if (info->hardsectors==0)
+      printf("Soft sectored\n");
+    else
+      printf("%d hard sectors\n", info->hardsectors);
+  }
 
   free(info);
 
@@ -146,6 +242,18 @@ int a2r_processchunk(struct a2r_chunkheader *chunkheader, FILE *fp)
       return 1;
   }
   else
+  if (strncmp((char *)&chunkheader->id, A2R_CHUNK_RWCP, 4)==0)
+  {
+    if (a2r_processrawcapture(chunkheader, fp)!=0)
+      return 1;
+  }
+  else
+  if (strncmp((char *)&chunkheader->id, A2R_CHUNK_SLVD, 4)==0)
+  {
+    if (a2r_processsolved(chunkheader, fp)!=0)
+      return 1;
+  }
+  else
     fseek(fp, chunkheader->size, SEEK_CUR);
 
   return 0;
@@ -174,7 +282,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  printf("A2R file\n");
+  printf("A2R revision %c file\n", a2rheader.id[3]);
 
   // Process chunks
   while (!feof(fp))
