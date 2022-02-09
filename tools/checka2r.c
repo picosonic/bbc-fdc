@@ -6,6 +6,7 @@
 #include "a2r.h"
 
 struct a2r_header a2rheader;
+int is525=0; // Is the capture from a 5.25" disk
 
 int a2r_processheader(FILE *fp)
 {
@@ -38,7 +39,7 @@ int a2r_processmeta(struct a2r_chunkheader *chunkheader, FILE *fp)
 
   if (fread(meta, 1, chunkheader->size, fp)==chunkheader->size)
   {
-    uint16_t i;
+    uint32_t i;
 
     printf("  ");
     for (i=0; i<chunkheader->size; i++)
@@ -58,6 +59,27 @@ int a2r_processmeta(struct a2r_chunkheader *chunkheader, FILE *fp)
   free(meta);
 
   return 1;
+}
+
+int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *fp)
+{
+  struct a2r_strm stream;
+
+  if (fread(&stream, 1, sizeof(stream), fp)<=0)
+    return 1;
+
+  if (is525)
+    printf("  Location: %.2f\n", (float)stream.location/4);
+  else
+    printf("  Location: %d\n", stream.location);
+
+  printf("  Capture type: %d (%s)\n", stream.type, (stream.type==1)?"Timing":(stream.type==2)?"Bits":(stream.type==3)?"Extended timing":"Unknown");
+  printf("  Data length: %d bytes\n", stream.size);
+  printf("  Loop point: %d\n", stream.loop);
+
+  fseek(fp, chunkheader->size-sizeof(stream), SEEK_CUR);
+
+  return 0;
 }
 
 int a2r_processinfo(struct a2r_chunkheader *chunkheader, FILE *fp)
@@ -84,6 +106,8 @@ int a2r_processinfo(struct a2r_chunkheader *chunkheader, FILE *fp)
   printf("\n");
 
   printf("  Disk type: %d (%s)\n", info->disktype, info->disktype==1?"5.25\"":"3.5\"");
+  if (info->disktype==1)
+    is525=1;
 
   printf("  Protection: Write%s\n", info->writeprotected==1?"able":" protected");
 
@@ -113,6 +137,12 @@ int a2r_processchunk(struct a2r_chunkheader *chunkheader, FILE *fp)
   if (strncmp((char *)&chunkheader->id, A2R_CHUNK_META, 4)==0)
   {
     if (a2r_processmeta(chunkheader, fp)!=0)
+      return 1;
+  }
+  else
+  if (strncmp((char *)&chunkheader->id, A2R_CHUNK_STRM, 4)==0)
+  {
+    if (a2r_processstream(chunkheader, fp)!=0)
       return 1;
   }
   else
