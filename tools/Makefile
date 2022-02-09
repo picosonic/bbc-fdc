@@ -9,15 +9,21 @@ CPU = $(shell bash ./hw.sh CPU)
 DEBUGFLAGS = -g -W -Wall
 BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
 
-all: drivetest bbcfdc checkfsd checkhfe checktd0 checkscp bbcfdc-nopi
+all: drivetest bbcfdc checka2r checkfsd checkhfe checktd0 checkscp bbcfdc-nopi
 
-checktools: checkfsd checkhfe checktd0 checkscp
+checktools: checka2r checkfsd checkhfe checktd0 checkscp
 
 drivetest: drivetest.o hardware.o
 	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835
 
 drivetest.o: drivetest.c hardware.h
 	$(CC) $(BUILDFLAGS) -c -o drivetest.o drivetest.c
+
+checka2r: checka2r.o
+	$(CC) $(BUILDFLAGS) -o checka2r checka2r.o
+
+checka2r.o: checka2r.c a2r.h
+	$(CC) $(BUILDFLAGS) -c -o checka2r.o checka2r.c
 
 checkfsd: checkfsd.o
 	$(CC) $(BUILDFLAGS) -o checkfsd checkfsd.o
@@ -144,6 +150,7 @@ clean:
 	rm -f *.o
 	rm -f drivetest
 	rm -f bbcfdc
+	rm -f checka2r
 	rm -f checkfsd
 	rm -f checkhfe
 	rm -f checkscp

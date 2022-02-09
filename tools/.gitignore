@@ -3,6 +3,7 @@
 drivetest
 bbcfdc
 bbcfdc-nopi
+checka2r
 checkfsd
 checkhfe
 checkscp
@@ -13,6 +14,7 @@ checktd0
 *.rfi
 *.dfi
 *.scp
+*.hfe
 
 # BBC Micro DFS images
 *.ssd
@@ -33,3 +35,7 @@ checktd0
 # Generic images
 *.img
 *.td0
+
+# Apple II images
+*.a2r
+*.woz
