@@ -106,6 +106,7 @@ int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *fp)
 int a2r_processrawcapture(struct a2r_chunkheader *chunkheader, FILE *fp)
 {
   struct a2r_rwcp rwcp;
+  uint32_t done;
 
   if (fread(&rwcp, 1, sizeof(rwcp), fp)<=0)
     return 1;
@@ -113,10 +114,48 @@ int a2r_processrawcapture(struct a2r_chunkheader *chunkheader, FILE *fp)
   printf("  Version: %d\n", rwcp.version);
   printf("  Resolution: %d picoseconds/tick\n", rwcp.resolution);
 
-  // TODO list stream capture entries
+  done=sizeof(rwcp);
 
-  fseek(fp, chunkheader->size-sizeof(rwcp), SEEK_CUR);
+  // Loop through all available stream data
+  while (done<chunkheader->size)
+  {
+    struct a2r_rwcp_strm stream;
+    uint32_t capturesize;
 
+    if (fread(&stream, 1, sizeof(stream), fp)<=0)
+      return 1;
+
+    done+=sizeof(stream);
+
+    // Detect end of stream data
+    if (stream.mark=='X')
+    {
+      fseek(fp, 1-sizeof(stream), SEEK_CUR);
+      break;
+    }
+
+    printf("  Track ");
+    if (is525)
+      printf("%.2f", (float)stream.location/4);
+    else
+      printf("%d side %d", (stream.location>>1), stream.location&1);
+
+    printf(", type %d (%s)", stream.type, (stream.type==1)?"Timing":(stream.type==2)?"Bits":(stream.type==3)?"Extended timing":"Unknown");
+    printf(", %d index", stream.indexcount);
+
+    // Skip over index array
+    fseek(fp, sizeof(uint32_t)*stream.indexcount, SEEK_CUR);
+    done+=(sizeof(uint32_t)*stream.indexcount);
+
+    fread(&capturesize, 1, sizeof(capturesize), fp);
+    done+=sizeof(capturesize);
+    printf(", %d bytes\n", capturesize);
+
+    // Skip over capture data
+    fseek(fp, capturesize, SEEK_CUR);
+    done+=capturesize;
+  }
+ 
   return 0;
 }
 

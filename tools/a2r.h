@@ -93,6 +93,7 @@ struct a2r_rwcp
 {
   uint8_t version; // RWCP revision (currently 1)
   uint32_t resolution; // Picoseconds per tick for flux and index timing (default 125,000 i.e. 125 nanoseconds)
+  uint8_t reserved[11]; // Reserved for future use, all zeroes
 };
 
 struct a2r_rwcp_strm
