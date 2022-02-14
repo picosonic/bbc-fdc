@@ -201,6 +201,54 @@ int woz_processtmap(struct woz_chunkheader *chunkheader, FILE *fp)
   return 0;
 }
 
+int woz_processtrks(struct woz_chunkheader *chunkheader, FILE *fp)
+{
+  long filepos;
+
+  filepos=ftell(fp);
+
+  if (wozheader.id[3]=='1')
+  {
+    struct woz_trks1 trks;
+    int i;
+
+    for (i=0; i<WOZ_MAXTRACKS; i++)
+    {
+      if (trackmap[i]!=WOZ_NOTRACK)
+      {
+        if (is525)
+          printf("  Bitstream for Track %.2f\n", (double)i/4);
+        else
+          printf("  Bistream for Side %d Track %d\n", i/80, i%80);
+
+        fseek(fp, filepos+(trackmap[i]*sizeof(trks)), SEEK_SET);
+
+        if (fread(&trks, 1, sizeof(trks), fp)<sizeof(trks))
+          return 1;
+
+        printf("    Bytes used : %d\n", trks.bytesused);
+        printf("    Bit count : %d\n", trks.bitcount);
+        printf("    Splice point : %d\n", trks.splicepoint);
+        printf("    Splice nibble : %d\n", trks.splicenibble);
+        printf("    Splice bit count : %d\n", trks.splicebitcount);
+      }
+    }
+
+    // Move on to next chunk
+    fseek(fp, filepos, SEEK_SET);
+    fseek(fp, chunkheader->chunksize, SEEK_CUR);
+  }
+  else
+  if (wozheader.id[3]=='2')
+  {
+    fseek(fp, chunkheader->chunksize, SEEK_CUR);
+  }
+  else
+    return 1;
+
+  return 0;
+}
+
 int woz_processmeta(struct woz_chunkheader *chunkheader, FILE *fp)
 {
   uint8_t *meta;
@@ -257,6 +305,12 @@ int woz_processchunk(struct woz_chunkheader *chunkheader, FILE *fp)
   if (strncmp((char *)&chunkheader->id, WOZ_CHUNK_TMAP, 4)==0)
   {
     if (woz_processtmap(chunkheader, fp)!=0)
+      return 1;
+  }
+  else
+  if (strncmp((char *)&chunkheader->id, WOZ_CHUNK_TRKS, 4)==0)
+  {
+    if (woz_processtrks(chunkheader, fp)!=0)
       return 1;
   }
   else

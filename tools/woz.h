@@ -6,6 +6,7 @@
 
 #define WOZ_MAXTRACKS 160
 #define WOZ_NOTRACK 0xff
+#define WOZ_TRACKSIZE 6646
 
 // Chunk ids
 #define WOZ_CHUNK_INFO "INFO"
@@ -18,8 +19,11 @@
 //
 // WOZ format references
 //
-// https://applesaucefdc.com/woz/reference1/
-// https://applesaucefdc.com/woz/reference2/
+// Version 1.0.1 - May 20th, 2018
+//   https://applesaucefdc.com/woz/reference1/
+//
+// Version 2.1 - June 16th, 2021
+//   https://applesaucefdc.com/woz/reference2/
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -62,6 +66,27 @@ struct woz_info
 
   uint16_t fluxblock; // Block (512 bytes) where FLUX chunk resides relative to start of file, or 0
   uint16_t largestfluxtrack; // Number of (512 bytes) blocks used by largest flux track
+};
+
+// Version 1 track data, 160 of these
+//   starting location = (tmap_value * 6656) + 256
+struct woz_trks1
+{
+  uint8_t bitstream[WOZ_TRACKSIZE]; // Bitstream padded out to 6646 bytes
+  uint16_t bytesused; // Used bytes within bitstream
+  uint16_t bitcount; // Used bits within bitstream
+  uint16_t splicepoint; // Index of first bit after track splice, no splice=0xffff
+  uint8_t splicenibble; // Nibble value to use for splice
+  uint8_t splicebitcount; // Bit count of splice nibble
+  uint16_t reserved;
+};
+
+// Version 2 track data, 160 of these, then BITS data
+struct woz_trks2
+{
+  uint16_t startingblock; // First block of BITS data (512 byte blocks), relative to start of file
+  uint16_t blockcount; // Number of blocks for this BITS data
+  uint32_t bitcount; // Number of used bits in bitstream
 };
 
 #pragma pack(pop)
