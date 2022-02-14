@@ -159,7 +159,9 @@ int woz_processinfo(struct woz_chunkheader *chunkheader, FILE *fp)
     if (info->compatibility & 0x100) printf("%sApple /// Plus", (systems++)>0?", ":"");
     printf(")\n");
 
-    printf("  Required RAM : %dk\n", info->minimumram);
+    if (info->minimumram!=0)
+      printf("  Required RAM : %dk\n", info->minimumram);
+
     printf("  Largest track : %d x 512 byte blocks\n", info->largesttrack);
   }
 
@@ -172,6 +174,43 @@ int woz_processinfo(struct woz_chunkheader *chunkheader, FILE *fp)
   free(info);
 
   return 0;
+}
+
+int woz_processmeta(struct woz_chunkheader *chunkheader, FILE *fp)
+{
+  uint8_t *meta;
+
+  meta=malloc(chunkheader->chunksize);
+
+  if (meta==NULL)
+  {
+    printf("Failed to allocate memory for META block\n");
+
+    return 1;
+  }
+
+  if (fread(meta, 1, chunkheader->chunksize, fp)==chunkheader->chunksize)
+  {
+    uint32_t i;
+
+    printf("  ");
+    for (i=0; i<chunkheader->chunksize; i++)
+    {
+      printf("%c", meta[i]);
+
+      if (meta[i]=='\n')
+        printf("  ");
+    }
+    printf("\n");
+
+    free(meta);
+
+    return 0;
+  }
+
+  free(meta);
+
+  return 1;
 }
 
 int woz_processchunk(struct woz_chunkheader *chunkheader, FILE *fp)
@@ -187,6 +226,12 @@ int woz_processchunk(struct woz_chunkheader *chunkheader, FILE *fp)
   if (strncmp((char *)&chunkheader->id, WOZ_CHUNK_INFO, 4)==0)
   {
     if (woz_processinfo(chunkheader, fp)!=0)
+      return 1;
+  }
+  else
+  if (strncmp((char *)&chunkheader->id, WOZ_CHUNK_META, 4)==0)
+  {
+    if (woz_processmeta(chunkheader, fp)!=0)
       return 1;
   }
   else
