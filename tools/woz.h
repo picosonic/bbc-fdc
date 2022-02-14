@@ -4,6 +4,9 @@
 #define WOZ_MAGIC1 "WOZ1"
 #define WOZ_MAGIC2 "WOZ2"
 
+#define WOZ_MAXTRACKS 160
+#define WOZ_NOTRACK 0xff
+
 // Chunk ids
 #define WOZ_CHUNK_INFO "INFO"
 #define WOZ_CHUNK_TMAP "TMAP"

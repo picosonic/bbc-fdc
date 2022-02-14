@@ -8,6 +8,7 @@
 
 struct woz_header wozheader;
 int is525=0; // Is the capture from a 5.25" disk in SS 40t 0.25 step
+uint8_t trackmap[WOZ_MAXTRACKS]; // Index for track data within TRKS chunk
 
 int woz_processheader(FILE *fp)
 {
@@ -176,6 +177,30 @@ int woz_processinfo(struct woz_chunkheader *chunkheader, FILE *fp)
   return 0;
 }
 
+int woz_processtmap(struct woz_chunkheader *chunkheader, FILE *fp)
+{
+  int i;
+
+  if (chunkheader->chunksize!=WOZ_MAXTRACKS)
+    return 1;
+
+  if (fread(trackmap, 1, sizeof(trackmap), fp)<sizeof(trackmap))
+    return 1;
+
+  for (i=0; i<WOZ_MAXTRACKS; i++)
+  {
+    if (trackmap[i]!=WOZ_NOTRACK)
+    {
+      if (is525) // From INFO chunk
+        printf("  Track %.2f @ %.2x\n", (double)i/4, trackmap[i]);
+      else
+        printf("  Side %d Track %d @ %.2x\n", i/80, i%80, trackmap[i]);
+    }
+  }
+
+  return 0;
+}
+
 int woz_processmeta(struct woz_chunkheader *chunkheader, FILE *fp)
 {
   uint8_t *meta;
@@ -226,6 +251,12 @@ int woz_processchunk(struct woz_chunkheader *chunkheader, FILE *fp)
   if (strncmp((char *)&chunkheader->id, WOZ_CHUNK_INFO, 4)==0)
   {
     if (woz_processinfo(chunkheader, fp)!=0)
+      return 1;
+  }
+  else
+  if (strncmp((char *)&chunkheader->id, WOZ_CHUNK_TMAP, 4)==0)
+  {
+    if (woz_processtmap(chunkheader, fp)!=0)
       return 1;
   }
   else
