@@ -9,9 +9,9 @@ CPU = $(shell bash ./hw.sh CPU)
 DEBUGFLAGS = -g -W -Wall
 BUILDFLAGS = $(DEBUGFLAGS) -D$(HARDWARE) -D$(REVISION)
 
-all: drivetest bbcfdc checka2r checkfsd checkhfe checktd0 checkscp bbcfdc-nopi
+all: drivetest bbcfdc checka2r checkfsd checkhfe checktd0 checkscp checkwoz bbcfdc-nopi
 
-checktools: checka2r checkfsd checkhfe checktd0 checkscp
+checktools: checka2r checkfsd checkhfe checktd0 checkscp checkwoz
 
 drivetest: drivetest.o hardware.o
 	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835
@@ -48,6 +48,13 @@ checktd0: checktd0.o crc.o lzhuf.o
 
 checktd0.o: checktd0.c teledisk.h crc.h lzhuf.h
 	$(CC) $(BUILDFLAGS) -c -o checktd0.o checktd0.c
+
+checkwoz: checkwoz.o crc32.o
+	$(CC) $(BUILDFLAGS) -o checkwoz checkwoz.o crc32.o
+
+checkwoz.o: checkwoz.c crc32.h woz.h
+	$(CC) $(BUILDFLAGS) -c -o checkwoz.o checkwoz.c
+
 
 bbcfdc: bbcfdc.o adfs.o amigados.o amigamfm.o appledos.o applegcr.o atarist.o common.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o pll.o rfi.o scp.o teledisk.o
 	$(CC) $(BUILDFLAGS) -o bbcfdc adfs.o amigados.o amigamfm.o appledos.o applegcr.o atarist.o bbcfdc.o common.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hardware.o jsmn.o mfm.o mod.o pll.o rfi.o scp.o teledisk.o -lbcm2835 -lm
@@ -155,4 +162,5 @@ clean:
 	rm -f checkhfe
 	rm -f checkscp
 	rm -f checktd0
+	rm -f checkwoz
 	rm -f bbcfdc-nopi
