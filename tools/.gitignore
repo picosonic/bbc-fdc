@@ -32,11 +32,15 @@ checkwoz
 
 # C64 images
 *.d64
+*.g64
+
+# Atari ST images
+*.st
 
 # Generic images
 *.img
 *.td0
 
-# Apple II images
+# Applesauce images
 *.a2r
 *.woz
