@@ -51,8 +51,6 @@ long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, co
     uint8_t outb;
     uint8_t outblen;
 
-    hw_samplerate=(USINSECOND/APPLEGCR_BITCELL)*2;
-
     fseek(wozfile, (woz_trackmap[toffset]*sizeof(trks))+256, SEEK_SET);
     if (fread(&trks, 1, sizeof(trks), wozfile)<sizeof(trks))
       return -1;
@@ -207,6 +205,8 @@ int woz_readheader(FILE *wozfile)
     else
       fseek(wozfile, chunkheader.chunksize, SEEK_CUR);
   }
+
+  hw_samplerate=(USINSECOND/APPLEGCR_BITCELL)*2;
 
   return 0;
 }
