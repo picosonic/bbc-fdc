@@ -192,9 +192,9 @@ int woz_processtmap(struct woz_chunkheader *chunkheader, FILE *fp)
     if (trackmap[i]!=WOZ_NOTRACK)
     {
       if (is525) // From INFO chunk
-        printf("  Track %.2f @ %.2x\n", (double)i/4, trackmap[i]);
+        printf("  [%d] Track %.2f @ %.2x\n", i, (double)i/4, trackmap[i]);
       else
-        printf("  Side %d Track %d @ %.2x\n", i/80, i%80, trackmap[i]);
+        printf("  [%d] Side %d Track %d @ %.2x\n", i, i/80, i%80, trackmap[i]);
     }
   }
 
