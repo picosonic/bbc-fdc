@@ -636,6 +636,7 @@ int main(int argc,char **argv)
   }
 
   printf("Start with %lu byte sample buffer\n", samplebuffsize);
+  mod_samplesize=samplebuffsize;
 
   // Install signal handlers to make sure motor is stopped
   atexit(exitFunction);
