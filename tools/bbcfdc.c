@@ -215,9 +215,6 @@ int main(int argc,char **argv)
     if (strcmp(argv[argn], "-c")==0)
     {
       catalogue=1;
-
-      if (capturetype==DISKNONE)
-        capturetype=DISKCAT;
     }
     else
     if (strcmp(argv[argn], "-l")==0)
@@ -569,6 +566,10 @@ int main(int argc,char **argv)
 
     ++argn;
   }
+
+  // Check for catalogue requested without other operations
+  if ((catalogue==1) && (capturetype==DISKNONE))
+    capturetype=DISKCAT;
 
   // Create a csv file with the same name as the output file
   // but with a .csv extension
