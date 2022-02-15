@@ -354,7 +354,6 @@ long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, c
 {
   struct scp_tdh thdr;
   struct scp_timings timings;
-  long trackpos;
   double scalar=(double)scprate/(double)hw_samplerate;
 
   if (scpfile==NULL) return 0;
@@ -384,6 +383,7 @@ long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, c
     for (i=0; i<scpheader.revolutions; i++)
     {
       unsigned char b, blen;
+      long trackpos;
 
       fread(&timings, 1, sizeof(timings), scpfile);
 
