@@ -11,6 +11,8 @@
 #include "rfi.h"
 #include "scp.h"
 #include "hfe.h"
+#include "a2r.h"
+#include "woz.h"
 
 #define HW_OLDRAWTRACKSIZE (1024*1024)
 
@@ -196,6 +198,12 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
     else
     if (compare_extension(hw_samplefilename, ".hfe"))
       hfe_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
+    else
+    if (compare_extension(hw_samplefilename, ".a2r"))
+      a2r_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
+    else
+    if (compare_extension(hw_samplefilename, ".woz"))
+      woz_readtrack(hw_samplefile, hw_currenttrack, hw_currenthead, buf, len);
   }
 }
 
@@ -228,25 +236,42 @@ int hw_init(const char *rawfile, const int spiclockdivider)
   // Open sample file
   hw_samplefile=fopen(rawfile, "rb");
 
-  // If RFI opened and valid, read header values to determine capture settings
-  if ((hw_samplefile!=NULL) && (compare_extension(hw_samplefilename, ".rfi")))
+  if (hw_samplefile!=NULL)
   {
-    if (rfi_readheader(hw_samplefile)==-1)
-      return 0;
-  }
+    // If RFI opened and valid, read header values to determine capture settings
+    if (compare_extension(hw_samplefilename, ".rfi"))
+    {
+      if (rfi_readheader(hw_samplefile)==-1)
+        return 0;
+    }
 
-  // If SCP opened and valid, read header values to determine capture settings
-  if ((hw_samplefile!=NULL) && (compare_extension(hw_samplefilename, ".scp")))
-  {
-    if (scp_readheader(hw_samplefile)==-1)
-      return 0;
-  }
+    // If SCP opened and valid, read header values to determine capture settings
+    if (compare_extension(hw_samplefilename, ".scp"))
+    {
+      if (scp_readheader(hw_samplefile)==-1)
+        return 0;
+    }
 
-  // If HFE opened and valid, read header values to determine capture settings
-  if ((hw_samplefile!=NULL) && (compare_extension(hw_samplefilename, ".hfe")))
-  {
-    if (hfe_readheader(hw_samplefile)==-1)
-      return 0;
+    // If HFE opened and valid, read header values to determine capture settings
+    if (compare_extension(hw_samplefilename, ".hfe"))
+    {
+      if (hfe_readheader(hw_samplefile)==-1)
+        return 0;
+    }
+
+    // If A2R opened and valid, read header values to determine capture settings
+    if (compare_extension(hw_samplefilename, ".a2r"))
+    {
+      if (a2r_readheader(hw_samplefile)==-1)
+        return 0;
+    }
+
+    // If WOZ opened and valid, read header values to determine capture settings
+    if (compare_extension(hw_samplefilename, ".woz"))
+    {
+      if (woz_readheader(hw_samplefile)==-1)
+        return 0;
+    }
   }
 
   return (hw_detectdisk()==HW_HAVEDISK);

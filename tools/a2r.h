@@ -54,6 +54,10 @@
 #define A2R_CHUNK_RWCP "RWCP"
 #define A2R_CHUNK_SLVD "SLVD"
 
+// Timings
+#define A2R_TICKS 125
+#define A2R_SAMPLE_RATE (NSINSECOND/A2R_TICKS)
+
 #pragma pack(push,1)
 
 struct a2r_header
@@ -132,5 +136,9 @@ struct a2r_slvd_track
 };
 
 #pragma pack(pop)
+
+extern long a2r_readtrack(FILE *a2rfile, const int track, const int side, char* buf, const uint32_t buflen);
+
+extern int a2r_readheader(FILE *a2rfile);
 
 #endif

@@ -64,16 +64,19 @@ bbcfdc.o: bbcfdc.c adfs.h amigados.h amigamfm.h appledos.h applegcr.h atarist.h 
 
 ##########################
 
-bbcfdc-nopi: bbcfdc-nopi.o adfs.o amigados.o amigamfm.o appledos.o applegcr.o atarist.o common.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hfe.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o
-	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o adfs.o amigados.o amigamfm.o appledos.o applegcr.o atarist.o common.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hfe.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o -lm
+bbcfdc-nopi: bbcfdc-nopi.o a2r.o adfs.o amigados.o amigamfm.o appledos.o applegcr.o atarist.o common.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hfe.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o woz.o
+	$(CC) $(BUILDFLAGS) -DNOPI -o bbcfdc-nopi bbcfdc-nopi.o a2r.o adfs.o amigados.o amigamfm.o appledos.o applegcr.o atarist.o common.o crc.o crc32.o dfi.o dfs.o diskstore.o dos.o fm.o fsd.o gcr.o hfe.o jsmn.o mfm.o mod.o nopi.o pll.o rfi.o scp.o teledisk.o woz.o -lm
 
-bbcfdc-nopi.o: bbcfdc.c adfs.h appledos.h applegcr.h amigados.h amigamfm.h atarist.h common.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h hfe.h jsmn.h mfm.h mod.h pll.h rfi.h scp.o teledisk.h
+bbcfdc-nopi.o: bbcfdc.c a2r.h adfs.h appledos.h applegcr.h amigados.h amigamfm.h atarist.h common.h dfi.h dfs.h diskstore.h dos.h fm.h fsd.h gcr.h hardware.h hfe.h jsmn.h mfm.h mod.h pll.h rfi.h scp.o teledisk.h woz.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o bbcfdc-nopi.o bbcfdc.c
 
 nopi.o: nopi.c hardware.h jsmn.h rfi.h scp.h
 	$(CC) $(BUILDFLAGS) -DNOPI -c -o nopi.o nopi.c
 
 ##########################
+
+a2r.o: a2r.c a2r.h hardware.h
+	$(CC) $(BUILDFLAGS) -c -o a2r.o a2r.c
 
 adfs.o: adfs.c adfs.h diskstore.h
 	$(CC) $(BUILDFLAGS) -c -o adfs.o adfs.c
@@ -152,6 +155,9 @@ scp.o: scp.c hardware.h mod.h scp.h
 
 teledisk.o: teledisk.c diskstore.h hardware.h teledisk.h
 	$(CC) $(BUILDFLAGS) -c -o teledisk.o teledisk.c
+
+woz.o: woz.c woz.h hardware.h
+	$(CC) $(BUILDFLAGS) -c -o woz.o woz.c
 
 clean:
 	rm -f *.o

@@ -45,13 +45,14 @@ struct woz_chunkheader
 
 struct woz_info
 {
-  uint8_t version; // 1 or 2
+  // Version 1 fields
+
+  uint8_t version; // 1, 2 or 3
   uint8_t disktype; // 1=5.25", 2=3.5"
   uint8_t writeprotected; // 1=Source was write protected
   uint8_t synchronised; // 1=Cross track sync was used during imaging
   uint8_t cleaned; // 1=MC3470 fake bits removed
   uint8_t creator[32]; // Name of software that created file (UTF8, no BOM, padded with spaces)
-
 
   // Version 2 fields
 
@@ -72,13 +73,14 @@ struct woz_info
 //   starting location = (tmap_value * 6656) + 256
 struct woz_trks1
 {
+  // Bitstream data is a series of bits recorded from floppy and normalised to 4uS intervals (high to low), needs processing with logic state sequencer to create nibbles
   uint8_t bitstream[WOZ_TRACKSIZE]; // Bitstream padded out to 6646 bytes
   uint16_t bytesused; // Used bytes within bitstream
   uint16_t bitcount; // Used bits within bitstream
   uint16_t splicepoint; // Index of first bit after track splice, no splice=0xffff
   uint8_t splicenibble; // Nibble value to use for splice
   uint8_t splicebitcount; // Bit count of splice nibble
-  uint16_t reserved;
+  uint16_t reserved; // Reserved for future use
 };
 
 // Version 2 track data, 160 of these, then BITS data
@@ -90,5 +92,9 @@ struct woz_trks2
 };
 
 #pragma pack(pop)
+
+extern long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, const uint32_t buflen);
+
+extern int woz_readheader(FILE *wozfile);
 
 #endif
