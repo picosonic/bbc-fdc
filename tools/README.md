@@ -17,13 +17,13 @@ By default, sectors are sorted by their physical position on the disk regardless
 
 ## Where :
 
- * `-i` Specify input **.rfi**, **.scp** or **.hfe** file (when not being run on RPi hardware)
+ * `-i` Specify input **.rfi**, **.scp**, **.hfe**, **.a2r** or **.woz** file (when not being run on RPi hardware)
  * `-c` Catalogue the disk contents (DFS/ADFS/DOS/APPLEII/AMIGA/ATARI ST only)
  * `-ss` Force single-sided capture - optionally adding a 0 or 1 afterwards chooses that side (e.g. `-ss 0` or `-ss 1`)
  * `-ds` Force double-sided capture (unless output is to .ssd or .sdd)
  * `-o` Specify output file, with one of the following extensions (.rfi, .dfi, .scp, .ssd, .sdd, .dsd, .ddd, .fsd, .td0, .img, .adf, .st)
  * `-spidiv` Specify SPI clock divider to adjust sample rate (one of 16,32,64)
- * `-r` Specify number of retries per track when less than expected sectors are found (not in .rfi, .dfi, .scp or .raw)
+ * `-r` Specify number of retries per track when less than expected sectors are found (not when outputting to .rfi, .dfi, .scp or .raw)
  * `-sort` Sort sectors in diskstore by logical sector prior to writing image
  * `-summary` Present a summary of operations once complete
  * `-l` Show a layout diagram of where sectors were found upon the disk surface for each track/side
@@ -82,6 +82,24 @@ Finally, you can move the drive head in or out by seeking to a specific track.
  * `1` - Error failed hardware initialisation, or not enough user permissions
  * `2` - Error failed to detect drive
  * `3` - Error failed to detect disk in drive
+
+# checka2r
+
+checka2r - Check the contents of a **.a2r** (Applesauce) file for debug purposes
+
+checka2r will validate the a2r magic identifier against a2r format version 1 and 2, the binary marker and LFCRLF, to make sure it hasn't been transferred in ASCII mode. It will then traverse the file reading each chunk and displaying details about that chunk. The INFO block is decoded into a human readable form, and the META chunk is displayed in full. Supported chunks are INFO, META, STRM, RWCP and SLVD.
+
+## Syntax :
+
+`[input_a2r_file]`
+
+## Return codes :
+
+ * `0` - Success
+ * `1` - Error with command line arguments
+ * `2` - Error opening a2r file
+ * `3` - Error validating header
+ * `4` - Error during chunk processing
 
 # checkfsd
 
@@ -144,6 +162,24 @@ It will check for the .td0 magic identifier, show the header details, decompress
  * `8` - Unable to read sector data
  * `9` - Unable to allocate memory for decompression
  * `10` - Sector data CRC mismatch
+
+# checkwoz
+
+checkwoz - Check the contents of a **.woz** (Applesauce) file for debug purposes
+
+checkwoz will validate the woz magic identifier against woz format version 1 and 2, the binary marker and LFCRLF, to make sure it hasn't been transferred in ASCII mode, then validate the CRC32 checksum of the file. It will then traverse the file reading each chunk and displaying details about that chunk. The INFO block is decoded into a human readable form, and the META chunk is displayed in full. Supported chunks are INFO, META, TMAP, TRKS, FLUX and WRIT.
+
+## Syntax :
+
+`[input_woz_file]`
+
+## Return codes :
+
+ * `0` - Success
+ * `1` - Error with command line arguments
+ * `2` - Error opening woz file
+ * `3` - Error validating header
+ * `4` - Error during chunk processing
 
 ## BBC Micro DFS Notes :
 
