@@ -156,7 +156,7 @@ scp.o: scp.c hardware.h mod.h scp.h
 teledisk.o: teledisk.c diskstore.h hardware.h teledisk.h
 	$(CC) $(BUILDFLAGS) -c -o teledisk.o teledisk.c
 
-woz.o: woz.c woz.h hardware.h
+woz.o: woz.c woz.h applegcr.h hardware.h
 	$(CC) $(BUILDFLAGS) -c -o woz.o woz.c
 
 clean:

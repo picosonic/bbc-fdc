@@ -4,6 +4,7 @@
 #include <string.h>
 #include <strings.h>
 
+#include "applegcr.h"
 #include "hardware.h"
 #include "woz.h"
 #include "crc32.h"
@@ -14,9 +15,84 @@ uint8_t woz_trackmap[WOZ_MAXTRACKS]; // Index for track data within TRKS chunk
 
 long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, const uint32_t buflen)
 {
-  printf("Request for track %d, side %d\n", track, side);
+  uint16_t toffset;
 
-  return -1; // 0 on success
+  // Clear out buffer incase we don't find the right track
+  bzero(buf, buflen);
+
+  // If this is a 5.25" image then only process requests for side 0
+  if ((woz_is525) && (side!=0))
+    return 0;
+
+  // Determine where data for this track should be
+  if (woz_is525)
+  {
+    toffset=track*4;
+  }
+  else
+  {
+    toffset=track+(side*80);
+  }
+
+  // Make sure it's in range
+  if (toffset>=WOZ_MAXTRACKS)
+    return 1;
+
+  // Make sure it's not a blank track
+  if (woz_trackmap[toffset]==WOZ_NOTRACK)
+    return 0;
+
+  if (wozheader.id[3]=='1')
+  {
+    struct woz_trks1 trks;
+    uint32_t i;
+    uint8_t j;
+    uint32_t bufpos;
+    uint8_t outb;
+    uint8_t outblen;
+
+    hw_samplerate=(USINSECOND/APPLEGCR_BITCELL)*2;
+
+    fseek(wozfile, (woz_trackmap[toffset]*sizeof(trks))+256, SEEK_SET);
+    if (fread(&trks, 1, sizeof(trks), wozfile)<sizeof(trks))
+      return -1;
+
+    // Process flux buffer
+    bufpos=0; outb=0;
+    for (i=0; i<trks.bytesused; i++)
+    {
+      uint8_t b;
+
+      b=trks.bitstream[i];
+
+      for (j=0; j<BITSPERBYTE; j++)
+      {
+        if ((b&0x80)==0)
+          outb=(outb<<1);
+        else
+          outb=(outb<<1)|1;
+
+        outb=(outb<<1);
+
+        outblen+=2;
+
+        b<<=1;
+
+        if (outblen==BITSPERBYTE)
+        {
+          if (bufpos<buflen)
+            buf[bufpos++]=outb;
+
+          outb=0;
+          outblen=0;
+        }
+      }
+    }
+  }
+  else
+    return -1;
+
+  return 1;
 }
 
 int woz_processinfo(struct woz_chunkheader *chunkheader, FILE *wozfile)
