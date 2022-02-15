@@ -358,7 +358,7 @@ int main(int argc, char **argv)
   if (a2r_processheader(fp)!=0)
   {
     fclose(fp);
-    return 1;
+    return 3;
   }
 
   printf("A2R revision %c file\n", a2rheader.id[3]);
@@ -376,7 +376,7 @@ int main(int argc, char **argv)
       // Something went wrong
       fclose(fp);
 
-      return 1;
+      return 4;
     }
   }
 

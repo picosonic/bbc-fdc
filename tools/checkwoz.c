@@ -345,7 +345,7 @@ int main(int argc, char **argv)
   if (woz_processheader(fp)!=0)
   {
     fclose(fp);
-    return 1;
+    return 3;
   }
 
   printf("WOZ revision %c file\n", wozheader.id[3]);
@@ -364,7 +364,7 @@ int main(int argc, char **argv)
       // Something went wrong
       fclose(fp);
 
-      return 1;
+      return 4;
     }
   }
 
