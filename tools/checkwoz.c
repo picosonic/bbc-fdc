@@ -16,7 +16,8 @@ int woz_processheader(FILE *fp)
   unsigned char buf;
   uint32_t woz_calccrc=0;
 
-  fread(&wozheader, 1, sizeof(wozheader), fp);
+  if (fread(&wozheader, sizeof(wozheader), 1, fp)==0)
+    return 1;
 
   if (strncmp((char *)&wozheader.id, WOZ_MAGIC1, strlen(WOZ_MAGIC1))!=0)
   {
@@ -63,7 +64,11 @@ int woz_processinfo(struct woz_chunkheader *chunkheader, FILE *fp)
     return 1;
   }
 
-  fread(info, 1, chunkheader->chunksize, fp);
+  if (fread(info, chunkheader->chunksize, 1, fp)==0)
+  {
+    free(info);
+    return 1;
+  }
 
   printf("  INFO version: %d\n", info->version);
 
@@ -184,7 +189,7 @@ int woz_processtmap(struct woz_chunkheader *chunkheader, FILE *fp)
   if (chunkheader->chunksize!=WOZ_MAXTRACKS)
     return 1;
 
-  if (fread(trackmap, 1, sizeof(trackmap), fp)<sizeof(trackmap))
+  if (fread(trackmap, sizeof(trackmap), 1, fp)==0)
     return 1;
 
   for (i=0; i<WOZ_MAXTRACKS; i++)
@@ -223,7 +228,7 @@ int woz_processtrks(struct woz_chunkheader *chunkheader, FILE *fp)
 
         fseek(fp, filepos+(trackmap[i]*sizeof(trks)), SEEK_SET);
 
-        if (fread(&trks, 1, sizeof(trks), fp)<sizeof(trks))
+        if (fread(&trks, sizeof(trks), 1, fp)==0)
           return 1;
 
         printf("    Bytes used : %d\n", trks.bytesused);
@@ -252,6 +257,7 @@ int woz_processtrks(struct woz_chunkheader *chunkheader, FILE *fp)
 int woz_processmeta(struct woz_chunkheader *chunkheader, FILE *fp)
 {
   uint8_t *meta;
+  int retcode=1;
 
   meta=malloc(chunkheader->chunksize);
 
@@ -259,7 +265,7 @@ int woz_processmeta(struct woz_chunkheader *chunkheader, FILE *fp)
   {
     printf("Failed to allocate memory for META block\n");
 
-    return 1;
+    return retcode;
   }
 
   if (fread(meta, 1, chunkheader->chunksize, fp)==chunkheader->chunksize)
@@ -276,14 +282,12 @@ int woz_processmeta(struct woz_chunkheader *chunkheader, FILE *fp)
     }
     printf("\n");
 
-    free(meta);
-
-    return 0;
+    retcode=0;
   }
 
   free(meta);
 
-  return 1;
+  return retcode;
 }
 
 int woz_processchunk(struct woz_chunkheader *chunkheader, FILE *fp)
@@ -356,7 +360,7 @@ int main(int argc, char **argv)
   {
     struct woz_chunkheader chunkheader;
 
-    if (fread(&chunkheader, 1, sizeof(chunkheader), fp)<=0)
+    if (fread(&chunkheader, sizeof(chunkheader), 1, fp)==0)
       break;
 
     if (woz_processchunk(&chunkheader, fp)!=0)

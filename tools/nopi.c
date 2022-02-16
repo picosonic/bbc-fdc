@@ -182,7 +182,11 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
         rawbuf=malloc(HW_OLDRAWTRACKSIZE);
         if (rawbuf==NULL) return;
 
-        fread(rawbuf, HW_OLDRAWTRACKSIZE, 1, hw_samplefile);
+        if (fread(rawbuf, HW_OLDRAWTRACKSIZE, 1, hw_samplefile)==0)
+        {
+          free(rawbuf);
+          return;
+        }
 
         hw_fixspisamples(rawbuf, HW_OLDRAWTRACKSIZE, buf, len);
 

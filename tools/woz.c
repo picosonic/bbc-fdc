@@ -52,7 +52,7 @@ long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, co
     uint8_t outblen;
 
     fseek(wozfile, (woz_trackmap[toffset]*sizeof(trks))+256, SEEK_SET);
-    if (fread(&trks, 1, sizeof(trks), wozfile)<sizeof(trks))
+    if (fread(&trks, sizeof(trks), 1, wozfile)==0)
       return -1;
 
     // Process flux buffer
@@ -101,7 +101,7 @@ int woz_processinfo(struct woz_chunkheader *chunkheader, FILE *wozfile)
   if (info==NULL)
     return 1;
 
-  if (fread(info, 1, chunkheader->chunksize, wozfile)<=0)
+  if (fread(info, chunkheader->chunksize, 1, wozfile)==0)
   {
     free(info);
 
@@ -121,7 +121,7 @@ int woz_processtmap(struct woz_chunkheader *chunkheader, FILE *wozfile)
   if (chunkheader->chunksize!=WOZ_MAXTRACKS)
     return 1;
 
-  if (fread(woz_trackmap, 1, sizeof(woz_trackmap), wozfile)<sizeof(woz_trackmap))
+  if (fread(woz_trackmap, sizeof(woz_trackmap), 1, wozfile)==0)
     return 1;
 
   return 0;
@@ -135,7 +135,7 @@ int woz_readheader(FILE *wozfile)
 
   if (wozfile==NULL) return -1;
 
-  if (fread(&wozheader, 1, sizeof(wozheader), wozfile)<=0)
+  if (fread(&wozheader, sizeof(wozheader), 1, wozfile)==0)
     return -1;
 
   if (strncmp((char *)&wozheader.id, WOZ_MAGIC1, strlen(WOZ_MAGIC1))!=0)
@@ -171,7 +171,7 @@ int woz_readheader(FILE *wozfile)
   {
     struct woz_chunkheader chunkheader;
 
-    if (fread(&chunkheader, 1, sizeof(chunkheader), wozfile)<=0)
+    if (fread(&chunkheader, sizeof(chunkheader), 1, wozfile)==0)
       return -1;
 
     if (strncmp((char *)&chunkheader.id, WOZ_CHUNK_INFO, 4)==0)
@@ -192,7 +192,7 @@ int woz_readheader(FILE *wozfile)
   {
     struct woz_chunkheader chunkheader;
 
-    if (fread(&chunkheader, 1, sizeof(chunkheader), wozfile)<=0)
+    if (fread(&chunkheader, sizeof(chunkheader), 1, wozfile)==0)
       return -1;
 
     if (strncmp((char *)&chunkheader.id, WOZ_CHUNK_TMAP, 4)==0)

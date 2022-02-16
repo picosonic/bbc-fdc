@@ -10,7 +10,8 @@ int is525=0; // Is the capture from a 5.25" disk in SS 40t 0.25 step
 
 int a2r_processheader(FILE *fp)
 {
-  fread(&a2rheader, 1, sizeof(a2rheader), fp);
+  if (fread(&a2rheader, sizeof(a2rheader), 1, fp)==0)
+    return 1;
 
   if (strncmp((char *)&a2rheader.id, A2R_MAGIC2, strlen(A2R_MAGIC2))!=0)
   {
@@ -30,6 +31,7 @@ int a2r_processheader(FILE *fp)
 int a2r_processmeta(struct a2r_chunkheader *chunkheader, FILE *fp)
 {
   uint8_t *meta;
+  int retval=1;
 
   meta=malloc(chunkheader->size);
 
@@ -37,10 +39,10 @@ int a2r_processmeta(struct a2r_chunkheader *chunkheader, FILE *fp)
   {
     printf("Failed to allocate memory for META block\n");
 
-    return 1;
+    return retval;
   }
 
-  if (fread(meta, 1, chunkheader->size, fp)==chunkheader->size)
+  if (fread(meta, chunkheader->size, 1, fp)==1)
   {
     uint32_t i;
 
@@ -54,14 +56,12 @@ int a2r_processmeta(struct a2r_chunkheader *chunkheader, FILE *fp)
     }
     printf("\n");
 
-    free(meta);
-
-    return 0;
+    retval=0;
   }
 
   free(meta);
 
-  return 1;
+  return retval;
 }
 
 int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *fp)
@@ -74,7 +74,7 @@ int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *fp)
   // Loop through all available stream data
   while (done<chunkheader->size)
   {
-    if (fread(&stream, 1, sizeof(stream), fp)<=0)
+    if (fread(&stream, sizeof(stream), 1, fp)==0)
       return 1;
 
     // Detect end of stream data
@@ -108,7 +108,7 @@ int a2r_processrawcapture(struct a2r_chunkheader *chunkheader, FILE *fp)
   struct a2r_rwcp rwcp;
   uint32_t done;
 
-  if (fread(&rwcp, 1, sizeof(rwcp), fp)<=0)
+  if (fread(&rwcp, sizeof(rwcp), 1, fp)==0)
     return 1;
 
   printf("  Version: %d\n", rwcp.version);
@@ -122,7 +122,7 @@ int a2r_processrawcapture(struct a2r_chunkheader *chunkheader, FILE *fp)
     struct a2r_rwcp_strm stream;
     uint32_t capturesize;
 
-    if (fread(&stream, 1, sizeof(stream), fp)<=0)
+    if (fread(&stream, sizeof(stream), 1, fp)==0)
       return 1;
 
     done+=sizeof(stream);
@@ -147,7 +147,9 @@ int a2r_processrawcapture(struct a2r_chunkheader *chunkheader, FILE *fp)
     fseek(fp, sizeof(uint32_t)*stream.indexcount, SEEK_CUR);
     done+=(sizeof(uint32_t)*stream.indexcount);
 
-    fread(&capturesize, 1, sizeof(capturesize), fp);
+    if (fread(&capturesize, sizeof(capturesize), 1, fp)==0)
+      return 1;
+
     done+=sizeof(capturesize);
     printf(", %d bytes\n", capturesize);
 
@@ -164,7 +166,7 @@ int a2r_processsolved(struct a2r_chunkheader *chunkheader, FILE *fp)
   struct a2r_slvd slvd;
   uint32_t done;
 
-  if (fread(&slvd, 1, sizeof(slvd), fp)<=0)
+  if (fread(&slvd, sizeof(slvd), 1, fp)==0)
     return 1;
 
   printf("  Version: %d\n", slvd.version);
@@ -178,7 +180,7 @@ int a2r_processsolved(struct a2r_chunkheader *chunkheader, FILE *fp)
     struct a2r_slvd_track stream;
     uint32_t capturesize;
 
-    if (fread(&stream, 1, sizeof(stream), fp)<=0)
+    if (fread(&stream, sizeof(stream), 1, fp)==0)
       return 1;
 
     done+=sizeof(stream);
@@ -204,7 +206,9 @@ int a2r_processsolved(struct a2r_chunkheader *chunkheader, FILE *fp)
     fseek(fp, sizeof(uint32_t)*stream.indexcount, SEEK_CUR);
     done+=(sizeof(uint32_t)*stream.indexcount);
 
-    fread(&capturesize, 1, sizeof(capturesize), fp);
+    if (fread(&capturesize, sizeof(capturesize), 1, fp)==0)
+      return 1;
+
     done+=sizeof(capturesize);
     printf(", %d bytes\n", capturesize);
 
@@ -230,7 +234,11 @@ int a2r_processinfo(struct a2r_chunkheader *chunkheader, FILE *fp)
     return 1;
   }
 
-  fread(info, 1, chunkheader->size, fp);
+  if (fread(info, chunkheader->size, 1, fp)==0)
+  {
+    free(info);
+    return 1;
+  }
 
   printf("  Version: %d\n", info->version);
 
@@ -368,7 +376,7 @@ int main(int argc, char **argv)
   {
     struct a2r_chunkheader chunkheader;
 
-    if (fread(&chunkheader, 1, sizeof(chunkheader), fp)<=0)
+    if (fread(&chunkheader, sizeof(chunkheader), 1, fp)==0)
       break;
 
     if (a2r_processchunk(&chunkheader, fp)!=0)

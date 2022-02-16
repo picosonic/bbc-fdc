@@ -12,7 +12,9 @@ uint32_t *scp_trackoffsets=NULL;
 int scp_processheader(FILE *scpfile)
 {
   bzero(&header, sizeof(header));
-  fread(&header, 1, sizeof(header), scpfile);
+
+  if (fread(&header, sizeof(header), 1, scpfile)==0)
+    return 1;
 
   if (strncmp((char *)&header.magic, SCP_MAGIC, strlen(SCP_MAGIC))!=0)
   {
@@ -331,7 +333,8 @@ void scp_processtimings(FILE *scpfile, const long dataoffset, const uint32_t dat
 
   for (sample=0; sample<datalen; sample++)
   {
-    fread(&bitcell, 1, sizeof(bitcell), scpfile);
+    if (fread(&bitcell, sizeof(bitcell), 1, scpfile)==0)
+      return;
 
     // Swap byte order (if required)
     bitcell=be16toh(bitcell);
@@ -358,7 +361,9 @@ void scp_processtrack(FILE *scpfile, const unsigned char track, const uint8_t re
   fseek(scpfile, scp_trackoffsets[track], SEEK_SET);
 
   // Verify track header
-  fread(&thdr, 1, sizeof(thdr), scpfile);
+  if (fread(&thdr, sizeof(thdr), 1, scpfile)==0)
+    return;
+
   if (strncmp((char *)&thdr.magic, SCP_TRACK, strlen(SCP_TRACK))==0)
   {
     uint8_t i;
@@ -367,7 +372,9 @@ void scp_processtrack(FILE *scpfile, const unsigned char track, const uint8_t re
 
     for (i=0; i<revolutions; i++)
     {
-      fread(&timings, 1, sizeof(timings), scpfile);
+      if (fread(&timings, sizeof(timings), 1, scpfile)==0)
+        return;
+
       printf("  %d:%x (%.2f ms) / %u len / %u offs\n", i, timings.indextime, ((double)timings.indextime*SCP_BASE_NS)/1000000, timings.tracklen, timings.dataoffset);
 
       // Process the track timings
@@ -438,7 +445,8 @@ int main(int argc, char **argv)
   {
     unsigned char track;
 
-    fread(scp_trackoffsets, 1, (header.endtrack-header.starttrack+1)*sizeof(uint32_t), fp);
+    if (fread(scp_trackoffsets, (header.endtrack-header.starttrack+1)*sizeof(uint32_t), 1, fp)==0)
+      return 1;
 
     for (track=header.starttrack; track<header.endtrack; track++)
       scp_processtrack(fp, track, header.revolutions);

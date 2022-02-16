@@ -288,8 +288,12 @@ uint32_t scp_checksum(FILE *scpfile)
 
     blocklen=fread(block, 1, sizeof(block), scpfile);
     if (blocklen>0)
+    {
       for (i=0; i<blocklen; i++)
         checksum+=block[i];
+    }
+    else
+      return 0;
   }
 
   fseek(scpfile, scp_endofheader, SEEK_SET);
@@ -301,7 +305,7 @@ int scp_readheader(FILE *scpfile)
 {
   if (scpfile==NULL) return -1;
 
-  fread(&scpheader, 1, sizeof(scpheader), scpfile);
+  if (fread(&scpheader, sizeof(scpheader), 1, scpfile)==0) return -1;
 
   if (strncmp((char *)&scpheader.magic, SCP_MAGIC, strlen(SCP_MAGIC))!=0)
   {
@@ -336,7 +340,13 @@ int scp_readheader(FILE *scpfile)
   scp_trackoffsets=malloc(sizeof(uint32_t) * SCP_MAXTRACKS);
   if (scp_trackoffsets!=NULL)
   {
-    fread(scp_trackoffsets, 1, (scpheader.endtrack-scpheader.starttrack+1)*sizeof(uint32_t), scpfile);
+    if (fread(scp_trackoffsets, (scpheader.endtrack-scpheader.starttrack+1)*sizeof(uint32_t), 1, scpfile)==0)
+    {
+      free(scp_trackoffsets);
+      bzero(&scpheader, sizeof(scpheader));
+
+      return -1;
+    }
   }
   else
   {
@@ -370,7 +380,8 @@ long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, c
   fseek(scpfile, scp_trackoffsets[(track*2)+side], SEEK_SET);
 
   // Verify track header
-  fread(&thdr, 1, sizeof(thdr), scpfile);
+  if (fread(&thdr, sizeof(thdr), 1, scpfile)==0) return 0;
+
   if (strncmp((char *)&thdr.magic, SCP_TRACK, strlen(SCP_TRACK))==0)
   {
     uint8_t i;
@@ -385,7 +396,7 @@ long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, c
       unsigned char b, blen;
       long trackpos;
 
-      fread(&timings, 1, sizeof(timings), scpfile);
+      if (fread(&timings, sizeof(timings), 1, scpfile)==0) return 0;
 
       trackpos=ftell(scpfile);
 
@@ -396,7 +407,7 @@ long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, c
 
       for (sample=0; sample<timings.tracklen; sample++)
       {
-        fread(&bitcell, 1, sizeof(bitcell), scpfile);
+        if (fread(&bitcell, sizeof(bitcell), 1, scpfile)==0) return 0;
 
         // Swap byte order (if required)
         bitcell=be16toh(bitcell);
@@ -656,8 +667,12 @@ void scp_finalise(FILE *scpfile, const uint8_t endtrack)
 
     blocklen=fread(block, 1, sizeof(block), scpfile);
     if (blocklen>0)
+    {
       for (i=0; i<blocklen; i++)
         checksum+=block[i];
+    }
+    else
+      return;
   }
 
   // Update checksum in header

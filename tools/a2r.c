@@ -26,7 +26,7 @@ void a2r_processtiming(struct a2r_strm *stream, FILE *a2rfile, char* buf, const 
     uint8_t outb;
     uint8_t outblen;
 
-    if (fread(buff, 1, stream->size, a2rfile)<=0)
+    if (fread(buff, stream->size, 1, a2rfile)==0)
     {
       free(buff);
 
@@ -74,7 +74,7 @@ int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *a2rfile, const 
   // Loop through all available stream data
   while (done<chunkheader->size)
   {
-    if (fread(&stream, 1, sizeof(stream), a2rfile)<=0)
+    if (fread(&stream, sizeof(stream), 1, a2rfile)==0)
       return 1;
 
     // Detect end of stream data
@@ -125,7 +125,7 @@ long a2r_readtrack(FILE *a2rfile, const int track, const int side, char* buf, co
   {
     struct a2r_chunkheader chunkheader;
 
-    if (fread(&chunkheader, 1, sizeof(chunkheader), a2rfile)<=0)
+    if (fread(&chunkheader, sizeof(chunkheader), 1, a2rfile)==0)
       return -1;
 
     if (strncmp((char *)&chunkheader.id, A2R_CHUNK_STRM, 4)==0)
@@ -150,7 +150,7 @@ int a2r_processinfo(struct a2r_chunkheader *chunkheader, FILE *a2rfile)
   if (info==NULL)
     return 1;
 
-  if (fread(info, 1, chunkheader->size, a2rfile)<=0)
+  if (fread(info, chunkheader->size, 1, a2rfile)==0)
   {
     free(info);
 
@@ -169,7 +169,7 @@ int a2r_readheader(FILE *a2rfile)
 {
   if (a2rfile==NULL) return -1;
 
-  if (fread(&a2rheader, 1, sizeof(a2rheader), a2rfile)<=0)
+  if (fread(&a2rheader, sizeof(a2rheader), 1, a2rfile)==0)
     return -1;
 
   if (strncmp((char *)&a2rheader.id, A2R_MAGIC2, strlen(A2R_MAGIC2))!=0)
@@ -189,7 +189,7 @@ int a2r_readheader(FILE *a2rfile)
   {
     struct a2r_chunkheader chunkheader;
 
-    if (fread(&chunkheader, 1, sizeof(chunkheader), a2rfile)<=0)
+    if (fread(&chunkheader, sizeof(chunkheader), 1, a2rfile)==0)
       return -1;
 
     if (strncmp((char *)&chunkheader.id, A2R_CHUNK_INFO, 4)==0)

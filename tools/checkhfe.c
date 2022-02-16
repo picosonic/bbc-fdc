@@ -12,7 +12,8 @@ int isv3=0;
 int hfe_processheader(FILE *hfefile)
 {
   bzero(&hfeheader, sizeof(hfeheader));
-  fread(&hfeheader, 1, sizeof(hfeheader), hfefile);
+  if (fread(&hfeheader, sizeof(hfeheader), 1, hfefile)==0)
+    return 1;
 
   if (strncmp((char *)&hfeheader.HEADERSIGNATURE, HFE_MAGIC1, strlen(HFE_MAGIC1))!=0)
   {
@@ -116,7 +117,8 @@ int main(int argc, char **argv)
   for (track=0; track<hfeheader.number_of_track; track++)
   {
     fseek(fp, (hfeheader.track_list_offset*HFE_BLOCKSIZE)+(track*(sizeof(curtrack))), SEEK_SET);
-    fread(&curtrack, 1, sizeof(curtrack), fp);
+    if (fread(&curtrack, sizeof(curtrack), 1, fp)==0)
+      return 1;
 
     printf("  Track %.2d @ block %d, %d bytes\n", track, curtrack.offset, curtrack.track_len);
 

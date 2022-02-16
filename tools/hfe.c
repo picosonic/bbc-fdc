@@ -15,7 +15,7 @@ int hfe_readheader(FILE *hfefile)
 {
   if (hfefile==NULL) return -1;
 
-  if (fread(&hfeheader, 1, sizeof(hfeheader), hfefile)!=sizeof(hfeheader)) return -1;
+  if (fread(&hfeheader, sizeof(hfeheader), 1, hfefile)==0) return -1;
 
   if (strncmp((char *)&hfeheader.HEADERSIGNATURE, HFE_MAGIC1, strlen(HFE_MAGIC1))!=0)
   {
@@ -83,7 +83,7 @@ void hfe_gettrackdata(FILE *hfefile, struct hfe_track *curtrack, const int side,
   while ((dataread<curtrack->track_len) && (!feof(hfefile)))
   {
     numread=fread(&data, 1, sizeof(data), hfefile);
-    if (numread<=0) return;
+    if (numread==0) return;
 
     // Convert from HFE timings to flux
     for (pos=0; pos<(HFE_BLOCKSIZE/2); pos++)
@@ -194,7 +194,8 @@ long hfe_readtrack(FILE *hfefile, const int track, const int side, char* buf, co
 
   // Seek to the offset for this track
   fseek(hfefile, (hfeheader.track_list_offset*HFE_BLOCKSIZE)+(track*(sizeof(curtrack))), SEEK_SET);
-  fread(&curtrack, 1, sizeof(curtrack), hfefile);
+  if (fread(&curtrack, sizeof(curtrack), 1, hfefile)==0)
+    return 0;
 
   // Fetch flux data
   hfe_gettrackdata(hfefile, &curtrack, side, buf, buflen);

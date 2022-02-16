@@ -97,9 +97,9 @@ int main(int argc, char **argv)
 
   printf("Opened '%s'\n", argv[1]);
 
-  numread=blockread(&header, 1, sizeof(header), fp);
+  numread=blockread(&header, sizeof(header), 1, fp);
 
-  if (numread<sizeof(header))
+  if (numread==0)
   {
     printf("Unable to read header\n");
     fclose(fp);
@@ -185,7 +185,12 @@ int main(int argc, char **argv)
     {
       // Add fake length
       lzdata[0]=lzdata[1]=lzdata[2]=lzdata[3]=0xff;
-      fread(&lzdata[4], clen, 1, fp);
+
+      if (fread(&lzdata[4], clen, 1, fp)==0)
+      {
+        fclose(fp);
+        free(lzdata);
+      }
 
       // Determine decompressed size, and allocate block memory
       block=malloc(LZ_UNCOMPRESSED);
@@ -212,9 +217,9 @@ int main(int argc, char **argv)
 
   if ((header.stepping&0x80)!=0)
   {
-    numread=blockread(&comment, 1, sizeof(comment), fp);
+    numread=blockread(&comment, sizeof(comment), 1, fp);
 
-    if (numread<sizeof(comment))
+    if (numread==0)
     {
       printf("Unable to read comment\n");
       if (block!=NULL)
@@ -244,6 +249,12 @@ int main(int argc, char **argv)
       {
         printf("Comment data: '");
         numread=blockread(cdata, 1, comment.datalen, fp);
+        if (numread==0)
+        {
+          free(cdata);
+          return 5;
+        }
+
         if (numread==comment.datalen)
         {
           for (i=actuallen-1; i>0; i--)
@@ -280,8 +291,8 @@ int main(int argc, char **argv)
 
   do
   {
-    numread=blockread(&track, 1, sizeof(track), fp);
-    if (numread<sizeof(track))
+    numread=blockread(&track, sizeof(track), 1, fp);
+    if (numread==0)
     {
       printf("Unable to read track header\n");
       if (block!=NULL)
@@ -330,8 +341,8 @@ int main(int argc, char **argv)
     {
       for (i=0; i<track.sectors; i++)
       {
-        numread=blockread(&sector, 1, sizeof(sector), fp);
-        if (numread<sizeof(sector))
+        numread=blockread(&sector, sizeof(sector), 1, fp);
+        if (numread==0)
         {
           printf("Unable to read sector header\n");
           if (block!=NULL)
@@ -356,8 +367,8 @@ int main(int argc, char **argv)
 
         if (((sector.flags&TELEDISK_FLAGS_UNALLOCATED)==0) && ((sector.flags&TELEDISK_FLAGS_NODATA)==0))
         {
-          numread=blockread(&data, 1, sizeof(data), fp);
-          if (numread<sizeof(data))
+          numread=blockread(&data, sizeof(data), 1, fp);
+          if (numread==0)
           {
             printf("Unable to read sector data header\n");
             if (block!=NULL)
@@ -379,7 +390,8 @@ int main(int argc, char **argv)
             int32_t output;
 
             case 0: // Raw as-is
-              blockread(&buffer, 1, data.blocksize-1, fp);
+              if (blockread(&buffer, data.blocksize-1, 1, fp)==0) return 8;
+
               crcvalue=calc_crc_stream((unsigned char *)&buffer, data.blocksize-1, 0, TELEDISK_POLYNOMIAL);
               printf("    [%d]", data.blocksize-1);
               for (j=0; j<(data.blocksize-1); j++)
@@ -388,7 +400,7 @@ int main(int argc, char **argv)
               break;
 
             case 1: // Repeated 2-byte pattern
-              blockread(&repblock, 1, sizeof(repblock), fp);
+              if (blockread(&repblock, sizeof(repblock), 1, fp)==0) return 8;
 
               printf("      @ %lx [%d x 0x%.4x]\n", blocktell(fp), repblock.repcount, repblock.repdata);
               printf("    [%d]", repblock.repcount*2);
@@ -406,14 +418,14 @@ int main(int argc, char **argv)
 
               while (output<(128<<sector.size))
               {
-                blockread(&rle_c, 1, 1, fp);
+                if (blockread(&rle_c, 1, 1, fp)==0) return 8;
 
                 if (rle_c==0)
                 {
                   // Literal block
-                  blockread(&rle_n, 1, 1, fp); // Length of as-is data
+                  if (blockread(&rle_n, 1, 1, fp)==0) return 8; // Length of as-is data
 
-                  blockread(&buffer, 1, rle_n, fp);
+                  if (blockread(&buffer, rle_n, 1, fp)==0) return 8;
                   crcvalue=calc_crc_stream((unsigned char *)&buffer, rle_n, output==0?0:crcvalue, TELEDISK_POLYNOMIAL);
                   for (j=0; j<rle_n; j++)
                   {
@@ -427,8 +439,8 @@ int main(int argc, char **argv)
                 {
                   // Repeating block
                   rle_l=rle_c*2; // Determine repeating block length
-                  blockread(&rle_r, 1, 1, fp); // Repeat count
-                  blockread(&buffer, 1, rle_l, fp);
+                  if (blockread(&rle_r, 1, 1, fp)==0) return 8; // Repeat count
+                  if (blockread(&buffer, rle_l, 1, fp)==0) return 8;
 
                   for (k=0; k<rle_r; k++)
                   {

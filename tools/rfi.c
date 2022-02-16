@@ -43,17 +43,18 @@ int rfi_readheader(FILE *rfifile)
   // Check for rfi magic
   fseek(rfifile, 0, SEEK_SET);
   bzero(buff, sizeof(buff));
-  fread(buff, 3, 1, rfifile);
+
+  if (fread(buff, 3, 1, rfifile)==0) return -1;
   if (strcmp((char *)buff, RFI_MAGIC)!=0) return -1;
 
   // Check for "{"
-  fread(buff, 1, 1, rfifile);
+  if (fread(buff, 1, 1, rfifile)==0) return -1;
   if (buff[0]!='{') return -1;
 
   // Determine header JSON size by looking for "}"
   while (!feof(rfifile))
   {
-    fread(buff, 1, 1, rfifile);
+    if (fread(buff, 1, 1, rfifile)==0) return -1;
 
     if (buff[0]=='}')
     {
@@ -67,7 +68,11 @@ int rfi_readheader(FILE *rfifile)
         return -1;
 
       fseek(rfifile, 3, SEEK_SET);
-      fread(rfi_headerstring, rfi_headerlen, 1, rfifile);
+      if (fread(rfi_headerstring, rfi_headerlen, 1, rfifile)==0)
+      {
+        free(rfi_headerstring);
+        return -1;
+      }
       rfi_headerstring[rfi_headerlen]=0;
 
       jsmn_init(&parser);
@@ -407,17 +412,9 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
         if (strstr(rfi_trackencoding, "raw")!=NULL)
         {
           if (rfi_trackdatalen<=buflen)
-          {
-            fread(buf, rfi_trackdatalen, 1, rfifile);
-
-            return rfi_trackdatalen;
-          }
+            return fread(buf, rfi_trackdatalen, 1, rfifile);
           else
-          {
-            fread(buf, buflen, 1, rfifile);
-
-            return buflen;
-          }
+            return fread(buf, buflen, 1, rfifile);
         }
         else
         if (strstr(rfi_trackencoding, "rle")!=NULL)
@@ -431,7 +428,11 @@ long rfi_readtrack(FILE *rfifile, const int track, const int side, char* buf, co
           if (rlebuff==NULL) return 0;
 
           blen=0; s=0; b=0;
-          fread(rlebuff, rfi_trackdatalen, 1, rfifile);
+          if (fread(rlebuff, rfi_trackdatalen, 1, rfifile)==0)
+          {
+            free(rlebuff);
+            return 0;
+          }
 
           for (i=0; (unsigned int)i<rfi_trackdatalen; i++)
           {

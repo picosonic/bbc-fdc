@@ -10,7 +10,8 @@ unsigned char fsd_processheader(FILE *fsdfile)
   char titlechar;
   unsigned char numtracks;
 
-  fread(magic, 3, 1, fsdfile);
+  if (fread(magic, 3, 1, fsdfile)==0)
+    return 0;
 
   if ((magic[0]!='F') || (magic[1]!='S') || (magic[2]!='D'))
   {
@@ -20,20 +21,28 @@ unsigned char fsd_processheader(FILE *fsdfile)
 
   printf("FSD magic detected\n");
 
-  fread(creator, 5, 1, fsdfile);
+  if (fread(creator, 5, 1, fsdfile)==0)
+    return 0;
+
   printf("Created: %.2d/%.2d/%d by %d release %d unused %.2x\n", (creator[0]&0xf8)>>3, creator[2]&0x0f, ((creator[0]&0x07)<<8)|creator[1], (creator[2]&0xf0)>>4, (((creator[4]&0xc0)>>6)<<8)|creator[3], creator[4]&0x3f);
 
   printf("Title: \"");
-  fread(&titlechar, 1, 1, fsdfile);
+
+  if (fread(&titlechar, 1, 1, fsdfile)==0)
+    return 0;
+
   while ((titlechar!=0) && (!feof(fsdfile)))
   {
     printf("%c", titlechar);
-    fread(&titlechar, 1, 1, fsdfile);
+
+    if (fread(&titlechar, 1, 1, fsdfile)==0)
+      return 0;
   }
 
   printf("\"\n");
 
-  fread(&numtracks, 1, 1, fsdfile);
+  if (fread(&numtracks, 1, 1, fsdfile)==0)
+    return 0;
 
   printf("Tracks in FSD: %d\n", numtracks);
 
@@ -44,7 +53,8 @@ void fsd_processsector(FILE *fsdfile, const unsigned char readability)
 {
   unsigned char sectorheader[6];
 
-  fread(sectorheader, 4, 1, fsdfile);
+  if (fread(sectorheader, 4, 1, fsdfile)==0)
+    return;
 
   printf("    C%d H%d S%d N%d", sectorheader[0], sectorheader[1], sectorheader[2], sectorheader[3]);
 
@@ -53,7 +63,8 @@ void fsd_processsector(FILE *fsdfile, const unsigned char readability)
     unsigned char databyte;
     int datasize, i;
 
-    fread(&sectorheader[4], 2, 1, fsdfile);
+    if (fread(&sectorheader[4], 2, 1, fsdfile)==0)
+      return;
 
     printf(" (%d) code %.2x\n", sectorheader[4], sectorheader[5]);
 
@@ -62,7 +73,9 @@ void fsd_processsector(FILE *fsdfile, const unsigned char readability)
     printf("      [%d]", datasize);
     for (i=0; i<datasize; i++)
     {
-      fread(&databyte, 1, 1, fsdfile);
+      if (fread(&databyte, 1, 1, fsdfile)==0)
+        return;
+
       printf("%c", ((databyte>=' ')&&(databyte<='~'))?databyte:'.');
     }
     printf("\n");
@@ -78,13 +91,15 @@ void fsd_processtrack(FILE *fsdfile, const unsigned char track)
 
   printf("\n  Track : ");
 
-  fread(trackheader, 2, 1, fsdfile);
+  if (fread(trackheader, 2, 1, fsdfile)==0)
+    return;
 
   printf("%d (%d)", trackheader[0], track);
 
   if (trackheader[1]!=FSD_UNFORMATTED)
   {
-    fread(&trackheader[2], 1, 1, fsdfile);
+    if (fread(&trackheader[2], 1, 1, fsdfile)==0)
+      return;
 
     printf("(%.2x %sreadable)\n", trackheader[2], trackheader[2]==0?"un":"");
   }
