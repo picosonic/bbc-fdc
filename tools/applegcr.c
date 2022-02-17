@@ -149,11 +149,11 @@ void applegcr_process_data62()
   bzero(applegcr_decodebuff, sizeof(applegcr_decodebuff));
 
   // Convert 342+1 disk bytes into 342+1 6-bit GCR
-  for (i=0; i<(342+1); i++)
+  for (i=0; i<(APPLEGCR_DATA_62+1); i++)
     applegcr_decodebuff[i]=applegcr_gcr62decodemap[applegcr_bytebuff[i]];
 
   // XOR 342+1 GCR bytes to undo checksum process
-  for (i=0; i<(342+1); i++)
+  for (i=0; i<(APPLEGCR_DATA_62+1); i++)
   {
     if (i==0)
       applegcr_decodebuff[i]^=0;
@@ -161,7 +161,7 @@ void applegcr_process_data62()
       applegcr_decodebuff[i]^=applegcr_decodebuff[i-1];
   }
 
-  cx=applegcr_decodebuff[342];
+  cx=applegcr_decodebuff[APPLEGCR_DATA_62];
 
   if (cx==0)
   {
@@ -179,13 +179,13 @@ void applegcr_process_data62()
       buff[i]|=applegcr_bit_reverse[(value>>0) & 0x3];
     }
 
-    for (i=86; i<(342+1); i++)
+    for (i=86; i<(APPLEGCR_DATA_62+1); i++)
       buff[i-86]|=(applegcr_decodebuff[i]<<2);
 
     // Check we have an ID
     if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
     {
-      diskstore_addsector(MODAPPLEGCR, hw_currenttrack, hw_currenthead, applegcr_idamtrack, hw_currenthead, applegcr_idamsector, 1, applegcr_idpos, applegcr_idblockcrc, applegcr_blockpos, applegcr_datamode, APPLEGCR_SECTORLEN, &buff[0], applegcr_decodebuff[342]);
+      diskstore_addsector(MODAPPLEGCR, hw_currenttrack, hw_currenthead, applegcr_idamtrack, hw_currenthead, applegcr_idamsector, 1, applegcr_idpos, applegcr_idblockcrc, applegcr_blockpos, applegcr_datamode, APPLEGCR_SECTORLEN, &buff[0], applegcr_decodebuff[APPLEGCR_DATA_62]);
     }
     else
     {
@@ -203,7 +203,7 @@ void applegcr_process_data62()
   {
     if (applegcr_debug)
     {
-      fprintf(stderr, "** INVALID DATA EORSUM [%.2x] (%.2x)", applegcr_decodebuff[341], applegcr_decodebuff[342]);
+      fprintf(stderr, "** INVALID DATA EORSUM [%.2x] (%.2x)", applegcr_decodebuff[341], applegcr_decodebuff[APPLEGCR_DATA_62]);
       if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
         fprintf(stderr, ", possibly for T%d S%d", applegcr_idamtrack, applegcr_idamsector);
 
@@ -219,6 +219,79 @@ void applegcr_process_data62()
 // Process data block stored using 5 data bits, 3 extra bits per byte format
 void applegcr_process_data53()
 {
+  int i;
+  unsigned char buff[512];
+  unsigned char cx;
+
+  bzero(buff, sizeof(buff));
+  bzero(applegcr_decodebuff, sizeof(applegcr_decodebuff));
+
+  // Convert 410+1 disk bytes into 410+1 5-bit GCR
+  for (i=0; i<(APPLEGCR_DATA_53+1); i++)
+    applegcr_decodebuff[i]=applegcr_gcr53decodemap[applegcr_bytebuff[i]];
+
+  // XOR 342+1 GCR bytes to undo checksum process
+  for (i=0; i<(APPLEGCR_DATA_53+1); i++)
+  {
+    if (i==0)
+      applegcr_decodebuff[i]^=0;
+    else
+      applegcr_decodebuff[i]^=applegcr_decodebuff[i-1];
+  }
+
+  cx=applegcr_decodebuff[APPLEGCR_DATA_53];
+
+  if (cx==0)
+  {
+    // Recombine bits
+    for (i=0; i<86; i++)
+    {
+      unsigned char value;
+
+      value=applegcr_decodebuff[i];
+
+      if (i<84)
+        buff[i+172]|=applegcr_bit_reverse[(value>>4) & 0x3];
+
+      buff[i+86]|=applegcr_bit_reverse[(value>>2) & 0x3];
+      buff[i]|=applegcr_bit_reverse[(value>>0) & 0x3];
+    }
+
+    for (i=86; i<(APPLEGCR_DATA_53+1); i++)
+      buff[i-86]|=(applegcr_decodebuff[i]<<2);
+
+    // Check we have an ID
+    if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
+    {
+      diskstore_addsector(MODAPPLEGCR, hw_currenttrack, hw_currenthead, applegcr_idamtrack, hw_currenthead, applegcr_idamsector, 1, applegcr_idpos, applegcr_idblockcrc, applegcr_blockpos, applegcr_datamode, APPLEGCR_SECTORLEN, &buff[0], applegcr_decodebuff[APPLEGCR_DATA_53]);
+    }
+    else
+    {
+      if (applegcr_debug)
+      {
+        fprintf(stderr, "** VALID DATA BUT INVALID ID");
+        if ((applegcr_lasttrack!=-1) && (applegcr_lastsector!=-1))
+          fprintf(stderr, ", last found ID was T%d S%d", applegcr_lasttrack, applegcr_lastsector);
+
+        fprintf(stderr, " **\n");
+      }
+    }
+  }
+  else
+  {
+    if (applegcr_debug)
+    {
+      fprintf(stderr, "** INVALID DATA EORSUM [%.2x] (%.2x)", applegcr_decodebuff[341], applegcr_decodebuff[APPLEGCR_DATA_53]);
+      if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
+        fprintf(stderr, ", possibly for T%d S%d", applegcr_idamtrack, applegcr_idamsector);
+
+      fprintf(stderr, " **\n");
+    }
+  }
+
+  // Clear IDAM cache
+  applegcr_idamtrack=-1;
+  applegcr_idamsector=-1;
 }
 
 void applegcr_addbit(const unsigned char bit, const unsigned long datapos)
