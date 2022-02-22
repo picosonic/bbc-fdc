@@ -246,6 +246,31 @@ int woz_processtrks(struct woz_chunkheader *chunkheader, FILE *fp)
   else
   if (wozheader.id[3]=='2')
   {
+    struct woz_trks2 trks;
+    int i;
+
+    for (i=0; i<WOZ_MAXTRACKS; i++)
+    {
+      if (trackmap[i]!=WOZ_NOTRACK)
+      {
+        if (is525)
+          printf("  Bitstream for Track %.2f\n", (double)i/4);
+        else
+          printf("  Bistream for Side %d Track %d\n", i/80, i%80);
+
+        fseek(fp, filepos+(trackmap[i]*sizeof(trks)), SEEK_SET);
+
+        if (fread(&trks, sizeof(trks), 1, fp)==0)
+          return 1;
+
+        printf("    Starting block : %d%s\n", trks.startingblock, ((trks.startingblock<3)?" (INVALID)":""));
+        printf("    Block count : %d\n", trks.blockcount);
+        printf("    Bit count : %d\n", trks.bitcount);
+      }
+    }
+
+    // Move on to next chunk
+    fseek(fp, filepos, SEEK_SET);
     fseek(fp, chunkheader->chunksize, SEEK_CUR);
   }
   else
