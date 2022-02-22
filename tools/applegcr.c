@@ -166,21 +166,21 @@ void applegcr_process_data62()
   if (cx==0)
   {
     // Recombine bits
-    for (i=0; i<86; i++)
+    for (i=0; i<(APPLEGCR_DATA_62-APPLEGCR_SECTORLEN); i++)
     {
       unsigned char value;
 
       value=applegcr_decodebuff[i];
 
-      if (i<84)
-        buff[i+172]|=applegcr_bit_reverse[(value>>4) & 0x3];
+      if (i<(APPLEGCR_DATA_62-APPLEGCR_SECTORLEN-2))
+        buff[i+((APPLEGCR_DATA_62-APPLEGCR_SECTORLEN)*2)]|=applegcr_bit_reverse[(value>>4) & 0x3];
 
-      buff[i+86]|=applegcr_bit_reverse[(value>>2) & 0x3];
+      buff[i+(APPLEGCR_DATA_62-APPLEGCR_SECTORLEN)]|=applegcr_bit_reverse[(value>>2) & 0x3];
       buff[i]|=applegcr_bit_reverse[(value>>0) & 0x3];
     }
 
-    for (i=86; i<(APPLEGCR_DATA_62+1); i++)
-      buff[i-86]|=(applegcr_decodebuff[i]<<2);
+    for (i=(APPLEGCR_DATA_62-APPLEGCR_SECTORLEN); i<(APPLEGCR_DATA_62+1); i++)
+      buff[i-(APPLEGCR_DATA_62-APPLEGCR_SECTORLEN)]|=(applegcr_decodebuff[i]<<2);
 
     // Check we have an ID
     if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
@@ -230,7 +230,7 @@ void applegcr_process_data53()
   for (i=0; i<(APPLEGCR_DATA_53+1); i++)
     applegcr_decodebuff[i]=applegcr_gcr53decodemap[applegcr_bytebuff[i]];
 
-  // XOR 342+1 GCR bytes to undo checksum process
+  // XOR 410+1 GCR bytes to undo checksum process
   for (i=0; i<(APPLEGCR_DATA_53+1); i++)
   {
     if (i==0)
@@ -244,21 +244,48 @@ void applegcr_process_data53()
   if (cx==0)
   {
     // Recombine bits
-    for (i=0; i<86; i++)
+    int j;
+    int k=0; // input stream pos
+
+    buff[APPLEGCR_SECTORLEN]=applegcr_decodebuff[k++];
+
+    for (i=0; i<(APPLEGCR_SECTORLEN/5); i++)
     {
-      unsigned char value;
+      cx=applegcr_decodebuff[k++];
 
-      value=applegcr_decodebuff[i];
-
-      if (i<84)
-        buff[i+172]|=applegcr_bit_reverse[(value>>4) & 0x3];
-
-      buff[i+86]|=applegcr_bit_reverse[(value>>2) & 0x3];
-      buff[i]|=applegcr_bit_reverse[(value>>0) & 0x3];
+      buff[(i*5)+2]=(cx>>2);
+      buff[(i*5)+3]|=(cx>>1) & 0x1;
+      buff[(i*5)+4]|=cx & 0x1;
     }
 
-    for (i=86; i<(APPLEGCR_DATA_53+1); i++)
-      buff[i-86]|=(applegcr_decodebuff[i]<<2);
+    for (i=0; i<(APPLEGCR_SECTORLEN/5); i++)
+    {
+      cx=applegcr_decodebuff[k++];
+
+      buff[(i*5)+1]=(cx>>2);
+      buff[(i*5)+3]|=cx & 0x2;
+      buff[(i*5)+4]|=(cx<<1) & 0x2;
+    }
+
+    for (i=0; i<(APPLEGCR_SECTORLEN/5); i++)
+    {
+      cx=applegcr_decodebuff[k++];
+
+      buff[i*5]=(cx>>2);
+      buff[(i*5)+3]|=(cx<<1) & 0x4;
+      buff[(i*5)+4]|=(cx<<2) & 0x4;
+    }
+
+    for (j=0; j<5; j++)
+    {
+      for (i=((APPLEGCR_SECTORLEN/5)-1); i>=0; i--)
+      {
+        buff[(i*5)+j] &= 0x07;
+        buff[(i*5)+j] |= (applegcr_decodebuff[k++] << 3);
+      }
+    }
+
+    buff[APPLEGCR_SECTORLEN]|=(applegcr_decodebuff[k++]<<3);
 
     // Check we have an ID
     if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
