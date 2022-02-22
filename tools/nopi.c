@@ -117,7 +117,7 @@ int hw_writeprotected()
 }
 
 // Fix SPI sample buffer timings
-void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen)
+void hw_fixspisamples(unsigned char *inbuf, long inlen, unsigned char *outbuf, long outlen)
 {
   long inpos, outpos;
   unsigned char o, olen, bitpos;
@@ -164,7 +164,7 @@ void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen)
 }
 
 // Read raw flux data for current track/head
-void hw_samplerawtrackdata(char* buf, uint32_t len)
+void hw_samplerawtrackdata(unsigned char* buf, uint32_t len)
 {
   // Clear output buffer to prevent failed reads potentially returning previous data
   bzero(buf, len);
@@ -177,7 +177,7 @@ void hw_samplerawtrackdata(char* buf, uint32_t len)
     {
       if (fseek(hw_samplefile, ((hw_maxtracks*hw_currenthead)+hw_currenttrack)*HW_OLDRAWTRACKSIZE, SEEK_SET)==0)
       {
-        char *rawbuf;
+        unsigned char *rawbuf;
 
         rawbuf=malloc(HW_OLDRAWTRACKSIZE);
         if (rawbuf==NULL) return;

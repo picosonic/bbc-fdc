@@ -56,7 +56,7 @@ struct hfe_track
 
 extern struct hfe_header hfeheader;
 
-extern long hfe_readtrack(FILE *hfefile, const int track, const int side, char* buf, const uint32_t buflen);
+extern long hfe_readtrack(FILE *hfefile, const int track, const int side, unsigned char *buf, const uint32_t buflen);
 
 extern int hfe_readheader(FILE *hfefile);
 

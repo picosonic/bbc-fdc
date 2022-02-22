@@ -13,7 +13,7 @@ struct woz_header wozheader;
 int woz_is525=0; // Is the capture from a 5.25" disk in SS 40t 0.25 step
 uint8_t woz_trackmap[WOZ_MAXTRACKS]; // Index for track data within TRKS chunk
 
-long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, const uint32_t buflen)
+long woz_readtrack(FILE *wozfile, const int track, const int side, unsigned char *buf, const uint32_t buflen)
 {
   uint16_t toffset;
 
@@ -31,7 +31,7 @@ long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, co
   }
   else
   {
-    toffset=track+(side*80);
+    toffset=track+(side*(WOZ_MAXTRACKS/2));
   }
 
   // Make sure it's in range
@@ -51,12 +51,12 @@ long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, co
     uint8_t outb;
     uint8_t outblen;
 
-    fseek(wozfile, (woz_trackmap[toffset]*sizeof(trks))+256, SEEK_SET);
+    fseek(wozfile, (woz_trackmap[toffset]*sizeof(trks))+WOZ_TRKS_OFFSET, SEEK_SET);
     if (fread(&trks, sizeof(trks), 1, wozfile)==0)
       return -1;
 
     // Process flux buffer
-    bufpos=0; outb=0;
+    bufpos=0; outb=0; outblen=0;
     for (i=0; i<trks.bytesused; i++)
     {
       uint8_t b;
@@ -76,7 +76,7 @@ long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, co
 
         b<<=1;
 
-        if (outblen==BITSPERBYTE)
+        if (outblen>=BITSPERBYTE)
         {
           if (bufpos<buflen)
             buf[bufpos++]=outb;
@@ -88,7 +88,73 @@ long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, co
     }
   }
   else
-    return -1;
+  {
+    struct woz_trks2 trks;
+    uint32_t i;
+    uint8_t j;
+    uint16_t k;
+    uint32_t bufpos;
+    uint8_t outb;
+    uint8_t outblen;
+    uint8_t bits[WOZ_BITSBLOCKSIZE];
+    uint32_t done;
+
+    // Read TRKS data for this track
+    fseek(wozfile, (woz_trackmap[toffset]*sizeof(trks))+WOZ_TRKS_OFFSET, SEEK_SET);
+    if (fread(&trks, sizeof(trks), 1, wozfile)==0)
+      return -1;
+
+    // Don't process invalid TRKS data
+    if (trks.startingblock<3)
+      return -1;
+
+    // Seek to first block of capture data
+    fseek(wozfile, (trks.startingblock*WOZ_BITSBLOCKSIZE), SEEK_SET);
+
+    bufpos=0; outb=0; outblen=0;
+    done=0;
+    for (k=0; k<trks.blockcount; k++)
+    {
+      if (fread(&bits, WOZ_BITSBLOCKSIZE, 1, wozfile)==0)
+        return -1;
+
+      // Process flux buffer
+      for (i=0; i<WOZ_BITSBLOCKSIZE; i++)
+      {
+        uint8_t b;
+
+        b=bits[i];
+
+        for (j=0; j<BITSPERBYTE; j++)
+        {
+          if ((b&0x80)==0)
+            outb=(outb<<1);
+          else
+            outb=(outb<<1)|1;
+
+          outb=(outb<<1);
+
+          outblen+=2;
+
+          b<<=1;
+
+          if (outblen>=BITSPERBYTE)
+          {
+            if (bufpos<buflen)
+              buf[bufpos++]=outb;
+
+            outb=0;
+            outblen=0;
+          }
+        }
+
+        done+=BITSPERBYTE;
+
+        if (done>=trks.bitcount)
+          return 1;
+      }
+    }
+  }
 
   return 1;
 }

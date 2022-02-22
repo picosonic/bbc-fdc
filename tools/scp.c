@@ -360,7 +360,7 @@ int scp_readheader(FILE *scpfile)
   return 0;
 }
 
-long scp_readtrack(FILE * scpfile, const int track, const int side, char* buf, const uint32_t buflen)
+long scp_readtrack(FILE * scpfile, const int track, const int side, unsigned char *buf, const uint32_t buflen)
 {
   struct scp_tdh thdr;
   struct scp_timings timings;

@@ -49,7 +49,7 @@ uint8_t hfe_byteflip(uint8_t val)
   return ret;
 }
 
-void hfe_gettrackdata(FILE *hfefile, struct hfe_track *curtrack, const int side, char* buf, const uint32_t buflen)
+void hfe_gettrackdata(FILE *hfefile, struct hfe_track *curtrack, const int side, unsigned char *buf, const uint32_t buflen)
 {
   uint8_t data[HFE_BLOCKSIZE];
   uint8_t fluxdata;
@@ -183,7 +183,7 @@ void hfe_gettrackdata(FILE *hfefile, struct hfe_track *curtrack, const int side,
   }
 }
 
-long hfe_readtrack(FILE *hfefile, const int track, const int side, char* buf, const uint32_t buflen)
+long hfe_readtrack(FILE *hfefile, const int track, const int side, unsigned char *buf, const uint32_t buflen)
 {
   struct hfe_track curtrack;
 

@@ -80,10 +80,10 @@ extern void hw_seekout();
 // Signaling and data sampling
 extern void hw_waitforindex();
 extern int hw_writeprotected();
-extern void hw_samplerawtrackdata(char* buf, uint32_t len);
+extern void hw_samplerawtrackdata(unsigned char *buf, uint32_t len);
 extern void hw_sleep(const unsigned int seconds);
 extern float hw_measurerpm();
-extern void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen);
+extern void hw_fixspisamples(unsigned char *inbuf, long inlen, unsigned char *outbuf, long outlen);
 
 // Clean up
 extern void hw_done();

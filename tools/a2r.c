@@ -10,7 +10,7 @@
 struct a2r_header a2rheader;
 int a2r_is525=0; // Is the capture from a 5.25" disk in SS 40t 0.25 step
 
-void a2r_processtiming(struct a2r_strm *stream, FILE *a2rfile, char* buf, const uint32_t buflen)
+void a2r_processtiming(struct a2r_strm *stream, FILE *a2rfile, unsigned char *buf, const uint32_t buflen)
 {
   uint8_t *buff;
   uint32_t bitgap;
@@ -64,7 +64,7 @@ void a2r_processtiming(struct a2r_strm *stream, FILE *a2rfile, char* buf, const 
     fseek(a2rfile, stream->size, SEEK_CUR);
 }
 
-int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *a2rfile, const int track, const int side, char* buf, const uint32_t buflen)
+int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *a2rfile, const int track, const int side, unsigned char *buf, const uint32_t buflen)
 {
   struct a2r_strm stream;
   uint32_t done;
@@ -109,7 +109,7 @@ int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *a2rfile, const 
   return 0;
 }
 
-long a2r_readtrack(FILE *a2rfile, const int track, const int side, char* buf, const uint32_t buflen)
+long a2r_readtrack(FILE *a2rfile, const int track, const int side, unsigned char *buf, const uint32_t buflen)
 {
   // set RPM if available to hw_rpm
   // set resolution/bitrate if available

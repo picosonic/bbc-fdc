@@ -7,6 +7,8 @@
 #define WOZ_MAXTRACKS 160
 #define WOZ_NOTRACK 0xff
 #define WOZ_TRACKSIZE 6646
+#define WOZ_TRKS_OFFSET 256
+#define WOZ_BITSBLOCKSIZE 512
 
 // Chunk ids
 #define WOZ_CHUNK_INFO "INFO"
@@ -93,7 +95,7 @@ struct woz_trks2
 
 #pragma pack(pop)
 
-extern long woz_readtrack(FILE *wozfile, const int track, const int side, char* buf, const uint32_t buflen);
+extern long woz_readtrack(FILE *wozfile, const int track, const int side, unsigned char* buf, const uint32_t buflen);
 
 extern int woz_readheader(FILE *wozfile);
 

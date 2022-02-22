@@ -420,7 +420,7 @@ void hw_sideselect(const int side)
 }
 
 // Fix SPI sample buffer timings
-void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen)
+void hw_fixspisamples(unsigned char *inbuf, long inlen, unsigned char *outbuf, long outlen)
 {
   long inpos, outpos;
   unsigned char o, olen, bitpos;
@@ -467,7 +467,7 @@ void hw_fixspisamples(char *inbuf, long inlen, char *outbuf, long outlen)
 }
 
 // Sample raw track data
-void hw_samplerawtrackdata(char* buf, uint32_t len)
+void hw_samplerawtrackdata(unsigned char* buf, uint32_t len)
 {
   char *rawbuf;
 

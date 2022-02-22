@@ -224,7 +224,7 @@ int woz_processtrks(struct woz_chunkheader *chunkheader, FILE *fp)
         if (is525)
           printf("  Bitstream for Track %.2f\n", (double)i/4);
         else
-          printf("  Bistream for Side %d Track %d\n", i/80, i%80);
+          printf("  Bitstream for Side %d Track %d\n", i/80, i%80);
 
         fseek(fp, filepos+(trackmap[i]*sizeof(trks)), SEEK_SET);
 
@@ -256,7 +256,7 @@ int woz_processtrks(struct woz_chunkheader *chunkheader, FILE *fp)
         if (is525)
           printf("  Bitstream for Track %.2f\n", (double)i/4);
         else
-          printf("  Bistream for Side %d Track %d\n", i/80, i%80);
+          printf("  Bitstream for Side %d Track %d\n", i/80, i%80);
 
         fseek(fp, filepos+(trackmap[i]*sizeof(trks)), SEEK_SET);
 

@@ -137,7 +137,7 @@ struct a2r_slvd_track
 
 #pragma pack(pop)
 
-extern long a2r_readtrack(FILE *a2rfile, const int track, const int side, char* buf, const uint32_t buflen);
+extern long a2r_readtrack(FILE *a2rfile, const int track, const int side, unsigned char *buf, const uint32_t buflen);
 
 extern int a2r_readheader(FILE *a2rfile);
 

@@ -704,7 +704,7 @@ int main(int argc,char **argv)
   hw_sleep(1);
 
   // Sample track
-  hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
+  hw_samplerawtrackdata(samplebuffer, samplebuffsize);
   mod_process(samplebuffer, samplebuffsize, 99, usepll);
 
   // Check readability
@@ -774,7 +774,7 @@ int main(int argc,char **argv)
       hw_sleep(1);
 
       // Sample track
-      hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
+      hw_samplerawtrackdata(samplebuffer, samplebuffsize);
       mod_process(samplebuffer, samplebuffsize, 99, usepll);
 
       // Check for flippy disk
@@ -923,7 +923,7 @@ int main(int argc,char **argv)
           printf("Sampling data for track %.2X head %.2x\n", i, side);
 
         // Sampling data
-        hw_samplerawtrackdata((char *)samplebuffer, samplebuffsize);
+        hw_samplerawtrackdata(samplebuffer, samplebuffsize);
 
         // Process the raw sample data to extract encoded data
         if (capturetype!=DISKRAW)
