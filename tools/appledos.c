@@ -215,7 +215,7 @@ int appledos_validate()
     if ((vtoc->firstcattrack>(APPLEDOS_MAXTRACK+1)) || (vtoc->firstcatsector>APPLEDOS_MAXSECTOR+1))
       return format;
 
-    // TODO Validate AppleDOS version (seen so far 3 = 3.3)
+    // TODO Validate AppleDOS version (seen so far 2 = 3.2 / 3 = 3.3)
 
     // Validate disk volume
     if ((vtoc->diskvol<1) || (vtoc->diskvol>254))
@@ -229,7 +229,9 @@ int appledos_validate()
     if (vtoc->lastallocatedtrack>(APPLEDOS_MAXTRACK+1))
       return format;
 
-    // TODO Validate track allocation direction (seen so far 1 = forward)
+    // Validate track allocation direction (1 = forward / -1 (255) = backward)
+    if ((vtoc->allocationdirection!=1) && (vtoc->allocationdirection!=255))
+      return format;
 
     // Validate tracks/disk
     if (vtoc->tracksperdisk>(APPLEDOS_MAXTRACK+1))
@@ -244,7 +246,7 @@ int appledos_validate()
       return format;
 
     // Validate allocation bitmaps (one per track)
-    if (vtoc->tracksperdisk<=35)
+    if (vtoc->tracksperdisk<=(APPLEDOS_MAXTRACK+1))
     {
       int track;
 
@@ -261,7 +263,10 @@ int appledos_validate()
       }
 
       // All still OK, so return as an AppleDOS disk
-      return APPLEDOS_33;
+      if (vtoc->dosrelease==2)
+        return APPLEDOS_32;
+      else
+        return APPLEDOS_33;
     }
   }
 

@@ -4,6 +4,7 @@
 #pragma pack(push,1)
 
 #define APPLEDOS_UNKNOWN -1
+#define APPLEDOS_32 3
 #define APPLEDOS_33 3
 
 #define APPLEDOS_MAXTRACK 34
