@@ -91,8 +91,8 @@ int a2r_processstream(struct a2r_chunkheader *chunkheader, FILE *fp)
       printf("%d side %d", (stream.location>>1), stream.location&1);
 
     printf(", type %d (%s)", stream.type, (stream.type==1)?"Timing":(stream.type==2)?"Bits":(stream.type==3)?"Extended timing":"Unknown");
-    printf(", length %d bytes", stream.size);
-    printf(", loop %d\n", stream.loop);
+    printf(", length %u bytes", stream.size);
+    printf(", loop %u\n", stream.loop);
 
     // Skip over the actual data
     fseek(fp, stream.size, SEEK_CUR);
@@ -112,7 +112,7 @@ int a2r_processrawcapture(struct a2r_chunkheader *chunkheader, FILE *fp)
     return 1;
 
   printf("  Version: %d\n", rwcp.version);
-  printf("  Resolution: %d picoseconds/tick\n", rwcp.resolution);
+  printf("  Resolution: %u picoseconds/tick\n", rwcp.resolution);
 
   done=sizeof(rwcp);
 
@@ -151,7 +151,7 @@ int a2r_processrawcapture(struct a2r_chunkheader *chunkheader, FILE *fp)
       return 1;
 
     done+=sizeof(capturesize);
-    printf(", %d bytes\n", capturesize);
+    printf(", %u bytes\n", capturesize);
 
     // Skip over capture data
     fseek(fp, capturesize, SEEK_CUR);
@@ -170,7 +170,7 @@ int a2r_processsolved(struct a2r_chunkheader *chunkheader, FILE *fp)
     return 1;
 
   printf("  Version: %d\n", slvd.version);
-  printf("  Resolution: %d picoseconds/tick\n", slvd.resolution);
+  printf("  Resolution: %u picoseconds/tick\n", slvd.resolution);
 
   done=sizeof(slvd);
 
@@ -210,7 +210,7 @@ int a2r_processsolved(struct a2r_chunkheader *chunkheader, FILE *fp)
       return 1;
 
     done+=sizeof(capturesize);
-    printf(", %d bytes\n", capturesize);
+    printf(", %u bytes\n", capturesize);
 
     // Skip over capture data
     fseek(fp, capturesize, SEEK_CUR);
@@ -309,7 +309,7 @@ int a2r_processchunk(struct a2r_chunkheader *chunkheader, FILE *fp)
   for (i=0; i<4; i++)
     printf("%c", chunkheader->id[i]);
     
-  printf("', length %d\n", chunkheader->size);
+  printf("', length %u\n", chunkheader->size);
 
   if (strncmp((char *)&chunkheader->id, A2R_CHUNK_INFO, 4)==0)
   {

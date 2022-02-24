@@ -90,13 +90,13 @@ void atarist_readdir(const int level, const unsigned long offset, const unsigned
     printf("  %.2d:%.2d:%.2d", (de.ftime&0xf800)>>11, (de.ftime&0x7e0)>>5, (de.ftime&0x1f)*2);
 
     // Extract attributes
-    printf("  %c%c%c%c%c%c", de.attrib&ATARIST_ATTRIB_READONLY?'r':'w', de.attrib&ATARIST_ATTRIB_HIDDEN?'h':'-', de.attrib&ATARIST_ATTRIB_SYSTEM?'s':'-', de.attrib&ATARIST_ATTRIB_VOLUME?'v':'-', de.attrib&ATARIST_ATTRIB_DIR?'d':'f', de.attrib&ATARIST_ATTRIB_NEWMOD?'n':'-');
+    printf("  %c%c%c%c%c%c", (de.attrib&ATARIST_ATTRIB_READONLY)?'r':'w', (de.attrib&ATARIST_ATTRIB_HIDDEN)?'h':'-', (de.attrib&ATARIST_ATTRIB_SYSTEM)?'s':'-', (de.attrib&ATARIST_ATTRIB_VOLUME)?'v':'-', (de.attrib&ATARIST_ATTRIB_DIR)?'d':'f', (de.attrib&ATARIST_ATTRIB_NEWMOD)?'n':'-');
 
     printf("  (%d)", de.scluster);
     if ((de.attrib&ATARIST_ATTRIB_DIR)!=0)
       printf("  <dir>\n");
     else
-      printf("  %d bytes\n", de.fsize);
+      printf("  %u bytes\n", de.fsize);
 
     // Recurse into subdirectories
     if ((de.attrib&ATARIST_ATTRIB_DIR)!=0)
@@ -138,7 +138,6 @@ void atarist_showinfo(const int debug)
   {
     struct atarist_bootsector *bootsector;
     int i;
-    uint32_t serial;
     uint16_t cxsum;
     uint16_t rootsector;
     uint16_t dataregion;
@@ -148,6 +147,8 @@ void atarist_showinfo(const int debug)
 
     if (atarist_debug)
     {
+      uint32_t serial;
+
       printf("BRA : %.2x %.2x\n", bootsector->bra&0xff, (bootsector->bra&0xff00) >> 8);
 
       printf("OEM : ");
@@ -158,7 +159,7 @@ void atarist_showinfo(const int debug)
       serial=bootsector->serial[2];
       serial=(serial<<8)|bootsector->serial[1];
       serial=(serial<<8)|bootsector->serial[0];
-      printf("SERIAL : %d (%.3x)\n", serial, serial);
+      printf("SERIAL : %u (%.3x)\n", serial, serial);
 
       // BPB
       printf("Bytes/sector : %d\n", bootsector->bpb.bps);

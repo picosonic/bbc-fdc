@@ -54,7 +54,6 @@ void hfe_gettrackdata(FILE *hfefile, struct hfe_track *curtrack, const int side,
   uint8_t data[HFE_BLOCKSIZE];
   uint8_t fluxdata;
   uint16_t dataread=0;
-  int numread;
   uint16_t pos;
 
   int skipbits=0;
@@ -82,6 +81,8 @@ void hfe_gettrackdata(FILE *hfefile, struct hfe_track *curtrack, const int side,
 
   while ((dataread<curtrack->track_len) && (!feof(hfefile)))
   {
+    int numread;
+
     numread=fread(&data, 1, sizeof(data), hfefile);
     if (numread==0) return;
 

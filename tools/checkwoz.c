@@ -54,7 +54,6 @@ int woz_processinfo(struct woz_chunkheader *chunkheader, FILE *fp)
 {
   struct woz_info *info;
   int i;
-  int systems=0;
 
   info=malloc(chunkheader->chunksize);
   if (info==NULL)
@@ -124,6 +123,8 @@ int woz_processinfo(struct woz_chunkheader *chunkheader, FILE *fp)
   // Process extra version 2 fields
   if (info->version>=2)
   {
+    int systems=0;
+
     printf("  Disk sides : %d\n", info->sides);
 
     printf("  Boot sector format : %d (", info->bootsectorformat);
@@ -264,8 +265,8 @@ int woz_processtrks(struct woz_chunkheader *chunkheader, FILE *fp)
           return 1;
 
         printf("    Starting block : %d%s\n", trks.startingblock, ((trks.startingblock<3)?" (INVALID)":""));
-        printf("    Block count : %d\n", trks.blockcount);
-        printf("    Bit count : %d\n", trks.bitcount);
+        printf("    Block count : %u\n", trks.blockcount);
+        printf("    Bit count : %u\n", trks.bitcount);
       }
     }
 
@@ -323,7 +324,7 @@ int woz_processchunk(struct woz_chunkheader *chunkheader, FILE *fp)
   for (i=0; i<4; i++)
     printf("%c", chunkheader->id[i]);
     
-  printf("', length %d\n", chunkheader->chunksize);
+  printf("', length %u\n", chunkheader->chunksize);
 
   if (strncmp((char *)&chunkheader->id, WOZ_CHUNK_INFO, 4)==0)
   {

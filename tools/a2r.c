@@ -13,7 +13,6 @@ int a2r_is525=0; // Is the capture from a 5.25" disk in SS 40t 0.25 step
 void a2r_processtiming(struct a2r_strm *stream, FILE *a2rfile, unsigned char *buf, const uint32_t buflen)
 {
   uint8_t *buff;
-  uint32_t bitgap;
 
   hw_samplerate=A2R_SAMPLE_RATE;
 
@@ -37,6 +36,8 @@ void a2r_processtiming(struct a2r_strm *stream, FILE *a2rfile, unsigned char *bu
     outblen=0; bufpos=0;
     for (i=0; i<stream->size; i++)
     {
+      uint32_t bitgap;
+
       bitgap=buff[i];
 
       while (bitgap>0)
