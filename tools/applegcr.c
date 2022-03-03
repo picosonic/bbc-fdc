@@ -247,7 +247,7 @@ void applegcr_process_data53()
     int j;
     int k=0; // input stream pos
 
-    buff[APPLEGCR_SECTORLEN]=applegcr_decodebuff[k++];
+    buff[APPLEGCR_SECTORLEN-1]=applegcr_decodebuff[k++];
 
     for (i=0; i<(APPLEGCR_SECTORLEN/5); i++)
     {
@@ -285,7 +285,7 @@ void applegcr_process_data53()
       }
     }
 
-    buff[APPLEGCR_SECTORLEN]|=(applegcr_decodebuff[k++]<<3);
+    buff[APPLEGCR_SECTORLEN-1]|=(applegcr_decodebuff[k++]<<3);
 
     // Check we have an ID
     if ((applegcr_idamtrack!=-1) && (applegcr_idamsector!=-1))
