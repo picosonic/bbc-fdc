@@ -19,4 +19,6 @@ More recently I've also been able to read 3.5 inch disks using a TEAC FD-235HG P
 
 I've so far been able to read and extract data from several 3.5 inch disks including Archimedes Acorn ADFS S/M/L/D/E/F, MS-DOS, Amiga and Atari ST.
 
+For testing purposes I've run some disk images via a Gotek running the excellent [FlashFloppy](https://github.com/keirf/flashfloppy) by Keir Fraser into the Pi via BBC-FDC and got good results on several image formats. This also means I should be able to support cataloguing disk contents for more formats which I don't have physical media for.
+
 ![Top of board](/circuit/top.jpg?raw=true "Top of board")
