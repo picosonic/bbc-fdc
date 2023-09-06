@@ -160,6 +160,30 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
           fm_bitstreamcrc=(((unsigned int)fm_bitstream[fm_bitlen-2]<<8)|fm_bitstream[fm_bitlen-1]);
           dataCRC=(fm_idblockcrc==fm_bitstreamcrc)?GOODDATA:BADDATA;
 
+          // Check for duplicator mark
+          if ((dataCRC!=GOODDATA) && (hw_currenthead==0) && ((hw_currenttrack==40) || (hw_currenttrack==80)))
+          {
+            if (calc_crc_stream(&fm_bitstream[0], fm_bitlen-2, 0xffff, 0x2352)==fm_bitstreamcrc)
+            {
+              dataCRC=GOODDATA;
+            }
+            else
+            {
+              uint16_t crcs;
+              uint16_t crcout;
+
+              for (crcs=0; crcs<0xffff; crcs++)
+              {
+                crcout=calc_crc_stream(&fm_bitstream[0], fm_bitlen-2, 0xffff, crcs);
+                if (crcout==fm_bitstreamcrc)
+                {
+                  fprintf(stderr, "CRC poly = %.4x\n", crcs);
+                  break;
+                }
+              }
+            }
+          }
+
           if (fm_debug)
           {
             fprintf(stderr, "[%lx] FM Track %d (%d) ", datapos, fm_bitstream[1], hw_currenttrack);
@@ -249,6 +273,25 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
             fprintf(stderr, "  %.2x CRC %.4x", fm_blocktype, fm_bitstreamcrc);
 
           dataCRC=(fm_datablockcrc==fm_bitstreamcrc)?GOODDATA:BADDATA;
+
+          if ((fm_bitstreamcrc==0x0000) && (fm_bitstream[1]=1) && (fm_bitstream[2]=2) && (fm_bitstream[3]=3) && (fm_bitstream[4]=4) && (fm_bitstream[5]=5))
+          {
+            int j;
+
+            fprintf(stderr, "\nDUPLICATOR MARK\n");
+
+            fprintf(stderr, "Disc birthday (YY/MM/DD) : %.2x/%.2x/%.2x\n", fm_bitstream[15], fm_bitstream[16], fm_bitstream[17]);
+
+            for (j=0; j<fm_blocksize; j++)
+              fprintf(stderr, "%c", fm_bitstream[j]);
+
+            fprintf(stderr, "\n");
+
+            for (j=0; j<fm_blocksize; j++)
+              fprintf(stderr, "%.2x ", fm_bitstream[j]);
+
+            fprintf(stderr, "\n");
+          }
 
           // Report and save if the CRC matches
           if (dataCRC==GOODDATA)
