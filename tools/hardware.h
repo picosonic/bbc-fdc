@@ -30,7 +30,7 @@
 // For buffer calculations
 #define BITSPERBYTE 8
 #define HW_DEFAULTRPM 300
-#define HW_ROTATIONSPERSEC (HW_DEFAULTRPM/SECONDSINMINUTE)
+#define HW_ROTATIONSPERSEC (hw_rpm/SECONDSINMINUTE)
 
 // For SPI clock dividers
 #define HW_SPIDIV1024 1024
