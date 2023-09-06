@@ -913,6 +913,9 @@ int main(int argc,char **argv)
       // Select the correct side
       hw_sideselect(side);
 
+      // Measure the RPM for the current track/side
+      hw_measurerpm();
+
       // Retry the capture if any sectors are missing
       for (retry=0; retry<retries; retry++)
       {
@@ -1105,7 +1108,7 @@ int main(int argc,char **argv)
           switch (outputtype)
           {
             case IMAGERAW:
-              rfi_writetrack(rawdata, i, side, hw_measurerpm(), "rle", samplebuffer, samplebuffsize);
+              rfi_writetrack(rawdata, i, side, hw_rpm, "rle", samplebuffer, samplebuffsize);
               break;
 
             case IMAGEDFI:
@@ -1113,7 +1116,7 @@ int main(int argc,char **argv)
               break;
 
             case IMAGESCP:
-              scp_writetrack(rawdata, ((i/hw_stepping)*sides)+side, rawbuffer, samplebuffsize, ROTATIONS, hw_measurerpm());
+              scp_writetrack(rawdata, ((i/hw_stepping)*sides)+side, rawbuffer, samplebuffsize, ROTATIONS, hw_rpm);
               break;
 
             default:
