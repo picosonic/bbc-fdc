@@ -27,7 +27,7 @@ int hfe_readheader(FILE *hfefile)
 
   hfe_bitrate=hfeheader.bitRate;
 
-  if (hfeheader.floppyRPM!=0)
+  if ((hfeheader.floppyRPM!=0) && (hw_forcedrpm==0.0))
     hw_rpm=hfeheader.floppyRPM;
 
   return 0;

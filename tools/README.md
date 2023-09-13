@@ -13,7 +13,7 @@ By default, sectors are sorted by their physical position on the disk regardless
 
 ## Syntax :
 
-`[-i input_file] [-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-dblstep] [-title "Title"] [-pll [period] [phase]] [-v]`
+`[-i input_file] [-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-rpm rpm] [-dblstep] [-title "Title"] [-pll [period] [phase]] [-v]`
 
 ## Where :
 
@@ -30,6 +30,7 @@ By default, sectors are sorted by their physical position on the disk regardless
  * `-sectors` Expected sector count (e.g. 16 for Solidisk / Watford double density DFS)
  * `-csv` Create a csv of bad sectors (named as <outputfile>.csv)
  * `-tmax` Specify the maximum track number you wish to try stepping to
+ * `-rpm` Override the drive RPM value instead of measuring it
  * `-dblstep` Force double-stepping, for 40 track disks in 80 track drives
  * `-title` Override the title used in metadata for disk formats which support it (.td0 / .fsd)
  * `-pll` Use PLL to decode flux data. Optionally specify period and phase adjustments (as percentages)

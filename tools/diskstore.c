@@ -424,8 +424,10 @@ void diskstore_dumplayoutmap(const int rotations)
   else
     mtrack=hw_maxtracks+1;
 
-  fprintf(stderr, "Samples : %lu  Rotations : %d\n", mod_samplesize, rotations);
+  fprintf(stderr, "Buffer size : %lu  Rotations : %d  Bytes per rotation : %ld\n", mod_samplesize, rotations, mod_samplesize/rotations);
   samplesperrotation=(mod_samplesize/rotations);
+
+  fprintf(stderr, "Sample rate : %ld/sec  RPM : %.2f  Samples per rotation : %.2f  Bytes per rotation : %.0f\n", hw_samplerate, hw_rpm, hw_samplerate/(hw_rpm/SECONDSINMINUTE), (hw_samplerate/(hw_rpm/SECONDSINMINUTE))/BITSPERBYTE);
 
   fprintf(stderr, "TRACK[HEAD]\n");
   for (dtrack=0; ((dtrack<mtrack) && (dtrack<(int)hw_maxtracks)); dtrack+=hw_stepping)

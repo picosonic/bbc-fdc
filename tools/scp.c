@@ -323,11 +323,14 @@ int scp_readheader(FILE *scpfile)
   // Verify checksum
   if (scp_checksum(scpfile)!=scpheader.checksum) return -1;
 
-  // Set RPM
-  if ((scpheader.flags & SCP_FLAGS_360RPM)!=0)
-    hw_rpm=360;
-  else
-    hw_rpm=300;
+  // Set RPM, when no override set
+  if (hw_forcedrpm==0.0)
+  {
+    if ((scpheader.flags & SCP_FLAGS_360RPM)!=0)
+      hw_rpm=360;
+    else
+      hw_rpm=300;
+  }
 
   // Determine sample rate in Hz
   scprate=(NSINUS/((scpheader.resolution+1)*SCP_BASE_NS))*USINSECOND;

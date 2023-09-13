@@ -21,6 +21,7 @@ uint8_t hw_currenttrack = 0;
 uint8_t hw_currenthead = 0;
 unsigned long hw_samplerate = 0;
 float hw_rpm = HW_DEFAULTRPM;
+float hw_forcedrpm = 0.0;
 
 int hw_stepping = HW_NORMALSTEPPING;
 
@@ -288,6 +289,13 @@ void hw_sleep(const unsigned int seconds)
   (void) seconds;
 
   // No sleep required as this is not using real hardware
+}
+
+// Override RPM
+void hw_setrpm(const float rpm)
+{
+  hw_rpm=rpm;
+  hw_forcedrpm=rpm;
 }
 
 // Measure RPM, defaults to 300RPM

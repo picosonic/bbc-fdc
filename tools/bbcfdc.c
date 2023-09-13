@@ -149,7 +149,7 @@ void showargs(const char *exename)
 #ifdef NOPI
   fprintf(stderr, "[-i input_file] ");
 #endif
-  fprintf(stderr, "[-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-dblstep] [-title \"Title\"] [-v]\n");
+  fprintf(stderr, "[-c] [[-ss [0|1]]|[-ds]] [-o output_file] [-spidiv spi_divider] [-r retries] [-sort] [-summary] [-l] [-sectors sectors_per_track] [-csv] [-tmax maxtracks] [-rpm rpm] [-dblstep] [-title \"Title\"] [-v]\n");
 }
 
 int main(int argc,char **argv)
@@ -351,6 +351,20 @@ int main(int argc,char **argv)
       {
         hw_setmaxtracks(retval);
         printf("Override maximum number of drive tracks to %d\n", retval);
+      }
+    }
+    else
+    if ((strcmp(argv[argn], "-rpm")==0) && ((argn+1)<argc))
+    {
+      float retval;
+
+      ++argn;
+
+      // Override the RPM measurement
+      if (sscanf(argv[argn], "%f", &retval)==1)
+      {
+        hw_setrpm(retval);
+        printf("Override RPM to %f\n", retval);
       }
     }
     else

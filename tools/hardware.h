@@ -52,6 +52,7 @@ extern uint8_t hw_currenttrack;
 extern uint8_t hw_currenthead;
 extern unsigned long hw_samplerate;
 extern float hw_rpm;
+extern float hw_forcedrpm;
 
 extern int hw_stepping;
 
@@ -83,6 +84,7 @@ extern int hw_writeprotected();
 extern void hw_samplerawtrackdata(unsigned char *buf, uint32_t len);
 extern void hw_sleep(const unsigned int seconds);
 extern float hw_measurerpm();
+extern void hw_setrpm(const float rpm);
 extern void hw_fixspisamples(unsigned char *inbuf, long inlen, unsigned char *outbuf, long outlen);
 
 // Clean up
