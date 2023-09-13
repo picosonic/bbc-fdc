@@ -270,6 +270,10 @@ int dfs_validcatalogue(const int head, int *totalsectors)
   if ((sector0->datasize!=DFS_SECTORSIZE) || (sector1->datasize!=DFS_SECTORSIZE))
     return 0;
 
+  // Check sectors are in FM format
+  if ((sector0->modulation!=MODFM) || (sector1->modulation!=MODFM))
+    return 0;
+
   // Check cycle number is BCD
   if ((sector1->data[4]&0xf0)>0x90) return 0;
   if ((sector1->data[4]&0x0f)>0x09) return 0;
