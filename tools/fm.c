@@ -382,7 +382,7 @@ void fm_init(const int debug, const char density)
   }
 
   // Adjust bitcell for RPM
-  bitcell=(bitcell/(float)HW_DEFAULTRPM)*hw_rpm;
+  bitcell=(bitcell/hw_rpm)*(float)HW_DEFAULTRPM;
 
   // Determine number of samples between "1" pulses (default window)
   fm_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*bitcell;

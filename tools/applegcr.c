@@ -534,7 +534,7 @@ void applegcr_init(const int debug, const char density)
   applegcr_debug=debug;
 
   // Adjust bitcell for RPM
-  bitcell=(bitcell/(float)HW_DEFAULTRPM)*hw_rpm;
+  bitcell=(bitcell/hw_rpm)*(float)HW_DEFAULTRPM;
 
   applegcr_defaultwindow=((float)hw_samplerate/(float)USINSECOND)*bitcell;
   applegcr_threshold01=applegcr_defaultwindow*1.5;
