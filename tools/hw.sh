@@ -90,6 +90,9 @@ case "$1" in
       3)
         processor="BCM2711"
         ;;
+      4)
+        processor="BCM2712"
+        ;;
       *)
         processor="UNKNOWN"
         ;;
@@ -152,6 +155,15 @@ case "$1" in
         ;;
       19)
         boardtype="CM4"
+        ;;
+      20)
+        boardtype="CM4S"
+        ;;
+      21)
+        boardtype="INTERNAL"
+        ;;
+      22)
+        boardtype="5"
         ;;
       *)
         boardtype="UNKNOWN"

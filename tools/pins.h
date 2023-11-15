@@ -70,6 +70,13 @@
   #define CLOCK_500 1
 #endif
 
+// Try to detect RPi 5
+#if defined (REV_c04170) || defined(REV_d04170)
+  #define RPI5 1
+  #define HAS_BCM2712 1
+  #define CLOCK_500 1
+#endif
+
 #ifdef RPI1_1
   // GPIO and P1 numbers are for Raspberry Pi 1 rev 1, with 26 pin header
 

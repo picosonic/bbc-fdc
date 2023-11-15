@@ -198,6 +198,9 @@ int main(int argc,char **argv)
 #ifdef HW_BCM2709
   printf("BCM2709");
 #endif
+#ifdef HW_BCM2712
+  printf("BCM2712");
+#endif
 #ifdef HW_UNKNOWN
   printf("UNKNOWN");
 #endif
