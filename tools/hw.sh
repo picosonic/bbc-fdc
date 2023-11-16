@@ -151,18 +151,21 @@ case "$1" in
         boardtype="4B"
         ;;
       18)
-        boardtype="400"
+        boardtype="ZERO_2_W"
         ;;
       19)
-        boardtype="CM4"
+        boardtype="400"
         ;;
       20)
-        boardtype="CM4S"
+        boardtype="CM4"
         ;;
       21)
-        boardtype="INTERNAL"
+        boardtype="CM4S"
         ;;
       22)
+        boardtype="INTERNAL"
+        ;;
+      23)
         boardtype="5"
         ;;
       *)
