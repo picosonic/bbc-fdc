@@ -205,7 +205,14 @@ char *adfs_filetype(const unsigned int filetype)
 {
   switch (filetype)
   {
+    // 000 - 0FF : User (Unallocated)
+
+    // 100 - 3FF : Non-commercial software
+
+    // 400 - 9FF : Commercial software
     case 0x695: return "GIF";
+
+    // A00 - AFF : Acorn (Reserved)
     case 0xa91: return "Zip";
     case 0xadb: return "NewFont";
     case 0xadf: return "PDF";
@@ -218,6 +225,8 @@ char *adfs_filetype(const unsigned int filetype)
     case 0xafa: return "DtpStyle";
     case 0xafe: return "Mouse";
     case 0xaff: return "DrawFile";
+
+    // B00 - DFF : Commercial software
     case 0xb60: return "PNG";
     case 0xbbc: return "BBCROM";
     case 0xc25: return "AWord";
@@ -237,6 +246,8 @@ char *adfs_filetype(const unsigned int filetype)
     case 0xdea: return "DXF";
     case 0xdec: return "DiscRec";
     case 0xdfe: return "CSV";
+
+    // E00 - FFF : Generic data
     case 0xf89: return "GZip";
     case 0xfae: return "Resource";
     case 0xfaf: return "HTML";
