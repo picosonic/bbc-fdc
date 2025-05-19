@@ -7,7 +7,7 @@
 revision=$(cat /proc/cpuinfo | grep "Revision" | sed 's/.*: //')
 
 # Convert to decimal
-revision=$((16#$revision))
+revision=$(printf "%d\n" 0x$revision)
 
 # Strip off top 8 bits - Overvotage/OTP/Warranty
 revision=$(($revision & 0xffffff))
