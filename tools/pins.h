@@ -71,7 +71,7 @@
 #endif
 
 // Try to detect RPi 5
-#if defined (REV_c04170) || defined(REV_d04170)
+#if defined (REV_b04170) || (REV_c04170) || defined(REV_d04170) || (REV_b04171) || (REV_c04171) || defined(REV_d04171)
   #define RPI5 1
   #define HAS_BCM2712 1
   #define CLOCK_500 1
