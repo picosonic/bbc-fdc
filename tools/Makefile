@@ -13,6 +13,13 @@ all: drivetest bbcfdc checka2r checkfsd checkhfe checktd0 checkscp checkwoz bbcf
 
 checktools: checka2r checkfsd checkhfe checktd0 checkscp checkwoz
 
+.PHONY: test
+test: test_flippybuffer
+	./test_flippybuffer
+
+test_flippybuffer: tests/test_flippybuffer.c bbcfdc.c
+	$(CC) $(DEBUGFLAGS) -DNOPI -ffunction-sections -fdata-sections -Wl,--gc-sections -o $@ tests/test_flippybuffer.c
+
 drivetest: drivetest.o hardware.o
 	$(CC) $(BUILDFLAGS) -o drivetest drivetest.o hardware.o -lbcm2835
 
@@ -161,6 +168,7 @@ woz.o: woz.c woz.h applegcr.h hardware.h
 
 clean:
 	rm -f *.o
+	rm -f test_flippybuffer
 	rm -f drivetest
 	rm -f bbcfdc
 	rm -f checka2r
