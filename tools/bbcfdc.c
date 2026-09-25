@@ -95,6 +95,9 @@ unsigned char reverse(unsigned char n)
 // Used for flipping the bits in a raw sample buffer
 void fillflippybuffer(const unsigned char *rawdata, const unsigned long rawlen)
 {
+  if (rawlen==0)
+    return;
+
   if (flippybuffer==NULL)
     flippybuffer=malloc(rawlen);
 
@@ -103,7 +106,7 @@ void fillflippybuffer(const unsigned char *rawdata, const unsigned long rawlen)
     unsigned long em;
 
     for (em=0; em<rawlen; em++)
-      flippybuffer[rawlen-em]=reverse(rawdata[em]);
+      flippybuffer[rawlen-em-1]=reverse(rawdata[em]);
   }
 }
 
