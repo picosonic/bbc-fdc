@@ -170,10 +170,11 @@ void fm_addbit(const unsigned char bit, const unsigned long datapos)
             else
             {
               uint16_t crcs;
-              uint16_t crcout;
 
               for (crcs=0; crcs<0xffff; crcs++)
               {
+                uint16_t crcout;
+
                 crcout=calc_crc_stream(&fm_bitstream[0], fm_bitlen-2, 0xffff, crcs);
                 if (crcout==fm_bitstreamcrc)
                 {
