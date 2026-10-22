@@ -6,6 +6,11 @@
 # Get revision code
 revision=$(cat /proc/cpuinfo | grep "Revision" | sed 's/.*: //')
 
+if [ "${revision}" == "" ]
+then
+  revision=0
+fi
+
 # Convert to decimal
 revision=$(printf "%d\n" 0x$revision)
 
